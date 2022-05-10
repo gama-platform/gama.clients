@@ -37,6 +37,7 @@ var attribute2Name = 'type';
 
 var queue = [];
 var req = "";
+var result = "";
 var updateSource = setInterval(() => {
 	if (queue.length > 0 && req === "") {
 		req = queue.shift();
@@ -47,23 +48,31 @@ var updateSource = setInterval(() => {
 		launchSocket.onmessage = function (event) {
 			msg = event.data;
 			if (event.data instanceof Blob) { } else {
-
-				console.log(msg);
-				const mm = JSON.parse(msg);
-				if (mm.exp_id) exp_id = mm.exp_id;
-				if (mm.socket_id) socket_id = mm.socket_id;
-				// let mm = JSON.parse(msg);
-				// console.log(mm["type"]);
-				// socket_id=mm["socket_id"];
+				if(req.callback){
+					req.callback(msg);
+				}
+				// console.log(msg);	
+				// result = JSON.parse(msg);
+				// if (result.exp_id) exp_id = result.exp_id;
+				// if (result.socket_id) socket_id = result.socket_id; 
 			}
 			req = "";
 		}
 	}
 
-}, 1);
+}, 100);
 launchSocket.onclose = function (event) {
 	clearInterval(updateSource);
 };
+function onLaunch(e){
+	console.log(e);
+	result = JSON.parse(msg);
+	if (result.exp_id) exp_id = result.exp_id;
+	if (result.socket_id) socket_id = result.socket_id; 
+}
+function onReceiveMsg(e){
+	console.log(e);
+}
 launchSocket.addEventListener('open', (event) => {
 	var cmd = {
 		"type": "launch",
@@ -73,49 +82,57 @@ launchSocket.addEventListener('open', (event) => {
 			{ "name": "Number of people agents", "value": "500", "type": "int" },
 			{ "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
 		],
-		"auto-export": false
+		"auto-export": false,
+		"callback":onLaunch
+
 	};
 	queue.push(cmd);
 	cmd = {
 		"type": "expression",
 		"socket_id": socket_id,
 		"exp_id": exp_id,
-		"expr": "length(people)"
+		"expr": "length(people)",
+		"callback":onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
 		"type": "expression",
 		"socket_id": socket_id,
 		"exp_id": exp_id,
-		"expr": "ask 10 among people{do die;}"
+		"expr": "ask 10 among people{do die;}",
+		"callback":onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
 		"type": "expression",
 		"socket_id": socket_id,
 		"exp_id": exp_id,
-		"expr": "length(people)"
+		"expr": "length(people)",
+		"callback":onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
 		"type": "expression",
 		"socket_id": socket_id,
 		"exp_id": exp_id,
-		"expr": "create people number:100;"
+		"expr": "create people number:100;",
+		"callback":onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
 		"type": "expression",
 		"socket_id": socket_id,
 		"exp_id": exp_id,
-		"expr": "length(people)"
+		"expr": "length(people)",
+		"callback":onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
 		"type": "expression",
 		"socket_id": socket_id,
 		"exp_id": exp_id,
-		"expr": "dead(simulation)"
+		"expr": "dead(simulation)",
+		"callback":onReceiveMsg
 	};
 	queue.push(cmd);
 }); 
