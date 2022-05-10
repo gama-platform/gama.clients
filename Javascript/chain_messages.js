@@ -1,16 +1,16 @@
-// mapboxgl.accessToken = 'pk.eyJ1IjoiaHFuZ2hpODgiLCJhIjoiY2t0N2w0cGZ6MHRjNTJ2bnJtYm5vcDB0YyJ9.oTjisOggN28UFY8q1hiAug';
+mapboxgl.accessToken = 'pk.eyJ1IjoiaHFuZ2hpODgiLCJhIjoiY2t0N2w0cGZ6MHRjNTJ2bnJtYm5vcDB0YyJ9.oTjisOggN28UFY8q1hiAug';
 
-// const map = new mapboxgl.Map({
-// 	container: 'map', // container id
-// 	style: 'mapbox://styles/mapbox/dark-v10',
-// 	pitch: 45,
-// 	bearing: -17.6,
-// 	antialias: true,
-// 	center: [0, 0], //  -84.5, 38.05starting position 
-// 	zoom: 13 // starting zoom
-// });
+const map = new mapboxgl.Map({
+	container: 'map', // container id
+	style: 'mapbox://styles/mapbox/dark-v10',
+	pitch: 45,
+	bearing: -17.6,
+	antialias: true,
+	center: [0, 0], //  -84.5, 38.05starting position 
+	zoom: 13 // starting zoom
+});
 
-var socket_id = "";
+var socket_id = 0;
 var exp_id = 0;
 var updateSource;
 var updateSource2;
@@ -34,7 +34,7 @@ var species1Name = 'people';
 var attribute1Name = 'objective';
 var species2Name = 'building';
 var attribute2Name = 'type';
-
+ 
 var queue = [];
 var req = "";
 var result = "";
@@ -48,30 +48,26 @@ var updateSource = setInterval(() => {
 		launchSocket.onmessage = function (event) {
 			msg = event.data;
 			if (event.data instanceof Blob) { } else {
-				if(req.callback){
+				if (req.callback) {
 					req.callback(msg);
+				} else {
+					req = "";
 				}
 				// console.log(msg);	
 				// result = JSON.parse(msg);
 				// if (result.exp_id) exp_id = result.exp_id;
 				// if (result.socket_id) socket_id = result.socket_id; 
 			}
-			req = "";
 		}
 	}
 
-}, 100);
+}, 1);
 launchSocket.onclose = function (event) {
 	clearInterval(updateSource);
 };
-function onLaunch(e){
+function onReceiveMsg(e) {
 	console.log(e);
-	result = JSON.parse(msg);
-	if (result.exp_id) exp_id = result.exp_id;
-	if (result.socket_id) socket_id = result.socket_id; 
-}
-function onReceiveMsg(e){
-	console.log(e);
+	req = "";
 }
 launchSocket.addEventListener('open', (event) => {
 	var cmd = {
@@ -83,8 +79,29 @@ launchSocket.addEventListener('open', (event) => {
 			{ "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
 		],
 		"auto-export": false,
-		"callback":onLaunch
+		"callback": function (e) {
+			console.log(e);
+			result = JSON.parse(msg);
+			if (result.exp_id) exp_id = result.exp_id;
+			if (result.socket_id) socket_id = result.socket_id;
+			req = "";
+		}
 
+	};
+	queue.push(cmd);
+	cmd = { 
+		"type": "expression",
+		"socket_id": socket_id,
+		"exp_id": exp_id,
+		// "expr": '"{\"lat\":"+(CRS_transform(world.shape,"EPSG:4326").location.x)+",\"lon\":"+(CRS_transform(world.shape,"EPSG:4326").location.y)+"}"',
+		"expr": "CRS_transform(world.shape,\"EPSG:4326\").location",
+		"callback": function (ee) {
+			ee = JSON.parse(ee).result.replace(/[{}]/g, "");
+			var eee = ee.split(",");
+			console.log(eee[0]);
+			console.log(eee[1]);
+			req = "";
+		}
 	};
 	queue.push(cmd);
 	cmd = {
@@ -92,7 +109,7 @@ launchSocket.addEventListener('open', (event) => {
 		"socket_id": socket_id,
 		"exp_id": exp_id,
 		"expr": "length(people)",
-		"callback":onReceiveMsg
+		"callback": onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
@@ -100,7 +117,7 @@ launchSocket.addEventListener('open', (event) => {
 		"socket_id": socket_id,
 		"exp_id": exp_id,
 		"expr": "ask 10 among people{do die;}",
-		"callback":onReceiveMsg
+		"callback": onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
@@ -108,7 +125,7 @@ launchSocket.addEventListener('open', (event) => {
 		"socket_id": socket_id,
 		"exp_id": exp_id,
 		"expr": "length(people)",
-		"callback":onReceiveMsg
+		"callback": onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
@@ -116,7 +133,7 @@ launchSocket.addEventListener('open', (event) => {
 		"socket_id": socket_id,
 		"exp_id": exp_id,
 		"expr": "create people number:100;",
-		"callback":onReceiveMsg
+		"callback": onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
@@ -124,7 +141,7 @@ launchSocket.addEventListener('open', (event) => {
 		"socket_id": socket_id,
 		"exp_id": exp_id,
 		"expr": "length(people)",
-		"callback":onReceiveMsg
+		"callback": onReceiveMsg
 	};
 	queue.push(cmd);
 	cmd = {
@@ -132,7 +149,7 @@ launchSocket.addEventListener('open', (event) => {
 		"socket_id": socket_id,
 		"exp_id": exp_id,
 		"expr": "dead(simulation)",
-		"callback":onReceiveMsg
+		"callback": onReceiveMsg
 	};
 	queue.push(cmd);
 }); 
