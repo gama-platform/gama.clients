@@ -17,7 +17,7 @@ var launchSocket = new WebSocket("ws://localhost:6868/");
 // var outputSocket = new WebSocket("ws://localhost:6868/");
 
 //GAMA PATH
-var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
+var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/';
 var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
 var experimentName = 'road_traffic';
 var species1Name = 'people';
