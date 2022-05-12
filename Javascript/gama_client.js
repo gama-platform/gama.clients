@@ -10,13 +10,11 @@ var canCallStaticLayer = Boolean(false);
 var staticLayerCalled = Boolean(false);
 
 //VISUALIZATION
+//Get the 3D building layer from MapBox
 var show3DBuilding = Boolean(false);
 
 //SOCKET
-
 var launchSocket = new WebSocket("ws://localhost:6868/");
-// var launchSocket = new WebSocket("ws://localhost:6868/launch");
-// var outputSocket = new WebSocket("ws://localhost:6868/output");
 
 //GAMA PATH
 var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/';
@@ -65,10 +63,10 @@ function start_sim() {
 		"type": "launch",
 		"model": modelPath,
 		"experiment": experimentName,
-		"parameters": [
+		/*"parameters": [
 			{ "name": "Number of people agents", "value": "50", "type": "int" },
 			{ "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
-		],
+		],*/
 		"auto-export": false,
 		"callback": function (e) {
 			console.log(e);
