@@ -14,47 +14,58 @@ var staticLayerCalled = Boolean(false);
 var show3DBuilding = Boolean(false);
 
 //SOCKET
-var launchSocket = new WebSocket("ws://localhost:6868/");
+var wSocket = new WebSocket("ws://localhost:6868/");
 
 //GAMA PATH
-var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/';
+/*var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/';
 var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
 var experimentName = 'road_traffic';
 var species1Name = 'people';
 var attribute1Name = 'objective';
 var species2Name = 'building';
+var attribute2Name = 'type';*/
+
+
+
+var modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
+var experimentName = 'GratteCielErasme';
+var species1Name = 'people';
+var attribute1Name = 'type';
+var species2Name = 'building';
 var attribute2Name = 'type';
 
 
 var queue = [];
-var req = "";
+var request = "";
 var result = "";
 var updateSource;
+let executor_speed = 1;
 var executor = setInterval(() => {
-	if (queue.length > 0 && req === "") {
-		req = queue.shift();
-		req.exp_id = exp_id;
-		req.socket_id = socket_id;
-		launchSocket.send(JSON.stringify(req));
+	if (queue.length > 0 && request === "") {
+		request = queue.shift();
+		request.exp_id = exp_id;
+		request.socket_id = socket_id;
+		wSocket.send(JSON.stringify(request));
 		// console.log("request " + JSON.stringify(req));
-		launchSocket.onmessage = function (event) {
+		wSocket.onmessage = function (event) {
 			msg = event.data;
 			if (event.data instanceof Blob) { } else {
-				if (req.callback) {
-					req.callback(msg);
+				if (request.callback) {
+					request.callback(msg);
 				} else {
-					req = "";
+					request = "";
 				}
 			}
 		}
 	}
 
-}, 1);
-launchSocket.onclose = function (event) {
+}, executor_speed);
+
+wSocket.onclose = function (event) {
 	clearInterval(executor);
 	clearInterval(updateSource);
 };
-launchSocket.addEventListener('open', (event) => {
+wSocket.addEventListener('open', (event) => {
 	start_sim();
 });
 
@@ -63,17 +74,13 @@ function start_sim() {
 		"type": "launch",
 		"model": modelPath,
 		"experiment": experimentName,
-		/*"parameters": [
-			{ "name": "Number of people agents", "value": "50", "type": "int" },
-			{ "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
-		],*/
 		"auto-export": false,
 		"callback": function (e) {
 			console.log(e);
 			result = JSON.parse(msg);
 			if (result.exp_id) exp_id = result.exp_id;
 			if (result.socket_id) socket_id = result.socket_id;
-			req = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
+			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 		}
 
 	};
@@ -91,10 +98,10 @@ function start_sim() {
 			map.flyTo({
 				center: [eee[0], eee[1]],
 				essential: true,
-				zoom: 16 
+				zoom: 15 
 			});
 			document.getElementById('div-loader').remove();
-			req = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
+			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 		}
 	};
 	queue.push(cmd);
@@ -122,7 +129,7 @@ function start_renderer() {
 				// console.log(geojson);
 				map.getSource('source2').setData(geojson);
 			}
-			req = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
+			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 		}
 	};
 	queue.push(cmd);
@@ -144,7 +151,7 @@ function start_renderer() {
 					canCallStaticLayer = true;
 
 				}
-				req = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
+				request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 			}
 		};
 		queue.push(cmd);
