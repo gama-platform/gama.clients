@@ -17,15 +17,15 @@ var show3DBuilding = Boolean(false);
 var wSocket = new WebSocket("ws://localhost:6868/");
 
 //GAMA PATH
-/*var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/';
+var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
 var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
 var experimentName = 'road_traffic';
 var species1Name = 'people';
 var attribute1Name = 'objective';
 var species2Name = 'building';
-var attribute2Name = 'type';*/
+var attribute2Name = 'type';
 
-
+ 
 
 // var modelPath = 'C:\\git\\UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
 // var experimentName = 'GratteCielErasme';
@@ -33,18 +33,6 @@ var attribute2Name = 'type';*/
 // var attribute1Name = 'type';
 // var species2Name = 'building';
 // var attribute2Name = 'type';
-
-
-var modelPath = 'C:\\git\\UD_ReAgent_ABM\\ReAgent\\models\\Gratte_Ciel_Basic.gaml';
-var experimentName = 'GratteCielErasme';
-var species1Name = 'people';
-var attribute1Name = 'type';
-// const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
-// const experimentName = 'GratteCielErasme';
-// const species1Name = 'people';
-// const attribute1Name = 'type';
-const species2Name = 'building';
-const attribute2Name = 'type';
 
 
 var queue = [];
@@ -79,6 +67,7 @@ wSocket.onclose = function (event) {
 };
 wSocket.addEventListener('open', (event) => {
 	start_sim();
+	start_renderer();
 });
 
 function start_sim() {
@@ -95,6 +84,24 @@ function start_sim() {
 			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 		}
 
+	};
+	queue.push(cmd);
+	cmd = {
+		"type": "expression",
+		"socket_id": socket_id,
+		"exp_id": exp_id,
+		"expr": "species(world).microspecies",
+		"callback": function (ee) { 
+			ee = JSON.parse(ee).result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
+			var eee = ee.split(","); 
+			console.log(eee);
+			
+			map.addSource('source1', {
+				type: 'geojson',
+				data: geojson
+			});
+			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
+		}
 	};
 	queue.push(cmd);
 	cmd = {
@@ -124,15 +131,14 @@ function start_sim() {
 	};
 	queue.push(cmd);
 }
-function start_renderer() {
-
+function start_renderer() { 
 	cmd = {
 		'type': 'output',
 		'species': species2Name,
 		'attributes': [attribute2Name],
 		'socket_id': socket_id,
-		'exp_id': exp_id,     
 		"crs":'EPSG:4326',
+		'exp_id': exp_id,
 		"callback": function (message) {
 			if (typeof event.data == "object") {
 
@@ -173,11 +179,13 @@ function start_renderer() {
 }
 const map = new mapboxgl.Map({
 	container: 'map', // container id
-	style: 'mapbox://styles/mapbox/dark-v10',
-	pitch: 45,
-	bearing: -17.6,
-	antialias: true,
-	center: [105.8249019, 21.0076181], // TLU -84.5, 38.05starting position 
+	// style: 'mapbox://styles/mapbox/dark-v10',
+	// style: {version: 8,sources: {},layers: []},
+
+	// pitch: 45,
+	// bearing: -17.6,
+	// antialias: true,
+	center: [105.8249019, 21.0076181], // TLU -84.5, 38.05starting position  [6.069437036914885,45.09389334701125],//
 	zoom: 13 // starting zoom
 });
 
@@ -193,8 +201,9 @@ var geojson = {
 		}
 	]
 };
-map.on('load', async () => {
+// map.on('load', async () => {
 	// Add the source1 location as a source.
+	/*
 	map.addSource('source1', {
 		type: 'geojson',
 		data: geojson
@@ -241,69 +250,5 @@ map.on('load', async () => {
 				'gray'],
 
 		},
-	});
-	const layers = map.getStyle().layers;
-	const labelLayerId = layers.find(
-		(layer) => layer.type === 'symbol' && layer.layout['text-field']
-	).id;
-	if (show3DBuilding) {
-		map.addLayer(
-			{
-				'id': 'add-3d-buildings',
-				'source': 'composite',
-				'source-layer': 'building',
-				'filter': ['==', 'extrude', 'true'],
-				'type': 'fill-extrusion',
-				'minzoom': 15,
-				'paint': {
-					'fill-extrusion-color': '#aaa',
-					'fill-extrusion-height': [
-						'interpolate',
-						['linear'],
-						['zoom'],
-						15,
-						0,
-						15.05,
-						['get', 'height']
-					],
-					'fill-extrusion-base': [
-						'interpolate',
-						['linear'],
-						['zoom'],
-						15,
-						0,
-						15.05,
-						['get', 'min_height']
-					],
-					'fill-extrusion-opacity': 0.6
-				}
-			},
-			labelLayerId
-		);
-	}
-	// Add some fog in the background
-	map.setFog({
-		'range': [-0.5, 5],
-		'color': 'white',
-		'horizon-blend': 0.2
-	});
-	// Add a sky layer over the horizon
-	map.addLayer({
-		'id': 'sky',
-		'type': 'sky',
-		'paint': {
-			'sky-type': 'atmosphere',
-			'sky-atmosphere-color': 'rgba(85, 151, 210, 0.5)'
-		}
-	});
-	// Add terrain source, with slight exaggeration
-	map.addSource('mapbox-dem', {
-		'type': 'raster-dem',
-		'url': 'mapbox://mapbox.terrain-rgb',
-		'tileSize': 512,
-		'maxzoom': 14
-	}); 
-	map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-	map.setLight({ anchor: 'map' });
-	start_renderer();
-});
+	});  
+*/
