@@ -7,11 +7,14 @@ var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
 var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Luneray flu/models/model5.gaml';
 var experimentName = 'main';
 
-gama = new GAMA("ws://localhost:6868/", modelPath, experimentName, on_connected);
-gama.init();
+gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
+gama.connect(on_connected, on_disconnected);
 function on_connected() {
 	start_sim();
 	start_renderer();
+}
+function on_disconnected() {
+	clearInterval(updateSource);
 }
 function start_sim() {
 	gama.launch();
@@ -22,14 +25,11 @@ function start_sim() {
 
 function start_renderer() {
 	updateSource = setInterval(() => {
+		console.log(".");
 		geojsonMap.forEach(logMapElements);
 	}, 100);
 }
 function logMapElements(value, key, mm) {
-	// console.log(`m[${key}] = ${value}`);
-	// console.log(key);
-	// console.log(value);
-
 	gama.getPopulation(key, ["name"], "EPSG:4326", updateLayer);
 
 	function updateLayer(message) {

@@ -1,8 +1,6 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiaHFuZ2hpODgiLCJhIjoiY2t0N2w0cGZ6MHRjNTJ2bnJtYm5vcDB0YyJ9.oTjisOggN28UFY8q1hiAug';
 
-
-var socket_id = 0;
-var exp_id = 0;
+ 
 var updateSource;
 var updateSource2;
 var updateSource3;
@@ -12,10 +10,7 @@ var staticLayerCalled = Boolean(false);
 //VISUALIZATION
 //Get the 3D building layer from MapBox
 var show3DBuilding = Boolean(false);
-
-//SOCKET
-var wSocket = new WebSocket("ws://localhost:6868/");
-
+ 
 //GAMA PATH
 /*var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/';
 var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
@@ -46,129 +41,60 @@ var attribute1Name = 'type';
 const species2Name = 'building';
 const attribute2Name = 'type';
 
+ 
+const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
+experiment.connect(on_connected,on_disconnected);
+function on_connected() {
+	start_sim(); 
+} 
 
-var queue = [];
-var request = "";
-var result = "";
-var updateSource;
-let executor_speed = 1;
-var executor = setInterval(() => {
-	if (queue.length > 0 && request === "") {
-		request = queue.shift();
-		request.exp_id = exp_id;
-		request.socket_id = socket_id;
-		wSocket.send(JSON.stringify(request));
-		// console.log("request " + JSON.stringify(req));
-		wSocket.onmessage = function (event) {
-			msg = event.data;
-			if (event.data instanceof Blob) { } else {
-				if (request.callback) {
-					request.callback(msg);
-				} else {
-					request = "";
-				}
-			}
-		}
-	}
-
-}, executor_speed);
-
-wSocket.onclose = function (event) {
-	clearInterval(executor);
+function on_disconnected() {
 	clearInterval(updateSource);
-};
-wSocket.addEventListener('open', (event) => {
-	start_sim();
-});
+} 
 
-function start_sim() {
-	var cmd = {
-		"type": "launch",
-		"model": modelPath,
-		"experiment": experimentName,
-		"auto-export": false,
-		"callback": function (e) {
-			console.log(e);
-			result = JSON.parse(msg);
-			if (result.exp_id) exp_id = result.exp_id;
-			if (result.socket_id) socket_id = result.socket_id;
-			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
-		}
-
-	};
-	queue.push(cmd);
-	cmd = {
-		"type": "expression",
-		"socket_id": socket_id,
-		"exp_id": exp_id,
-		"expr": "CRS_transform(world.location,\"EPSG:4326\")",
-		"callback": function (ee) {
-			ee = JSON.parse(ee).result.replace(/[{}]/g, "");
-			var eee = ee.split(",");
-			console.log(eee[0]);
-			console.log(eee[1]);
-			map.flyTo({
-				center: [eee[0], eee[1]],
-				essential: true,
-				zoom: 15 
-			});
-			document.getElementById('div-loader').remove();
-			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
-		}
-	};
-	queue.push(cmd);
-	cmd = {
-		"type": "play",
-		"socket_id": socket_id,
-		"exp_id": exp_id
-	};
-	queue.push(cmd);
+function start_sim() { 
+	experiment.launch();
+	experiment.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", function (ee) {
+		ee = JSON.parse(ee).result.replace(/[{}]/g, "");
+		var eee = ee.split(",");
+		console.log(eee[0]);
+		console.log(eee[1]);
+		map.flyTo({
+			center: [eee[0], eee[1]],
+			essential: true,
+			zoom: 15 
+		});
+		document.getElementById('div-loader').remove();
+		request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
+	});
+ 
+	experiment.play();
 }
 function start_renderer() {
 
-	cmd = {
-		'type': 'output',
-		'species': species2Name,
-		'attributes': [attribute2Name],
-		'socket_id': socket_id,
-		'exp_id': exp_id,     
-		"crs":'EPSG:4326',
-		"callback": function (message) {
+	experiment.getPopulation(species2Name, [attribute2Name], "EPSG:4326", function (message) {
+		if (typeof event.data == "object") {
+
+		} else {
+			geojson = null;
+			geojson = JSON.parse(message);
+			// console.log(geojson);
+			map.getSource('source2').setData(geojson);
+		} 
+	});
+	 
+	updateSource = setInterval(() => { 
+		experiment.getPopulation(species1Name, [attribute1Name], "EPSG:4326",function (message) {
 			if (typeof event.data == "object") {
 
 			} else {
 				geojson = null;
 				geojson = JSON.parse(message);
 				// console.log(geojson);
-				map.getSource('source2').setData(geojson);
-			}
-			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
-		}
-	};
-	queue.push(cmd);
-	updateSource = setInterval(() => {
-		cmd = {
-			'type': 'output',
-			'species': species1Name,
-			'attributes': [attribute1Name],
-			"crs":'EPSG:4326',
-			'socket_id': socket_id,
-			'exp_id': exp_id,
-			"callback": function (message) {
-				if (typeof event.data == "object") {
-
-				} else {
-					geojson = null;
-					geojson = JSON.parse(message);
-					// console.log(geojson);
-					map.getSource('source1').setData(geojson);
-					canCallStaticLayer = true;
-
-				}
-				request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
-			}
-		};
-		queue.push(cmd);
+				map.getSource('source1').setData(geojson);
+				canCallStaticLayer = true;
+			} 
+		}); 
 	}, 100);
 }
 const map = new mapboxgl.Map({

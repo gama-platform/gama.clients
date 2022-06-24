@@ -11,22 +11,24 @@ class GAMA {
     req = "";
     result = "";
     executor_speed = 1;
-    opened_callback;
-    constructor(address, md, exp, cb) {
+    endCondition = "";
+    param = [];
+    logger;
+    constructor(address, md, exp) {
         this.host = address;
         this.modelPath = md;
         this.experimentName = exp;
-        this.opened_callback = cb;
     }
-    init() {
+    connect(opened_callback, closed_callback) {
 
         this.wSocket = new WebSocket(this.host);
 
         this.wSocket.onclose = function (event) {
             clearInterval(this.executor);
+            if (closed_callback) closed_callback();
         };
         this.wSocket.addEventListener('open', (event) => {
-            this.opened_callback();
+            if (opened_callback) opened_callback();
         });
         this.executor = setInterval(() => {
             if (this.queue.length > 0 && this.req === "") {
@@ -35,6 +37,7 @@ class GAMA {
                 this.req.socket_id = this.socket_id;
                 this.wSocket.send(JSON.stringify(this.req));
                 // console.log("request " + JSON.stringify(this.req));
+                if (this.logger) { this.logger("request " + JSON.stringify(this.req)); }
                 var myself = this;
                 this.wSocket.onmessage = function (event) {
                     // console.log(myself.req);
@@ -75,6 +78,8 @@ class GAMA {
             "socket_id": this.socket_id,
             "exp_id": this.exp_id,
             "auto-export": false,
+            "parameters": this.param,
+            "until": this.endCondition,
             "callback": c
         };
         this.requestCommand(cmd);
@@ -92,8 +97,15 @@ class GAMA {
         this.requestCommand(cmd);
     }
 
+    setParameters(p) {
+        this.param = p;
+    }
+    setEndCondition(ec) {
+        this.endCondition = ec;
+    }
+
     launch(c) {
-        var myself=this;
+        var myself = this;
         this.execute("launch", function (e) {
             console.log(e);
             var result = JSON.parse(e);
