@@ -53,7 +53,7 @@ launchSocket.addEventListener('open', (event) => {
 			{ "name": "Number of people agents", "value": "111", "type": "int" },
 			{ "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
 		],
-		"until": "cycle>=15",
+		// "until": "cycle>=15",
 		"callback": function (e) {
 			log(e);
 			result = JSON.parse(msg);

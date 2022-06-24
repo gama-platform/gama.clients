@@ -36,14 +36,21 @@
 			fill: #ff1900;
 		}
 	</style>
+ 
+	<link href="lib/style.css" rel="stylesheet">
+	<link href="lib/mapbox-gl.css" rel="stylesheet">
+	<script src="lib/mapbox-gl.js"></script>
+ 
+	<script src="lib/turf.min.js"></script>
+	<script src="lib/polyline.js"></script>
+	<!-- <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.0.9/mapbox-gl-draw.css" rel="stylesheet">
+	<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.3.0/mapbox-gl-draw.js'></script>	 -->
 
-	<!-- Mapbox GL JS -->
-	<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
+	<!-- <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
 	<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
-
-	<!-- Turf & Polyline -->
+	 
 	<script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js"></script> -->
 
 </head>
 
@@ -63,8 +70,10 @@ C22.32,8.481,24.301,9.057,26.013,10.047z">
 			</path>
 		</svg>
 	</div>
-	<!-- <script src="./GAMA.js"></script> -->
-	<script src="./gama_client.js"></script>
+	<script src="./dev/GAMA.js"></script>
+	<script src="./js/mapbox.js"></script>
+	<script src="./js/controller.js"></script>
+	<script src="./js/toolbar.js"></script>
 </body>
 
 </html>
