@@ -164,7 +164,7 @@ function logMapElements(value, key, mm) {
 	cmd = {
 		'type': 'output',
 		'species': key,
-		// 'attributes': [attribute1Name],
+		'attributes': ["name"],
 		"crs": 'EPSG:4326',
 		'socket_id': socket_id,
 		'exp_id': exp_id,
@@ -229,6 +229,13 @@ function addLayer(type, key) {
 			}
 		});
 	}
+	map.on('click', `source${key}`, (e) => {
+		new mapboxgl.Popup()
+		.setLngLat(e.lngLat)
+		.setHTML(e.features[0].properties.name)
+		.addTo(map);
+		});
+		
 }
 const map = new mapboxgl.Map({
 	container: 'map', // container id
