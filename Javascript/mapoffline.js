@@ -18,15 +18,20 @@ var wSocket = new WebSocket("ws://localhost:6868/");
 
 //GAMA PATH
 var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
-var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
-var experimentName = 'road_traffic';
-var species1Name = 'people';
-var attribute1Name = 'objective';
-var species2Name = 'building';
-var attribute2Name = 'type';
+// var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
+// var experimentName = 'road_traffic';
+// var species1Name = 'people';
+// var attribute1Name = 'objective';
+// var species2Name = 'building';
+// var attribute2Name = 'type';
 
- 
+// var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Predator Prey/models/Model 08.gaml';
+// var experimentName = 'prey_predator';
+// var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Toy Models/Boids/models/Boids.gaml';
+// var experimentName = 'Basic';
 
+var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Luneray flu/models/model5.gaml';
+var experimentName = 'main';
 // var modelPath = 'C:\\git\\UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
 // var experimentName = 'GratteCielErasme';
 // var species1Name = 'people';
@@ -46,10 +51,11 @@ var executor = setInterval(() => {
 		request.exp_id = exp_id;
 		request.socket_id = socket_id;
 		wSocket.send(JSON.stringify(request));
-		// console.log("request " + JSON.stringify(req));
+		// console.log("request " + JSON.stringify(request));
 		wSocket.onmessage = function (event) {
 			msg = event.data;
-			if (event.data instanceof Blob) { } else {
+			if (event.data instanceof Blob) { } else { 
+				// console.log(msg);
 				if (request.callback) {
 					request.callback(msg);
 				} else {
@@ -69,7 +75,7 @@ wSocket.addEventListener('open', (event) => {
 	start_sim();
 	start_renderer();
 });
-
+var geojsonMap = new Map();
 function start_sim() {
 	var cmd = {
 		"type": "launch",
@@ -91,15 +97,29 @@ function start_sim() {
 		"socket_id": socket_id,
 		"exp_id": exp_id,
 		"expr": "species(world).microspecies",
-		"callback": function (ee) { 
+		"callback": function (ee) {
 			ee = JSON.parse(ee).result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
-			var eee = ee.split(","); 
-			console.log(eee);
-			
-			map.addSource('source1', {
-				type: 'geojson',
-				data: geojson
+			var eee = ee.split(",");
+			eee.forEach((e) => {
+				geojsonMap.set(e, {
+					'type': 'FeatureCollection',
+					'features': [
+						{
+							'type': 'Feature',
+							'geometry': {
+								'type': 'Point',
+								'coordinates': [0, 0]
+							}
+						}
+					]
+				});
+				map.addSource(`source${e}`, {
+					type: 'geojson',
+					data: geojsonMap.get(e)
+				});
 			});
+
+			geojsonMap.forEach(logMapElements);
 			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 		}
 	};
@@ -116,8 +136,8 @@ function start_sim() {
 			console.log(eee[1]);
 			map.flyTo({
 				center: [eee[0], eee[1]],
-				essential: true,
-				zoom: 15 
+				duration: 0,
+				zoom: 15
 			});
 			document.getElementById('div-loader').remove();
 			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
@@ -131,51 +151,84 @@ function start_sim() {
 	};
 	queue.push(cmd);
 }
-function start_renderer() { 
+function start_renderer() {
+	updateSource = setInterval(() => {
+
+		geojsonMap.forEach(logMapElements);
+	}, 100);
+}
+function logMapElements(value, key, mm) {
+	// console.log(`m[${key}] = ${value}`);
+	// console.log(key);
+	// console.log(value);
 	cmd = {
 		'type': 'output',
-		'species': species2Name,
-		'attributes': [attribute2Name],
+		'species': key,
+		// 'attributes': [attribute1Name],
+		"crs": 'EPSG:4326',
 		'socket_id': socket_id,
-		"crs":'EPSG:4326',
 		'exp_id': exp_id,
 		"callback": function (message) {
-			if (typeof event.data == "object") {
+			if (typeof message == "object" || message=="") {
 
 			} else {
-				geojson = null;
-				geojson = JSON.parse(message);
-				// console.log(geojson);
-				map.getSource('source2').setData(geojson);
+				// geojson = null;
+				// console.log(message);
+				var tmp = JSON.parse(message);
+				if(!map.style.getLayer( `source${key}`))
+				addLayer(tmp.features[0].geometry.type, key);
+				map.getSource(`source${key}`).setData(tmp);
+
 			}
 			request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 		}
 	};
 	queue.push(cmd);
-	updateSource = setInterval(() => {
-		cmd = {
-			'type': 'output',
-			'species': species1Name,
-			'attributes': [attribute1Name],
-			"crs":'EPSG:4326',
-			'socket_id': socket_id,
-			'exp_id': exp_id,
-			"callback": function (message) {
-				if (typeof event.data == "object") {
+}
 
-				} else {
-					geojson = null;
-					geojson = JSON.parse(message);
-					// console.log(geojson);
-					map.getSource('source1').setData(geojson);
-					canCallStaticLayer = true;
+function addLayer(type, key) {
 
-				}
-				request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
+	if (type === 'LineString') {
+		map.addLayer({
+			'id': `source${key}`,
+			'type': 'line',
+			'source': `source${key}`, // reference the data source
+			'layout': {},
+			'paint': {
+				'line-color': '#000',
+				'line-width': 3
 			}
-		};
-		queue.push(cmd);
-	}, 100);
+		});
+	} else if (type === 'Point') {
+
+		map.addLayer({
+			'id': `source${key}`,
+			'type': 'circle',
+			'source': `source${key}`, // reference the data source
+			'layout': {},
+			'paint': {
+				'circle-radius': {
+					'base': 1.75,
+					'stops': [
+						[12, 1],
+						[22, 50]
+					]
+				},
+			}
+		});
+	} else {
+
+		map.addLayer({
+			'id': `source${key}`,
+			'type': 'fill',
+			'source': `source${key}`, // reference the data source
+			'layout': {},
+			'paint': {
+				'fill-color': '#0080ff', // blue color fill
+				'fill-opacity': 0.5
+			}
+		});
+	}
 }
 const map = new mapboxgl.Map({
 	container: 'map', // container id
@@ -189,66 +242,66 @@ const map = new mapboxgl.Map({
 	zoom: 13 // starting zoom
 });
 
-var geojson = {
-	'type': 'FeatureCollection',
-	'features': [
-		{
-			'type': 'Feature',
-			'geometry': {
-				'type': 'Point',
-				'coordinates': [0, 0]
-			}
-		}
-	]
-};
+// var geojson = {
+// 	'type': 'FeatureCollection',
+// 	'features': [
+// 		{
+// 			'type': 'Feature',
+// 			'geometry': {
+// 				'type': 'Point',
+// 				'coordinates': [0, 0]
+// 			}
+// 		}
+// 	]
+// };
 // map.on('load', async () => {
 	// Add the source1 location as a source.
-	/*
-	map.addSource('source1', {
-		type: 'geojson',
-		data: geojson
-	});
-	map.addSource('source2', {
-		type: 'geojson',
-		data: geojson
-	});
-	map.addLayer({
-		'id': 'source1',
-		type: 'circle',
-		'source': 'source1',
-		'layout': {},
-		'paint': {
-			'circle-radius': {
-				'base': 1.75,
-				'stops': [
-					[12, 1],
-					[22, 50]
-				]
-			},
-			'circle-color': ['match', ['get', attribute1Name], // get the property
-				"ok", 'green',
-				"notok", 'red',
-				"resting", 'green',
-				"working", 'red',
-				"car", 'red',
-				"bike", 'green',
-				"pedestrian", 'blue',
-				'white'],
-
+/*
+map.addSource('source1', {
+	type: 'geojson',
+	data: geojson
+});
+map.addSource('source2', {
+	type: 'geojson',
+	data: geojson
+});
+map.addLayer({
+	'id': 'source1',
+	type: 'circle',
+	'source': 'source1',
+	'layout': {},
+	'paint': {
+		'circle-radius': {
+			'base': 1.75,
+			'stops': [
+				[12, 1],
+				[22, 50]
+			]
 		},
-	});
-	map.addLayer({
-		'id': 'source2',
-		type: 'fill',
-		'source': 'source2',
-		'layout': {},
-		'paint': {
-			'fill-color': ['match', ['get', attribute2Name], // get the property
-				"commerce", 'green',
-				"gare", 'red', "Musee", 'red',
-				"habitat", 'blue', "culte", 'blue', "Industrial", 'blue',
-				'gray'],
+		'circle-color': ['match', ['get', attribute1Name], // get the property
+			"ok", 'green',
+			"notok", 'red',
+			"resting", 'green',
+			"working", 'red',
+			"car", 'red',
+			"bike", 'green',
+			"pedestrian", 'blue',
+			'white'],
 
-		},
-	});  
+	},
+});
+map.addLayer({
+	'id': 'source2',
+	type: 'fill',
+	'source': 'source2',
+	'layout': {},
+	'paint': {
+		'fill-color': ['match', ['get', attribute2Name], // get the property
+			"commerce", 'green',
+			"gare", 'red', "Musee", 'red',
+			"habitat", 'blue', "culte", 'blue', "Industrial", 'blue',
+			'gray'],
+
+	},
+});  
 */
