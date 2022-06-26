@@ -7,9 +7,11 @@ class GAMA {
     socket_id = 0;
     exp_id = 0;
     wSocket;
+    state="";
     queue = [];
     req = "";
     result = "";
+    executor;
     executor_speed = 1;
     endCondition = "";
     param = [];
@@ -32,6 +34,7 @@ class GAMA {
         });
         this.executor = setInterval(() => {
             if (this.queue.length > 0 && this.req === "") {
+                // console.log(this.queue);
                 this.req = this.queue.shift();
                 this.req.exp_id = this.exp_id;
                 this.req.socket_id = this.socket_id;
@@ -44,7 +47,7 @@ class GAMA {
                     if (event.data instanceof Blob) { } else {
                         if (myself.req.callback) {
                             myself.req.callback(event.data);
-                        }
+                        } 
                         myself.endRequest();
                     }
                 };
@@ -54,7 +57,9 @@ class GAMA {
     }
 
     requestCommand(cmd) {
-        this.queue.push(cmd);
+        if (this.req === "" || this.queue.length == 0) {
+            this.queue.push(cmd);
+        }
     }
     endRequest() {
         this.req = "";
@@ -105,9 +110,11 @@ class GAMA {
     }
 
     launch(c) {
+        this.queue.length = 0;
         var myself = this;
-        this.execute("launch", function (e) {
-            console.log(e);
+        this.state="launch";
+        this.execute(this.state, function (e) {
+            // console.log(e);
             var result = JSON.parse(e);
             if (result.exp_id) myself.exp_id = result.exp_id;
             if (result.socket_id) myself.socket_id = result.socket_id;
@@ -115,23 +122,31 @@ class GAMA {
         });
     }
     play(c) {
-        this.execute("play");
+        this.queue.length = 0;
+        this.state="play";
+        this.execute(this.state);
         if (c) c();
     }
 
     pause(c) {
-        this.execute("pause");
+        this.queue.length = 0;
+        this.state="pause";
+        this.execute(this.state);
         if (c) c();
     }
 
     step(c) {
-        this.execute("step");
+        this.queue.length = 0;
+        this.state="step";
+        this.execute(this.state);
         if (c) c();
     }
 
 
     reload(c) {
-        this.execute("reload");
+        this.queue.length = 0;
+        this.state="reload";
+        this.execute(this.state);
         if (c) c();
     }
 

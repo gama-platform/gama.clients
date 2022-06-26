@@ -2,18 +2,33 @@
 
 /* Event Handlers */
 function play(event) {
-	gama.play();
+	gama.play(start_renderer);
 }
 function pause(event) {
-	gama.pause();
+	gama.pause(stop_renderer);
 }
 
-function step(event) {
-	gama.step();
+function doStep(event) {
+	gama.step(function (e) { geojsonMap.forEach(logMapElements); });
+
 }
 
 function reload(event) {
-	gama.reload();
+	var pp = [];
+	parameters.forEach((value, key, map) => {
+		if ($('#use_param_' + key).prop('checked')) {
+			pp.push({ "name": "" + key, "value": $('#param_' + key).val(), "type": "int" });
+		} 
+	})
+	gama.setParameters(pp);
+	// gama.setParameters([
+	// 	{ "name": "nb_people", "value":  $('#p_1').val(), "type": "int" }
+	// ]);
+	// gama.setEndCondition( $('#p_end_condition').val());
+	gama.reload(function (e) {
+		gama.endRequest();
+		geojsonMap.forEach(logMapElements);
+	});
 }
 
 const createButton = (text, onclick) => {
@@ -23,10 +38,17 @@ const createButton = (text, onclick) => {
 	button.addEventListener('click', onclick);
 	return button;
 };
+const createPanel = (text, onclick) => {
+	const button = document.createElement('button');
+	button.setAttribute('type', 'button');
+	button.appendChild(document.createTextNode(text));
+	button.addEventListener('click', onclick);
+	return button;
+};
 const fitZoomButton = createButton('[-]', fitZoomCenter);
 const playButton = createButton('Play', play);
 const pauseButton = createButton('Pause', pause);
-const stepButton = createButton('Step', step);
+const stepButton = createButton('Step', doStep);
 const reloadButton = createButton('Reload', reload);
 
 let lat, lng;
@@ -61,4 +83,3 @@ const mapboxglLatLngControl = {
 		map.off('moveend', updateLatLon);
 	}
 };
-map.addControl(mapboxglLatLngControl);

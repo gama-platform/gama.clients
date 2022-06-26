@@ -1,6 +1,7 @@
 
 
 var geojsonMap = new Map();
+var parameters = new Map();
 var updateSource;
 //GAMA PATH
 var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
@@ -14,9 +15,9 @@ var experimentName = 'normal_sim';
 // var experimentName = 'raster';
 // var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Toy Models/Flood Simulation/models/Hydrological Model.gaml';
 // var experimentName = 'Run';
-modelPath=urlParams.get('m');
-experimentName=urlParams.get('e');
-if(experimentName!=="") {
+modelPath = urlParams.get('m');
+experimentName = urlParams.get('e');
+if (experimentName !== "") {
 	gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
 	// gama.executor_speed=100;
 	gama.connect(on_connected, on_disconnected);
@@ -30,32 +31,40 @@ function on_disconnected() {
 	clearInterval(updateSource);
 }
 function start_sim() {
-	gama.launch(); 
-	gama.evalExpr("species(world).microspecies", createSources);
-	gama.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function(ee){
+	gama.launch();
+	gama.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
 		ee = JSON.parse(ee).result.replace(/[{}]/g, "").replace(/['"]+/g, '');
 		var eee = ee.split(",");
-		console.log(eee);
-		console.log(eee[0]);
-		console.log(eee[1]);
-		console.log(eee[3]);
-		console.log(eee[4]);
-		bbox=[
+		// console.log(eee);
+		// console.log(eee[0]);
+		// console.log(eee[1]);
+		// console.log(eee[3]);
+		// console.log(eee[4]);
+		bbox = [
 			[eee[0], eee[1]], // southwestern corner of the bounds
 			[eee[3], eee[4]], // northeastern corner of the bounds
-			]; 
+		];
 	});
 	gama.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", fitzoom);
-	gama.play();
+	gama.evalExpr("species(world).microspecies", createSources);
+	gama.evalExpr("experiment.parameters.pairs", createParameters);
+
+	// gama.play();
 }
 
 function start_renderer() {
 	updateSource = setInterval(() => {
-		geojsonMap.forEach(logMapElements);
+		if (gama.state === "play") {
+			geojsonMap.forEach(logMapElements);
+		}
 	}, 100);
 }
+
+function stop_renderer() {
+	clearInterval(updateSource);
+}
 function logMapElements(value, key, mm) {
-	gama.getPopulation(key, ["name","color"], "EPSG:4326", updateLayer);
+	gama.getPopulation(key, ["name", "color"], "EPSG:4326", updateLayer);
 
 	function updateLayer(message) {
 		if (typeof message == "object" || message == "") {
@@ -64,14 +73,35 @@ function logMapElements(value, key, mm) {
 			// geojson = null;
 			// console.log(message);
 			var tmp = JSON.parse(message);
-			if (!map.style.getLayer(`source${key}`))
+			if (!map.style.getLayer(`source${key}`)) {
+				// console.log("layer added");
 				addLayer(tmp.features[0].geometry.type, key);
+			}
 			map.getSource(`source${key}`).setData(tmp);
 
 		}
 	}
 }
+function createParameters(ee) {
 
+	ee = JSON.parse(ee).result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
+	var eee = ee.split(",");
+	var t="";
+	eee.forEach((e1) => {
+		var e2 = e1.split("::");
+		console.log(e2[0]);
+		console.log(e2[1]);
+		if(!(""+e2[1]).startsWith("file")){
+
+			parameters.set(e2[0],e2[1]);
+			t+='<tr><td>'+e2[0]+'</td><td> <input type="text" id="param_'+e2[0]+'" value="'+e2[1]+'">';
+			t+='<input type="checkbox" value="1" id="use_param_'+e2[0]+'" /></td></tr>';
+		}
+	});
+	t+='<tr><td> End Condition:</td><td> <input type="text" id="p_end_condition" value="cycle>1000"><input type="checkbox" value="1" id="use_end_condition" /></td></tr>';
+	$("#param_div").html('<table>'+t+'</table>');
+
+}
 function createSources(ee) {
 	ee = JSON.parse(ee).result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
 	var eee = ee.split(",");
@@ -93,7 +123,7 @@ function createSources(ee) {
 			data: geojsonMap.get(e)
 		});
 	});
-
+	gama.endRequest();
 	geojsonMap.forEach(logMapElements);
 }
 function fitzoom(ee) {
@@ -114,11 +144,11 @@ function addLayer(type, key) {
 			'type': 'line',
 			'source': `source${key}`, // reference the data source
 			'layout': {},
-			'paint': { 
+			'paint': {
 				'line-color': {
 					type: 'identity',
 					property: 'color',
-				}, 
+				},
 			}
 		});
 	} else if (type === 'Point') {
@@ -143,20 +173,22 @@ function addLayer(type, key) {
 			'source': `source${key}`, // reference the data source
 			'layout': {},
 			'paint': {
-				
+
 				'fill-color': {
 					type: 'identity',
 					property: 'color',
 				},
+				'fill-outline-color': 'rgba(0,0,0,0)',
+
 				// 'fill-color': '#0080ff', // blue color fill
-				// 'fill-opacity': 0.5
+				'fill-opacity': 0.5
 			}
 		});
 	}
 	map.on('click', `source${key}`, (e) => {
 		new mapboxgl.Popup()
 			.setLngLat(e.lngLat)
-			.setHTML(e.features[0].properties.color)
+			.setHTML(e.features[0].properties.name)
 			.addTo(map);
 	});
 

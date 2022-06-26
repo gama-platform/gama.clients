@@ -57,11 +57,31 @@
 		.ui-dialog .ui-dialog-titlebar-minimize:focus {
 			padding: 0;
 		}
+
+
+
+		#map-container {
+			position: relative;
+			height: 800px;
+			width: 1100px;
+		}
+
+		#map {
+			position: relative;
+			height: 100%;
+			width: 100%;
+		}
 	</style>
 	<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 	<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
 	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.1/jszip.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.0.2/jszip-utils.js"></script> -->
+
+	<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
+	<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
+
+	<script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js"></script>
 
 </head>
 
@@ -101,9 +121,13 @@
 		</table>
 	</div>
 
-	<button id="create_button">Create a new Widget</button>
 	<div id="controller_html">
 		<table>
+			<tr>
+				<td colspan="2">
+					<button id="create_button">Create a new Widget</button>
+				</td>
+			</tr>
 			<tr>
 				<td colspan=2>
 					Socket <input type="button" id="sk_open" value="Open" onclick="connect()"> <input type="button"
@@ -131,14 +155,30 @@
 				<td colspan=2>
 					<input type="button" id="exp_compile" value="Compile" onclick="compile()" disabled>
 					<input type="button" id="exp_launch" value="Launch" onclick="launch()" disabled>
-					<input type="button" id="exp_play" value="Play" onclick="play()" disabled>
-					<input type="button" id="exp_step" value="Step" onclick="dostep()" disabled>
-					<input type="button" id="exp_pause" value="Pause" onclick="pause()" disabled>
-					<input type="button" id="exp_stop" value="Stop" onclick="stop()" disabled>
+					<input type="button" id="exp_play" value="Play" onclick="play()" enable>
+					<input type="button" id="exp_step" value="Step" onclick="doStep()" enable>
+					<input type="button" id="exp_pause" value="Pause" onclick="pause()" enable>
+					<input type="button" id="exp_stop" value="Reload" onclick="reload()" enable>
+				</td>
+			</tr>
+			<tr>
+				<td colspan=2>
+					<div id="param_div">
+
+					</div>
 				</td>
 			</tr>
 		</table>
 		<div id="errors"></div>
+	</div>
+
+	<div id="map_html">
+		<div id="map-container">
+			<div id='map'>
+			</div>
+			<div class="loader loader--style1" title="0" id="div-loader">
+			</div>
+		</div>
 	</div>
 	<script>
 
@@ -259,7 +299,7 @@
 			//<input type="button" value="Load">  <input type="button" value="Compile" onclick="compile()">
 			create1();
 			$('#' + 'dialog_window_2').dialog("widget").find(".ui-dialog-titlebar-close").hide();
-			$('#' + 'dialog_window_2').parent().css({ left: 8, top: 50 });
+			$('#' + 'dialog_window_2').parent().css({ left: 8, top: 5 });
 
 
 			// $('#new_window_title').val("Display2"); $('#new_window_content').val('<img id="image_out0"></img>');
@@ -268,10 +308,13 @@
 
 
 
-			$('#new_window_title').val("Console"); $('#new_window_content').val('<textarea  rows="24" cols="36" id="console"></textarea>');
+			$('#new_window_title').val("Console");
+			// $('#new_window_content').val('<textarea  rows="24" cols="36" id="console"></textarea>');
+			$('#new_window_content').val($('#map_html').html());
+			$('#map_html').html('');
 			create1();
 			$('#' + 'dialog_window_3').dialog("widget").find(".ui-dialog-titlebar-close").hide();
-			$('#' + 'dialog_window_3').parent().css({ left: 8, top: 280 });
+			$('#' + 'dialog_window_3').parent().css({ left: 450, top: 5 });
 
 
 
@@ -510,6 +553,44 @@
 
 
 	</script>
+	<script src="./dev/GAMA.js"></script>
+	<script>
+		const queryString = window.location.search;
+
+		const urlParams = new URLSearchParams(queryString);
+		console.log(urlParams.get('m'));
+		console.log(urlParams.get('e'));
+		mapboxgl.accessToken = 'pk.eyJ1IjoiaHFuZ2hpODgiLCJhIjoiY2t0N2w0cGZ6MHRjNTJ2bnJtYm5vcDB0YyJ9.oTjisOggN28UFY8q1hiAug';
+		var centerPoint = [105.8249019, 21.0076181];
+		var bbox;
+		const map = new mapboxgl.Map({
+			container: 'map', // container id
+			style: 'mapbox://styles/mapbox/light-v10',
+			// style: {version: 8,sources: {},layers: []},
+
+			// pitch: 45,
+			// bearing: -17.6,
+			antialias: true,
+			center: centerPoint, // TLU -84.5, 38.05starting position  [6.069437036914885,45.09389334701125],//
+			zoom: 13 // starting zoom
+		});
+
+		function fitZoomCenter() {
+			map.flyTo({
+				center: centerPoint,
+				duration: 0,
+				zoom: 10
+			});
+			if (bbox) {
+				map.fitBounds(bbox, {
+					padding: 50,
+					duration: 0,
+				});
+			}
+		}
+	</script>
+	<script src="./js/controller.js"></script>
+	<script src="./js/toolbar.js"></script>
 </body>
 
 </html>
