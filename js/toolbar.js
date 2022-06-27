@@ -20,7 +20,7 @@ function reload(event) {
 			var v = $('#param_' + key).val();
 			var t;
 			t = "string";
-			if (isNaN()) {
+			if (!isNaN(v)) {
 				t = "float";
 				if (v.indexOf('.') === -1) { t = "int"; }
 			}
@@ -28,6 +28,7 @@ function reload(event) {
 			pp.push({ "name": "" + key, "value": v, "type": t });
 		}
 	})
+	// console.log(pp);
 	gama.setParameters(pp);
 	// gama.setParameters([
 	// 	{ "name": "nb_people", "value":  $('#p_1').val(), "type": "int" }
