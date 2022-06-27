@@ -7,8 +7,8 @@ experiment.logger = log;
 experiment.connect(on_connected);
 function on_connected() {
 	experiment.setParameters([
-		{ "name": "Number of people agents", "value": "111", "type": "int" },
-		{ "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
+		{ "name": "Number of people agents", "value": 111, "type": "int" },
+		{ "name": "Value of destruction when a people agent takes a road", "value": 0.2, "type": "float" }
 	]);
 	experiment.setEndCondition("cycle>=15");
 	experiment.launch();

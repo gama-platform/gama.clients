@@ -1,5 +1,10 @@
 
 
+const queryString = window.location.search;
+
+const urlParams = new URLSearchParams(queryString);
+console.log(urlParams.get('m'));
+console.log(urlParams.get('e'));
 var geojsonMap = new Map();
 var parameters = new Map();
 var updateSource;
@@ -17,7 +22,7 @@ var experimentName = 'normal_sim';
 // var experimentName = 'Run';
 modelPath = urlParams.get('m');
 experimentName = urlParams.get('e');
-if (experimentName !== "") {
+if (experimentName!=null && experimentName!== "") {
 	gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
 	// gama.executor_speed=100;
 	gama.connect(on_connected, on_disconnected);
@@ -56,7 +61,7 @@ function start_sim() {
 		};
 		waiting();
 	});
-	
+
 	// gama.evalExpr("species(world).microspecies", createSources);
 	gama.evalExpr("experiment.parameters.pairs", createParameters);
 
@@ -145,7 +150,7 @@ function fitzoom(ee) {
 	console.log(eee[1]);
 	centerPoint = [eee[0], eee[1]];
 	fitZoomCenter();
-	if(document.getElementById('div-loader'))document.getElementById('div-loader').remove();
+	if (document.getElementById('div-loader')) document.getElementById('div-loader').remove();
 }
 function addLayer(type, key) {
 

@@ -2,18 +2,22 @@
 
 /* Event Handlers */
 function play(event) {
+	gama.queue.length = 0;
 	gama.play(start_renderer);
 }
 function pause(event) {
+	gama.queue.length = 0;
 	gama.pause(stop_renderer);
 }
 
 function doStep(event) {
+	gama.queue.length = 0;
 	gama.step(function (e) { geojsonMap.forEach(logMapElements); });
 
 }
 
 function reload(event) {
+	gama.queue.length = 0;
 	var pp = [];
 	parameters.forEach((value, key, map) => {
 		if ($('#use_param_' + key).prop('checked')) {

@@ -122,21 +122,21 @@ class GAMA {
         });
     }
     play(c) {
-        this.queue.length = 0;
+        // this.queue.length = 0;
         this.state="play";
         this.execute(this.state);
         if (c) c();
     }
 
     pause(c) {
-        this.queue.length = 0;
+        // this.queue.length = 0;
         this.state="pause";
         this.execute(this.state);
         if (c) c();
     }
 
     step(c) {
-        this.queue.length = 0;
+        // this.queue.length = 0;
         this.state="step";
         this.execute(this.state);
         if (c) c();
@@ -144,7 +144,7 @@ class GAMA {
 
 
     reload(c) {
-        this.queue.length = 0;
+        // this.queue.length = 0;
         this.state="reload";
         this.execute(this.state);
         if (c) c();
