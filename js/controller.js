@@ -46,7 +46,18 @@ function start_sim() {
 		];
 	});
 	gama.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", fitzoom);
-	gama.evalExpr("species(world).microspecies", createSources);
+	map.on('style.load', () => {
+		const waiting = () => {
+			if (!map.isStyleLoaded()) {
+				setTimeout(waiting, 200);
+			} else {
+				gama.evalExpr("species(world).microspecies", createSources);
+			}
+		};
+		waiting();
+	});
+	
+	// gama.evalExpr("species(world).microspecies", createSources);
 	gama.evalExpr("experiment.parameters.pairs", createParameters);
 
 	// gama.play();
@@ -86,20 +97,20 @@ function createParameters(ee) {
 
 	ee = JSON.parse(ee).result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
 	var eee = ee.split(",");
-	var t="";
+	var t = "";
 	eee.forEach((e1) => {
 		var e2 = e1.split("::");
-		console.log(e2[0]);
-		console.log(e2[1]);
-		if(!(""+e2[1]).startsWith("file")){
+		// console.log(e2[0]);
+		// console.log(e2[1]);
+		if (!("" + e2[1]).startsWith("file")) {
 
-			parameters.set(e2[0],e2[1]);
-			t+='<tr><td>'+e2[0]+'</td><td> <input type="text" id="param_'+e2[0]+'" value="'+e2[1]+'">';
-			t+='<input type="checkbox" value="1" id="use_param_'+e2[0]+'" /></td></tr>';
+			parameters.set(e2[0], e2[1]);
+			t += '<tr><td class="tdparam" width="150px">' + e2[0] + '</td><td  width="200px"> <input type="text" id="param_' + e2[0] + '" value="' + e2[1] + '">';
+			t += '</td><td><input type="checkbox" value="1" id="use_param_' + e2[0] + '" /></td></tr>';
 		}
 	});
-	t+='<tr><td> End Condition:</td><td> <input type="text" id="p_end_condition" value="cycle>1000"><input type="checkbox" value="1" id="use_end_condition" /></td></tr>';
-	$("#param_div").html('<table>'+t+'</table>');
+	t += '<tr><td> End Condition:</td><td> <input type="text" id="param_end_condition" value="cycle>1000"></td><td><input type="checkbox" value="1" id="use_param_end_condition" /></td></tr>';
+	$("#param_div").html('<table>' + t + '</table>');
 
 }
 function createSources(ee) {
@@ -134,7 +145,7 @@ function fitzoom(ee) {
 	console.log(eee[1]);
 	centerPoint = [eee[0], eee[1]];
 	fitZoomCenter();
-	document.getElementById('div-loader').remove();
+	if(document.getElementById('div-loader'))document.getElementById('div-loader').remove();
 }
 function addLayer(type, key) {
 

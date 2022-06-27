@@ -17,17 +17,28 @@ function reload(event) {
 	var pp = [];
 	parameters.forEach((value, key, map) => {
 		if ($('#use_param_' + key).prop('checked')) {
-			pp.push({ "name": "" + key, "value": $('#param_' + key).val(), "type": "int" });
-		} 
+			var v = $('#param_' + key).val();
+			var t;
+			t = "string";
+			if (isNaN()) {
+				t = "float";
+				if (v.indexOf('.') === -1) { t = "int"; }
+			}
+
+			pp.push({ "name": "" + key, "value": v, "type": t });
+		}
 	})
 	gama.setParameters(pp);
 	// gama.setParameters([
 	// 	{ "name": "nb_people", "value":  $('#p_1').val(), "type": "int" }
 	// ]);
-	// gama.setEndCondition( $('#p_end_condition').val());
+	if ($('#use_param_end_condition').prop('checked')) {
+		gama.setEndCondition($('#param_end_condition').val());
+	}
 	gama.reload(function (e) {
 		gama.endRequest();
 		geojsonMap.forEach(logMapElements);
+		gama.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", fitzoom);
 	});
 }
 
