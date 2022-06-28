@@ -29,7 +29,7 @@ experiment.connect( Callback function on connected, Callback function on disconn
 ```javascript
 experiment.launch(Callback function when the command accomplish);
   
-experiment.play(Callback function when the command accomplish);
+experiment.play(Callback function when the command accomplish);//play the simulation if the end condition is not blank, it will wait for its finishing before execute the callback
   
 experiment.pause(Callback function when the command accomplish);
   
@@ -83,29 +83,29 @@ An example of simple syntax found at  https://github.com/gama-platform/gama.clie
     experiment.logger = log;
     experiment.connect(on_connected);
     function on_connected() {
-    experiment.setParameters([
-      { "name": "Number of people agents", "value": 111, "type": "int" },
-      { "name": "Value of destruction when a people agent takes a road", "value": 0.2, "type": "float" }
-    ]);
-    
-    experiment.setEndCondition("cycle>=15");
-    experiment.launch();
-    experiment.play();
-    experiment.evalExpr("create people number:100;", onReceiveMsg);
-    experiment.evalExpr("length(people)", onReceiveMsg);
-    experiment.evalExpr("cycle", onReceiveMsg);
+	    experiment.setParameters([
+	      { "name": "Number of people agents", "value": 111, "type": "int" },
+	      { "name": "Value of destruction when a people agent takes a road", "value": 0.2, "type": "float" }
+	    ]);
 
-    experiment.setParameters([
-      { "name": "Number of people agents", "value": "333", "type": "int" },
-      { "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
-    ]);
-    experiment.setEndCondition("cycle>=10000");
-    experiment.reload();
-    experiment.evalExpr("cycle", onReceiveMsg);
+	    experiment.setEndCondition("cycle>=15");
+	    experiment.launch();
+	    experiment.play();
+	    experiment.evalExpr("create people number:100;", onReceiveMsg);
+	    experiment.evalExpr("length(people)", onReceiveMsg);
+	    experiment.evalExpr("cycle", onReceiveMsg);
+
+	    experiment.setParameters([
+	      { "name": "Number of people agents", "value": "333", "type": "int" },
+	      { "name": "Value of destruction when a people agent takes a road", "value": "0.2", "type": "float" }
+	    ]);
+	    experiment.setEndCondition("cycle>=10000");
+	    experiment.reload();
+	    experiment.evalExpr("cycle", onReceiveMsg);
 
 
-    experiment.play();
-    experiment.evalExpr("length(people)", onReceiveMsg);
-    experiment.evalExpr("cycle", onReceiveMsg);
+	    experiment.play();
+	    experiment.evalExpr("length(people)", onReceiveMsg);
+	    experiment.evalExpr("cycle", onReceiveMsg);
     }
 ```
