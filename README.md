@@ -29,7 +29,7 @@ experiment.connect( Callback function on connected, Callback function on disconn
 ```javascript
 experiment.launch(Callback function when the command accomplish);
   
-experiment.play(Callback function when the command accomplish);//play the simulation if the end condition is not blank, it will wait for its finishing before execute the callback
+experiment.play(Callback function when the command accomplish);//play the simulation and if the end condition is not blank, it will wait for its finishing before execute the callback
   
 experiment.pause(Callback function when the command accomplish);
   
