@@ -30,16 +30,28 @@ var attribute2Name = 'type';*/
 // var attribute2Name = 'type';
 
 
-var modelPath = 'C:\\git\\UD_ReAgent_ABM\\ReAgent\\models\\Gratte_Ciel_Basic.gaml';
-var experimentName = 'GratteCielErasme';
-var species1Name = 'people';
-var attribute1Name = 'type';
+// var modelPath = 'C:\\git\\UD_ReAgent_ABM\\ReAgent\\models\\Gratte_Ciel_Basic.gaml';
+// var experimentName = 'GratteCielErasme';
+// var species1Name = 'people';
+// var attribute1Name = 'type';
+// // const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
+// // const experimentName = 'GratteCielErasme';
+// // const species1Name = 'people';
+// // const attribute1Name = 'type';
+// const species2Name = 'building';
+// const attribute2Name = 'type';
+
+// var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Lockdown\\LockDown.gaml';
+var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Activity Restrictions\\School and Workplace Closure.gaml';
+var experimentName = 'Closures';
+var species1Name = 'Individual';
+var attribute1Name = 'state';
 // const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
 // const experimentName = 'GratteCielErasme';
 // const species1Name = 'people';
 // const attribute1Name = 'type';
-const species2Name = 'building';
-const attribute2Name = 'type';
+const species2Name = 'Building';
+const attribute2Name = 'zone_id';
 
  
 const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
@@ -99,7 +111,7 @@ function start_renderer() {
 }
 const map = new mapboxgl.Map({
 	container: 'map', // container id
-	style: 'mapbox://styles/mapbox/dark-v10',
+	style: 'mapbox://styles/mapbox/satellite-v9',
 	pitch: 45,
 	bearing: -17.6,
 	antialias: true,
@@ -143,14 +155,13 @@ map.on('load', async () => {
 				]
 			},
 			'circle-color': ['match', ['get', attribute1Name], // get the property
-				"ok", 'green',
-				"notok", 'red',
-				"resting", 'green',
-				"working", 'red',
-				"car", 'red',
-				"bike", 'green',
-				"pedestrian", 'blue',
-				'white'],
+				"susceptible", 'green',
+				"latent", 'orange',
+				"presymptomatic", 'red',
+				"asymptomatic", 'red',
+				"symptomatic", 'red',
+				"removed", 'blue', 
+				'gray'],
 
 		},
 	});
@@ -169,44 +180,44 @@ map.on('load', async () => {
 		},
 	});
 	const layers = map.getStyle().layers;
-	const labelLayerId = layers.find(
-		(layer) => layer.type === 'symbol' && layer.layout['text-field']
-	).id;
-	if (show3DBuilding) {
-		map.addLayer(
-			{
-				'id': 'add-3d-buildings',
-				'source': 'composite',
-				'source-layer': 'building',
-				'filter': ['==', 'extrude', 'true'],
-				'type': 'fill-extrusion',
-				'minzoom': 15,
-				'paint': {
-					'fill-extrusion-color': '#aaa',
-					'fill-extrusion-height': [
-						'interpolate',
-						['linear'],
-						['zoom'],
-						15,
-						0,
-						15.05,
-						['get', 'height']
-					],
-					'fill-extrusion-base': [
-						'interpolate',
-						['linear'],
-						['zoom'],
-						15,
-						0,
-						15.05,
-						['get', 'min_height']
-					],
-					'fill-extrusion-opacity': 0.6
-				}
-			},
-			labelLayerId
-		);
-	}
+	// const labelLayerId = layers.find(
+	// 	(layer) => layer.type === 'symbol' && layer.layout['text-field']
+	// ).id;
+	// if (show3DBuilding) {
+	// 	map.addLayer(
+	// 		{
+	// 			'id': 'add-3d-buildings',
+	// 			'source': 'composite',
+	// 			'source-layer': 'building',
+	// 			'filter': ['==', 'extrude', 'true'],
+	// 			'type': 'fill-extrusion',
+	// 			'minzoom': 15,
+	// 			'paint': {
+	// 				'fill-extrusion-color': '#aaa',
+	// 				'fill-extrusion-height': [
+	// 					'interpolate',
+	// 					['linear'],
+	// 					['zoom'],
+	// 					15,
+	// 					0,
+	// 					15.05,
+	// 					['get', 'height']
+	// 				],
+	// 				'fill-extrusion-base': [
+	// 					'interpolate',
+	// 					['linear'],
+	// 					['zoom'],
+	// 					15,
+	// 					0,
+	// 					15.05,
+	// 					['get', 'min_height']
+	// 				],
+	// 				'fill-extrusion-opacity': 0.6
+	// 			}
+	// 		},
+	// 		labelLayerId
+	// 	);
+	// }
 	// Add some fog in the background
 	map.setFog({
 		'range': [-0.5, 5],

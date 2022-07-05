@@ -24,6 +24,7 @@ modelPath = urlParams.get('m');
 experimentName = urlParams.get('e');
 if (experimentName!=null && experimentName!== "") {
 	gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
+	// gama = new GAMA("ws://51.255.46.42:6001/", modelPath, experimentName);
 	// gama.executor_speed=100;
 	gama.connect(on_connected, on_disconnected);
 
@@ -51,18 +52,18 @@ function start_sim() {
 		];
 	});
 	gama.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", fitzoom);
-	map.on('style.load', () => {
-		const waiting = () => {
-			if (!map.isStyleLoaded()) {
-				setTimeout(waiting, 200);
-			} else {
-				gama.evalExpr("species(world).microspecies", createSources);
-			}
-		};
-		waiting();
-	});
+	// map.on('style.load', () => {
+	// 	const waiting = () => {
+	// 		if (!map.isStyleLoaded()) {
+	// 			setTimeout(waiting, 200);
+	// 		} else {
+	// 			gama.evalExpr("species(world).microspecies", createSources);
+	// 		}
+	// 	};
+	// 	waiting();
+	// });
 
-	// gama.evalExpr("species(world).microspecies", createSources);
+	gama.evalExpr("species(world).microspecies", createSources);
 	gama.evalExpr("experiment.parameters.pairs", createParameters);
 
 	// gama.play();
@@ -206,6 +207,8 @@ function addLayer(type, key) {
 			.setLngLat(e.lngLat)
 			.setHTML(e.features[0].properties.name)
 			.addTo(map);
-	});
+	});map.on('idle',function(){
+		map.resize()
+		})
 
 } 
