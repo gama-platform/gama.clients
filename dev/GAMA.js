@@ -1,3 +1,4 @@
+
 class GAMA {
     host = "";
     modelPath = 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
@@ -7,7 +8,7 @@ class GAMA {
     socket_id = 0;
     exp_id = 0;
     wSocket;
-    state="";
+    state = "";
     queue = [];
     req = "";
     result = "";
@@ -29,31 +30,36 @@ class GAMA {
             clearInterval(this.executor);
             if (closed_callback) closed_callback();
         };
-        this.wSocket.addEventListener('open', (event) => {
-            if (opened_callback) opened_callback();
-        });
-        this.executor = setInterval(() => {
-            if (this.queue.length > 0 && this.req === "") {
-                // console.log(this.queue);
-                this.req = this.queue.shift();
-                this.req.exp_id = this.exp_id;
-                this.req.socket_id = this.socket_id;
-                this.wSocket.send(JSON.stringify(this.req));
-                // console.log("request " + JSON.stringify(this.req));
-                if (this.logger) { this.logger("request " + JSON.stringify(this.req)); }
-                var myself = this;
-                this.wSocket.onmessage = function (event) {
-                    // console.log(myself.req);
-                    if (event.data instanceof Blob) { } else {
-                        if (myself.req.callback) {
-                            myself.req.callback(event.data);
-                        } 
-                        myself.endRequest();
+        this.wSocket.onerror=function(event){
+            console.log("Error: "+event.message);
+        }
+        this.wSocket.addEventListener('open', () => {
+            this.wSocket.onmessage = (event)=>  {
+                this.executor = setInterval(() => {
+                    if (this.queue.length > 0 && this.req === "") {
+                        // console.log(this.queue);
+                        this.req = this.queue.shift();
+                        this.req.exp_id = this.exp_id;
+                        this.req.socket_id = this.socket_id;
+                        // console.log(this.req);
+                        this.wSocket.send(JSON.stringify(this.req));
+                        // console.log("request " + JSON.stringify(this.req));
+                        if (this.logger) { this.logger("request " + JSON.stringify(this.req)); }
+                        var myself = this;
+                        this.wSocket.onmessage = function (event) {
+                            if (typeof event.data != "object") {
+                                if (myself.req.callback) {
+                                    myself.req.callback(event.data);
+                                }
+                                myself.endRequest();
+                            }
+                        };
                     }
-                };
-            }
 
-        }, this.executor_speed);
+                }, this.executor_speed);
+                if (opened_callback) opened_callback(event);
+            };
+        });
     }
 
     requestCommand(cmd) {
@@ -112,42 +118,41 @@ class GAMA {
     launch(c) {
         this.queue.length = 0;
         var myself = this;
-        this.state="launch";
+        this.state = "launch";
         this.execute(this.state, function (e) {
             // console.log(e);
             var result = JSON.parse(e);
             if (result.exp_id) myself.exp_id = result.exp_id;
             if (result.socket_id) myself.socket_id = result.socket_id;
-            if (c) c();
+
+            // if(c) c();
+            myself.play(c);
         });
     }
     play(c) {
         // this.queue.length = 0;
-        this.state="play";
-        this.execute(this.state);
-        if (c) c();
+        this.state = "play";
+        this.execute(this.state, c);
     }
 
     pause(c) {
         // this.queue.length = 0;
-        this.state="pause";
-        this.execute(this.state);
-        if (c) c();
+        this.state = "pause";
+        this.execute(this.state, c);
     }
 
     step(c) {
         // this.queue.length = 0;
-        this.state="step";
-        this.execute(this.state);
-        if (c) c();
+        this.state = "step";
+        this.execute(this.state, c);
     }
 
 
     reload(c) {
         // this.queue.length = 0;
-        this.state="reload";
+        this.state = "reload";
         this.execute(this.state);
         if (c) c();
     }
 
-}  
+} 
