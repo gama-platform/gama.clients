@@ -125,8 +125,8 @@ class GAMA {
             if (result.exp_id) myself.exp_id = result.exp_id;
             if (result.socket_id) myself.socket_id = result.socket_id;
 
-            // if(c) c();
-            myself.play(c);
+            if(c) c();
+            // myself.play(c);
         });
     }
     play(c) {
