@@ -12,7 +12,8 @@ function pause(event) {
 
 function doStep(event) {
 	gama.queue.length = 0;
-	gama.step(function (e) { geojsonMap.forEach(logMapElements); });
+	// gama.step(start_renderer);
+	gama.step(()=> { geojsonMap.forEach(logMapElements); });
 
 }
 

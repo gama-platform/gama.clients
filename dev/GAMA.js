@@ -30,11 +30,11 @@ class GAMA {
             clearInterval(this.executor);
             if (closed_callback) closed_callback();
         };
-        this.wSocket.onerror=function(event){
-            console.log("Error: "+event.message);
+        this.wSocket.onerror = function (event) {
+            console.log("Error: " + event.message);
         }
         this.wSocket.addEventListener('open', () => {
-            this.wSocket.onmessage = (event)=>  {
+            this.wSocket.onmessage = (event) => {
                 this.executor = setInterval(() => {
                     if (this.queue.length > 0 && this.req === "") {
                         // console.log(this.queue);
@@ -50,9 +50,11 @@ class GAMA {
                             // console.log(event.data);
                             if (typeof event.data != "object") {
                                 if (myself.req.callback) {
-                                    myself.req.callback(event.data);
+                                    myself.req.callback(event.data,
+                                        myself.endRequest());
+                                } else {
+                                    myself.endRequest();
                                 }
-                                myself.endRequest();
                             }
                         };
                     }
@@ -69,7 +71,7 @@ class GAMA {
         }
     }
     endRequest() {
-        console.log("end response of "+ this.req.type);
+        // console.log("end response of "+ this.req.type);
         this.req = "";
     }
 
@@ -93,7 +95,7 @@ class GAMA {
             "auto-export": false,
             "parameters": this.param,
             "until": this.endCondition,
-            "sync":false,
+            "sync": true,
             "callback": c
         };
         this.requestCommand(cmd);
@@ -101,11 +103,14 @@ class GAMA {
     getPopulation(q, att, crs, c) {
         var cmd = {
             'type': 'output',
+            "model": this.modelPath,
+            "experiment": this.experimentName,
+            'socket_id': this.socket_id,
+            'exp_id': this.exp_id,
             'species': q,
             'attributes': att,
             "crs": crs,
-            'socket_id': this.socket_id,
-            'exp_id': this.exp_id,
+            "sync": true,
             "callback": c
         };
         this.requestCommand(cmd);
@@ -128,7 +133,7 @@ class GAMA {
             if (result.content.exp_id) myself.exp_id = result.content.exp_id;
             if (result.content.socket_id) myself.socket_id = result.content.socket_id;
 
-            if(c) c();
+            if (c) c();
             // myself.play(c);
         });
     }
@@ -154,8 +159,8 @@ class GAMA {
     reload(c) {
         // this.queue.length = 0;
         this.state = "reload";
-        this.execute(this.state);
-        if (c) c();
+        this.execute(this.state, c);
+        // if (c) c();
     }
 
 } 

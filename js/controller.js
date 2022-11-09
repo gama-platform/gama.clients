@@ -20,15 +20,6 @@ var experimentName = 'normal_sim';
 // var experimentName = 'raster';
 // var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Toy Models/Flood Simulation/models/Hydrological Model.gaml';
 // var experimentName = 'Run'; 
-modelPath = urlParams.get('m');
-experimentName = urlParams.get('e');
-if (experimentName != null && experimentName !== "") {
-	gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
-	// gama = new GAMA("ws://51.255.46.42:6001/", modelPath, experimentName);
-	// gama.executor_speed=100;
-	gama.connect(on_connected, on_disconnected);
-
-}
 function on_connected() {
 	start_sim();
 	start_renderer();
@@ -75,27 +66,36 @@ function start_renderer() {
 		if (gama.state === "play") {
 			geojsonMap.forEach(logMapElements);
 		}
-	}, 1000);
+	}, 100);
 }
 
 function stop_renderer() {
 	clearInterval(updateSource);
 }
 function logMapElements(value, key, mm) {
-	gama.getPopulation(key, ["name", "color"], "EPSG:4326", updateLayer);
+	// if(key=='people'){
 
-	function updateLayer(message) {
+		gama.getPopulation(key, ["name", "color"], "EPSG:4326", updateLayer);
+	// }
+
+	function updateLayer(message,ccc) {
 		if (typeof message == "object" || message == "") {
-
+			
 		} else {
+			// console.log(key); 
 			// geojson = null;
-			// console.log(message);
-			var tmp = JSON.parse(message).content;
-			if (!map.style.getLayer(`source${key}`)) {
-				// console.log("layer added");
-				addLayer(tmp.features[0].geometry.type, key);
+			try {
+
+				var tmp = JSON.parse(message).content;
+				if (!map.style.getLayer(`source${key}`)) {
+					// console.log("layer added");
+					addLayer(tmp.features[0].geometry.type, key);
+				}
+				map.getSource(`source${key}`).setData(tmp);
+				if(ccc) ccc();
+			} catch (e) {
+				console.log(e);
 			}
-			map.getSource(`source${key}`).setData(tmp);
 
 		}
 	}
@@ -150,9 +150,11 @@ function fitzoom(ee) {
 	var eee = ee.split(",");
 	console.log(eee[0]);
 	console.log(eee[1]);
-	centerPoint = [eee[0], eee[1]];
-	fitZoomCenter();
-	if (document.getElementById('div-loader')) document.getElementById('div-loader').remove();
+	if (eee[1]) {
+		centerPoint = [eee[0], eee[1]];
+		fitZoomCenter();
+		if (document.getElementById('div-loader')) document.getElementById('div-loader').remove();
+	}
 }
 function addLayer(type, key) {
 
@@ -203,50 +205,45 @@ function addLayer(type, key) {
 			}
 		});
 	}
+
 	map.on('click', `source${key}`, (e) => {
 		new mapboxgl.Popup()
 			.setLngLat(e.lngLat)
 			.setHTML(e.features[0].properties.name)
 			.addTo(map);
 	});
-	map.on('load', () => {
-		console.log("gogo");
-	});
-
-	map.on('style.load', () => {
-		console.log(urlParams.get('m'));
-		console.log(urlParams.get('e'));
-		const waiting = () => {
-			if (!myMap.isStyleLoaded()) {
-				setTimeout(waiting, 200);
-			} else {
-
-			}
-		};
-		waiting();
-	});
 
 
-	var checking_style_status = false;
-map.on('styledata', function (e) {
-  if (checking_style_status){
-    // If already checking style status, bail out
-    // (important because styledata event may fire multiple times)
-    return;
-  } else {
-    checking_style_status = true;
-    check_style_status();
-  }
-});
-function check_style_status() {
-  if (map.isStyleLoaded()) {
-    checking_style_status = false;
-    map._container.trigger('map_style_finally_loaded');
-  } else {
-    // If not yet loaded, repeat check after delay:
-    setTimeout(function() {check_style_status();}, 200);
-    return;
-  }
 }
+map.on('load', () => {
 
-} 
+	modelPath = urlParams.get('m');
+	experimentName = urlParams.get('e');
+	if (experimentName != null && experimentName !== "") {
+		gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
+		// gama = new GAMA("ws://51.255.46.42:6001/", modelPath, experimentName);
+		// gama.executor_speed=100;
+		gama.connect(on_connected, on_disconnected);
+
+	}
+});
+
+// map.on('style.load', () => {
+// 	const waiting = () => {
+// 		if (!map.isStyleLoaded()) {
+// 			setTimeout(waiting, 200);
+// 		} else {
+
+// 			modelPath = urlParams.get('m');
+// 			experimentName = urlParams.get('e');
+// 			if (experimentName != null && experimentName !== "") {
+// 				gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
+// 				// gama = new GAMA("ws://51.255.46.42:6001/", modelPath, experimentName);
+// 				// gama.executor_speed=100;
+// 				gama.connect(on_connected, on_disconnected);
+
+// 			}
+// 		}
+// 	};
+// 	waiting();
+// });
