@@ -19,10 +19,10 @@ var experimentName = 'normal_sim';
 // var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Toy Models/Urban Growth/models/Raster Urban Growth.gaml';
 // var experimentName = 'raster';
 // var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Toy Models/Flood Simulation/models/Hydrological Model.gaml';
-// var experimentName = 'Run';
+// var experimentName = 'Run'; 
 modelPath = urlParams.get('m');
 experimentName = urlParams.get('e');
-if (experimentName!=null && experimentName!== "") {
+if (experimentName != null && experimentName !== "") {
 	gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
 	// gama = new GAMA("ws://51.255.46.42:6001/", modelPath, experimentName);
 	// gama.executor_speed=100;
@@ -39,7 +39,8 @@ function on_disconnected() {
 function start_sim() {
 	gama.launch();
 	gama.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
-		ee = JSON.parse(ee).result.replace(/[{}]/g, "").replace(/['"]+/g, '');
+		console.log(JSON.parse(ee));
+		ee = JSON.parse(ee).content.result.replace(/[{}]/g, "").replace(/['"]+/g, '');
 		var eee = ee.split(",");
 		// console.log(eee);
 		// console.log(eee[0]);
@@ -74,7 +75,7 @@ function start_renderer() {
 		if (gama.state === "play") {
 			geojsonMap.forEach(logMapElements);
 		}
-	}, 100);
+	}, 1000);
 }
 
 function stop_renderer() {
@@ -89,7 +90,7 @@ function logMapElements(value, key, mm) {
 		} else {
 			// geojson = null;
 			// console.log(message);
-			var tmp = JSON.parse(message);
+			var tmp = JSON.parse(message).content;
 			if (!map.style.getLayer(`source${key}`)) {
 				// console.log("layer added");
 				addLayer(tmp.features[0].geometry.type, key);
@@ -101,7 +102,7 @@ function logMapElements(value, key, mm) {
 }
 function createParameters(ee) {
 
-	ee = JSON.parse(ee).result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
+	ee = JSON.parse(ee).content.result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
 	var eee = ee.split(",");
 	var t = "";
 	eee.forEach((e1) => {
@@ -120,7 +121,7 @@ function createParameters(ee) {
 
 }
 function createSources(ee) {
-	ee = JSON.parse(ee).result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
+	ee = JSON.parse(ee).content.result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
 	var eee = ee.split(",");
 	eee.forEach((e) => {
 		geojsonMap.set(e, {
@@ -145,7 +146,7 @@ function createSources(ee) {
 }
 function fitzoom(ee) {
 	// console.log(ee);
-	ee = JSON.parse(ee).result.replace(/[{}]/g, "");
+	ee = JSON.parse(ee).content.result.replace(/[{}]/g, "");
 	var eee = ee.split(",");
 	console.log(eee[0]);
 	console.log(eee[1]);
@@ -207,8 +208,45 @@ function addLayer(type, key) {
 			.setLngLat(e.lngLat)
 			.setHTML(e.features[0].properties.name)
 			.addTo(map);
-	});map.on('idle',function(){
-		map.resize()
-		})
+	});
+	map.on('load', () => {
+		console.log("gogo");
+	});
+
+	map.on('style.load', () => {
+		console.log(urlParams.get('m'));
+		console.log(urlParams.get('e'));
+		const waiting = () => {
+			if (!myMap.isStyleLoaded()) {
+				setTimeout(waiting, 200);
+			} else {
+
+			}
+		};
+		waiting();
+	});
+
+
+	var checking_style_status = false;
+map.on('styledata', function (e) {
+  if (checking_style_status){
+    // If already checking style status, bail out
+    // (important because styledata event may fire multiple times)
+    return;
+  } else {
+    checking_style_status = true;
+    check_style_status();
+  }
+});
+function check_style_status() {
+  if (map.isStyleLoaded()) {
+    checking_style_status = false;
+    map._container.trigger('map_style_finally_loaded');
+  } else {
+    // If not yet loaded, repeat check after delay:
+    setTimeout(function() {check_style_status();}, 200);
+    return;
+  }
+}
 
 } 

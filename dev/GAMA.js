@@ -47,6 +47,7 @@ class GAMA {
                         if (this.logger) { this.logger("request " + JSON.stringify(this.req)); }
                         var myself = this;
                         this.wSocket.onmessage = function (event) {
+                            // console.log(event.data);
                             if (typeof event.data != "object") {
                                 if (myself.req.callback) {
                                     myself.req.callback(event.data);
@@ -68,6 +69,7 @@ class GAMA {
         }
     }
     endRequest() {
+        console.log("end response of "+ this.req.type);
         this.req = "";
     }
 
@@ -91,6 +93,7 @@ class GAMA {
             "auto-export": false,
             "parameters": this.param,
             "until": this.endCondition,
+            "sync":false,
             "callback": c
         };
         this.requestCommand(cmd);
@@ -118,12 +121,12 @@ class GAMA {
     launch(c) {
         this.queue.length = 0;
         var myself = this;
-        this.state = "launch";
+        this.state = "load";
         this.execute(this.state, function (e) {
             // console.log(e);
             var result = JSON.parse(e);
-            if (result.exp_id) myself.exp_id = result.exp_id;
-            if (result.socket_id) myself.socket_id = result.socket_id;
+            if (result.content.exp_id) myself.exp_id = result.content.exp_id;
+            if (result.content.socket_id) myself.socket_id = result.content.socket_id;
 
             if(c) c();
             // myself.play(c);
