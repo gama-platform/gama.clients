@@ -9,7 +9,9 @@ var geojsonMap = new Map();
 var parameters = new Map();
 var updateSource;
 //GAMA PATH
-var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
+// var ABSOLUTE_PATH_TO_GAMA = "C:/git/gama/msi.gama.models/models/";
+var ABSOLUTE_PATH_TO_GAMA = "/Users/hqn88/git/gama/msi.gama.models/models/";
+
 // var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Luneray flu/models/model5.gaml';
 // var experimentName = 'main';
 // var modelPath = 'C:/git/gama/msi.gama.models/models/Toy Models/Traffic/models/Simple Traffic Model.gaml';
@@ -75,12 +77,12 @@ function stop_renderer() {
 function logMapElements(value, key, mm) {
 	// if(key=='people'){
 
-		gama.getPopulation(key, ["name", "color"], "EPSG:4326", updateLayer);
+	gama.getPopulation(key, ["name", "color"], "EPSG:4326", updateLayer);
 	// }
 
-	function updateLayer(message,ccc) {
+	function updateLayer(message, ccc) {
 		if (typeof message == "object" || message == "") {
-			
+
 		} else {
 			// console.log(key); 
 			// geojson = null;
@@ -92,7 +94,7 @@ function logMapElements(value, key, mm) {
 					addLayer(tmp.features[0].geometry.type, key);
 				}
 				map.getSource(`source${key}`).setData(tmp);
-				if(ccc) ccc();
+				if (ccc) ccc();
 			} catch (e) {
 				console.log(e);
 			}
@@ -216,8 +218,7 @@ function addLayer(type, key) {
 
 }
 map.on('load', () => {
-
-	modelPath = urlParams.get('m');
+	modelPath = ABSOLUTE_PATH_TO_GAMA + urlParams.get('m');
 	experimentName = urlParams.get('e');
 	if (experimentName != null && experimentName !== "") {
 		gama = new GAMA("ws://localhost:6868/", modelPath, experimentName);
