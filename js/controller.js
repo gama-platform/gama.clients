@@ -9,13 +9,14 @@ var geojsonMap = new Map();
 var parameters = new Map();
 var updateSource;
 //GAMA PATH
-// var ABSOLUTE_PATH_TO_GAMA = "C:/git/gama/msi.gama.models/models/";
-var ABSOLUTE_PATH_TO_GAMA = "/Users/hqn88/git/gama/msi.gama.models/models/";
+var ABSOLUTE_PATH_TO_GAMA = "C:/git/gama/msi.gama.models/models/";
+// var ABSOLUTE_PATH_TO_GAMA = "/Users/hqn88/git/gama/msi.gama.models/models/";
 
 // var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Luneray flu/models/model5.gaml';
 // var experimentName = 'main';
 // var modelPath = 'C:/git/gama/msi.gama.models/models/Toy Models/Traffic/models/Simple Traffic Model.gaml';
 // var experimentName = 'traffic';
+//file:///C:/git/gama.client/SimpleGUI_new.html?m=../../../PROJECT/COMOKIT-Model/COMOKIT/Meso/Models/Experiments/Activity%20Restrictions/School%20and%20Workplace%20Closure.gaml&e=Closures#model213
 var modelPath = 'C:/git/gama/miat.gaml.extensions.pedestrian/models/Pedestrian Skill/models/Complex environment - walk.gaml';
 var experimentName = 'normal_sim';
 // var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Toy Models/Urban Growth/models/Raster Urban Growth.gaml';
@@ -33,7 +34,7 @@ function start_sim() {
 	gama.launch();
 	gama.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
 		console.log(JSON.parse(ee));
-		ee = JSON.parse(ee).content.result.replace(/[{}]/g, "").replace(/['"]+/g, '');
+		ee = JSON.parse(ee).content.replace(/[{}]/g, "").replace(/['"]+/g, '');
 		var eee = ee.split(",");
 		// console.log(eee);
 		// console.log(eee[0]);
@@ -77,7 +78,8 @@ function stop_renderer() {
 function logMapElements(value, key, mm) {
 	// if(key=='people'){
 
-	gama.getPopulation(key, ["name", "color"], "EPSG:4326", updateLayer);
+	gama.evalExpr("to_geojson("+key+",\"EPSG:4326\",[\"name\", \"color\"])", updateLayer,true);
+	// gama.getPopulation(key, ["name", "color"], "EPSG:4326", updateLayer);
 	// }
 
 	function updateLayer(message, ccc) {
@@ -87,13 +89,16 @@ function logMapElements(value, key, mm) {
 			// console.log(key); 
 			// geojson = null;
 			try {
+				var gjs=JSON.parse(message);
+				var tmp = gjs.content; 
+				if(tmp && gjs.type==="CommandExecutedSuccessfully"){
 
-				var tmp = JSON.parse(message).content;
-				if (!map.style.getLayer(`source${key}`)) {
-					// console.log("layer added");
-					addLayer(tmp.features[0].geometry.type, key);
+					if (!map.style.getLayer(`source${key}`)) {
+						// console.log("layer added");
+						addLayer(tmp.features[0].geometry.type, key);
+					}
+					map.getSource(`source${key}`).setData(tmp);
 				}
-				map.getSource(`source${key}`).setData(tmp);
 				if (ccc) ccc();
 			} catch (e) {
 				console.log(e);
@@ -103,8 +108,8 @@ function logMapElements(value, key, mm) {
 	}
 }
 function createParameters(ee) {
-
-	ee = JSON.parse(ee).content.result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
+	console.log( JSON.parse(ee).content);
+	ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
 	var eee = ee.split(",");
 	var t = "";
 	eee.forEach((e1) => {
@@ -123,7 +128,7 @@ function createParameters(ee) {
 
 }
 function createSources(ee) {
-	ee = JSON.parse(ee).content.result.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
+	ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
 	var eee = ee.split(",");
 	eee.forEach((e) => {
 		geojsonMap.set(e, {
@@ -148,7 +153,7 @@ function createSources(ee) {
 }
 function fitzoom(ee) {
 	// console.log(ee);
-	ee = JSON.parse(ee).content.result.replace(/[{}]/g, "");
+	ee = JSON.parse(ee).content.replace(/[{}]/g, "");
 	var eee = ee.split(",");
 	console.log(eee[0]);
 	console.log(eee[1]);

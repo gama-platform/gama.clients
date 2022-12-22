@@ -75,11 +75,12 @@ class GAMA {
         this.req = "";
     }
 
-    evalExpr(q, c) {
+    evalExpr(q, c, es) {
         var cmd = {
             "type": "expression",
             "socket_id": this.socket_id,
             "exp_id": this.exp_id,
+            "escaped": es?es:false,
             "expr": q,
             "callback": c
         };
@@ -92,6 +93,9 @@ class GAMA {
             "experiment": this.experimentName,
             "socket_id": this.socket_id,
             "exp_id": this.exp_id,
+            "console":false,
+            "status":false,
+            "dialog":false,
             "auto-export": false,
             "parameters": this.param,
             "until": this.endCondition,
