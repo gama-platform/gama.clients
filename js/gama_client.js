@@ -1,6 +1,6 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiaHFuZ2hpODgiLCJhIjoiY2t0N2w0cGZ6MHRjNTJ2bnJtYm5vcDB0YyJ9.oTjisOggN28UFY8q1hiAug';
 
- 
+
 var updateSource;
 var updateSource2;
 var updateSource3;
@@ -10,15 +10,15 @@ var staticLayerCalled = Boolean(false);
 //VISUALIZATION
 //Get the 3D building layer from MapBox
 var show3DBuilding = Boolean(false);
- 
+
 //GAMA PATH
-/*var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/';
+var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
 var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
 var experimentName = 'road_traffic';
 var species1Name = 'people';
 var attribute1Name = 'objective';
 var species2Name = 'building';
-var attribute2Name = 'type';*/
+var attribute2Name = 'type';
 
 
 
@@ -42,71 +42,88 @@ var attribute2Name = 'type';*/
 // const attribute2Name = 'type';
 
 // var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Lockdown\\LockDown.gaml';
-var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Activity Restrictions\\School and Workplace Closure.gaml';
-var experimentName = 'Closures';
-var species1Name = 'Individual';
-var attribute1Name = 'state';
+// var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Activity Restrictions\\School and Workplace Closure.gaml';
+// var experimentName = 'Closures';
+// var species1Name = 'Individual';
+// var attribute1Name = 'state';
 // const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
 // const experimentName = 'GratteCielErasme';
 // const species1Name = 'people';
 // const attribute1Name = 'type';
-const species2Name = 'Building';
-const attribute2Name = 'zone_id';
+// const species2Name = 'Building';
+// const attribute2Name = 'zone_id';
 
- 
+
 const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
-experiment.connect(on_connected,on_disconnected);
+experiment.connect(on_connected, on_disconnected);
 function on_connected() {
-	start_sim(); 
-} 
+	start_sim();
+}
 
 function on_disconnected() {
 	clearInterval(updateSource);
-} 
+}
 
-function start_sim() { 
+function start_sim() {
 	experiment.launch();
 	experiment.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", function (ee) {
-		ee = JSON.parse(ee).result.replace(/[{}]/g, "");
+
+		console.log(ee);
+		ee = JSON.parse(ee).content.replace(/[{}]/g, "");
 		var eee = ee.split(",");
 		console.log(eee[0]);
 		console.log(eee[1]);
 		map.flyTo({
 			center: [eee[0], eee[1]],
 			essential: true,
-			zoom: 15 
+			duration: 0,
+			zoom: 15
 		});
 		document.getElementById('div-loader').remove();
 		request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 	});
- 
+
 	experiment.play();
 }
 function start_renderer() {
-
-	experiment.getPopulation(species2Name, [attribute2Name], "EPSG:4326", function (message) {
+	experiment.evalExpr("to_geojson(" + species2Name + ",\"EPSG:4326\",[\"" + attribute2Name + "\"])", function (message) {
 		if (typeof event.data == "object") {
 
 		} else {
-			geojson = null;
-			geojson = JSON.parse(message);
-			// console.log(geojson);
-			map.getSource('source2').setData(geojson);
-		} 
-	});
-	 
-	updateSource = setInterval(() => { 
-		experiment.getPopulation(species1Name, [attribute1Name], "EPSG:4326",function (message) {
+
+
+			var gjs = JSON.parse(message);
+			if (gjs.content && gjs.type === "CommandExecutedSuccessfully") {
+				var tmp = gjs.content;
+				geojson = null;
+
+				geojson = tmp;
+
+				map.getSource('source2').setData(geojson);
+			}
+		}
+	}, true);
+
+	updateSource = setInterval(() => {
+		experiment.evalExpr("to_geojson(" + species1Name + ",\"EPSG:4326\",[\"" + attribute1Name + "\"])", function (message) {
+
 			if (typeof event.data == "object") {
 
 			} else {
-				geojson = null;
-				geojson = JSON.parse(message);
-				// console.log(geojson);
-				map.getSource('source1').setData(geojson);
-				canCallStaticLayer = true;
-			} 
-		}); 
+
+				var gjs = JSON.parse(message);
+				if (gjs.content && gjs.type === "CommandExecutedSuccessfully") {
+					var tmp = gjs.content;
+					geojson = null;
+
+					geojson = tmp;
+					// console.log(geojson);
+
+					map.getSource('source1').setData(tmp);
+					canCallStaticLayer = true;
+				}
+			}
+		}, true);
 	}, 100);
 }
 const map = new mapboxgl.Map({
@@ -147,21 +164,8 @@ map.on('load', async () => {
 		'source': 'source1',
 		'layout': {},
 		'paint': {
-			'circle-radius': {
-				'base': 1.75,
-				'stops': [
-					[12, 1],
-					[22, 50]
-				]
-			},
-			'circle-color': ['match', ['get', attribute1Name], // get the property
-				"susceptible", 'green',
-				"latent", 'orange',
-				"presymptomatic", 'red',
-				"asymptomatic", 'red',
-				"symptomatic", 'red',
-				"removed", 'blue', 
-				'gray'],
+			"circle-radius": 5,
+			"circle-color": 'yellow'
 
 		},
 	});
@@ -239,8 +243,8 @@ map.on('load', async () => {
 		'url': 'mapbox://mapbox.terrain-rgb',
 		'tileSize': 512,
 		'maxzoom': 14
-	}); 
-	map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-	map.setLight({ anchor: 'map' });
+	});
+	// map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+	// map.setLight({ anchor: 'map' });
 	start_renderer();
 });

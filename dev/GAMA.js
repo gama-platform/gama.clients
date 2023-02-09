@@ -80,7 +80,7 @@ class GAMA {
             "type": "expression",
             "socket_id": this.socket_id,
             "exp_id": this.exp_id,
-            "escaped": es?es:false,
+            "escaped": es ? es : false,
             "expr": q,
             "callback": c
         };
@@ -93,9 +93,9 @@ class GAMA {
             "experiment": this.experimentName,
             "socket_id": this.socket_id,
             "exp_id": this.exp_id,
-            "console":false,
-            "status":false,
-            "dialog":false,
+            "console": false,
+            "status": false,
+            "dialog": false,
             "auto-export": false,
             "parameters": this.param,
             "until": this.endCondition,
@@ -106,7 +106,7 @@ class GAMA {
     }
     getPopulation(q, att, crs, c) {
         var cmd = {
-            'type': 'output',
+            'type': 'expression',
             "model": this.modelPath,
             "experiment": this.experimentName,
             'socket_id': this.socket_id,
@@ -128,17 +128,20 @@ class GAMA {
     }
 
     launch(c) {
+
         this.queue.length = 0;
         var myself = this;
-        this.state = "load";
-        this.execute(this.state, function (e) {
-            // console.log(e);
-            var result = JSON.parse(e);
-            if (result.content.exp_id) myself.exp_id = result.content.exp_id;
-            if (result.content.socket_id) myself.socket_id = result.content.socket_id;
+        this.status = "load";
+        this.execute(this.status, function (e) {
 
-            if (c) c();
-            // myself.play(c);
+            var result = JSON.parse(e);
+            console.log(result);
+            // if(result.type==="CommandExecutedSuccessfully"){
+            if (result.type === "CommandExecutedSuccessfully" && result.content) myself.exp_id = result.content;
+            if (c) {
+                c(result);
+            }
+            // }
         });
     }
     play(c) {
