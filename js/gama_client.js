@@ -20,39 +20,18 @@ var attribute1Name = 'objective';
 var species2Name = 'building';
 var attribute2Name = 'type';
 
-
-
-// var modelPath = 'C:\\git\\UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
-// var experimentName = 'GratteCielErasme';
-// var species1Name = 'people';
-// var attribute1Name = 'type';
-// var species2Name = 'building';
-// var attribute2Name = 'type';
-
-
-// var modelPath = 'C:\\git\\UD_ReAgent_ABM\\ReAgent\\models\\Gratte_Ciel_Basic.gaml';
-// var experimentName = 'GratteCielErasme';
-// var species1Name = 'people';
-// var attribute1Name = 'type';
-// // const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
-// // const experimentName = 'GratteCielErasme';
-// // const species1Name = 'people';
-// // const attribute1Name = 'type';
-// const species2Name = 'building';
-// const attribute2Name = 'type';
+//const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Demo.gaml';
+//const experimentName = 'Demo';
+//const species1Name = 'people';
+//const attribute1Name = 'type';
+//const species2Name = 'building';
+//const attribute2Name = 'type';
 
 // var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Lockdown\\LockDown.gaml';
 // var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Activity Restrictions\\School and Workplace Closure.gaml';
 // var experimentName = 'Closures';
 // var species1Name = 'Individual';
 // var attribute1Name = 'state';
-// const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
-// const experimentName = 'GratteCielErasme';
-// const species1Name = 'people';
-// const attribute1Name = 'type';
-// const species2Name = 'Building';
-// const attribute2Name = 'zone_id';
-
 
 const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
 experiment.connect(on_connected, on_disconnected);
