@@ -1,0 +1,44 @@
+{
+  "name": "COMOKIT Dashboard",
+  "version": "1.0.0",
+  "engines": {
+    "node": "18.x"
+  },
+  "description": "",
+  "keywords": [],
+  "main": "src/index.js",
+  "dependencies": {
+    "highcharts": "^10.3.3",
+    "highcharts-react-official": "^3.0.0",
+    "mapbox-gl": "^2.9.1",
+    "react": "^16.12.0",
+    "react-color": "^2.19.3",
+    "react-dom": "^16.12.0",
+    "react-grid-layout": "^1.0.0",
+    "react-scripts": "^5.0.1",
+    "react-select": "^5.7.0",
+    "react-sidebar": "^3.0.2",
+    "react-tiny-fab": "^4.0.4",
+    "reactstrap": "^8.5.1"
+  },
+  "devDependencies": {
+    "react-native-wss": "^1.1.0",
+    "typescript": "^3.8.3"
+  },
+  "scripts": {
+    "ostart": "react-scripts start",
+    "start": "react-scripts --openssl-legacy-provider start",
+    "build": "react-scripts --openssl-legacy-provider build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "browser": {
+    "fs": false
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

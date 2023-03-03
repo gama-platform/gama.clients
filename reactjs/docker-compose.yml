@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  webapp:
+    image: comokit/webapp:1.0.0
+    build: .
+    restart: unless-stopped
+    networks:
+      - comokit
+    env_file: .env
+    ports:
+      - "3000:3000"
+
+  gama:
+    image: gamaplatform/gama:1.9.0
+    container_name: gama
+    restart: unless-stopped
+    networks:
+      - comokit
+    ports:
+      - "6868:6868"
+    command: -socket 6868
+    volumes:
+      - ./comokit-model:/usr/lib/gama/headless/comokit
+
+networks:
+  comokit:
