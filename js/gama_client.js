@@ -12,47 +12,30 @@ var staticLayerCalled = Boolean(false);
 var show3DBuilding = Boolean(false);
 
 //GAMA PATH
-var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
-var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
-var experimentName = 'road_traffic';
-var species1Name = 'people';
-var attribute1Name = 'objective';
-var species2Name = 'building';
-var attribute2Name = 'type';
+// var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
+// var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
 
 
-
-// var modelPath = 'C:\\git\\UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
-// var experimentName = 'GratteCielErasme';
+// var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
+// var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama\\msi.gama.models\\models\\Tutorials\\Road Traffic\\models\\Model 05.gaml';
+// var experimentName = 'road_traffic';
 // var species1Name = 'people';
-// var attribute1Name = 'type';
+// var attribute1Name = 'objective';
 // var species2Name = 'building';
 // var attribute2Name = 'type';
 
-
-// var modelPath = 'C:\\git\\UD_ReAgent_ABM\\ReAgent\\models\\Gratte_Ciel_Basic.gaml';
-// var experimentName = 'GratteCielErasme';
-// var species1Name = 'people';
-// var attribute1Name = 'type';
-// // const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
-// // const experimentName = 'GratteCielErasme';
-// // const species1Name = 'people';
-// // const attribute1Name = 'type';
-// const species2Name = 'building';
-// const attribute2Name = 'type';
+const modelPath = 'C:\\git\\UD_ReAgent_ABM\\ReAgent\\models\\Gratte_Ciel_Demo.gaml';
+const experimentName = 'Demo';
+const species1Name = 'people';
+const attribute1Name = 'type';
+const species2Name = 'building';
+const attribute2Name = 'type';
 
 // var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Lockdown\\LockDown.gaml';
 // var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Activity Restrictions\\School and Workplace Closure.gaml';
 // var experimentName = 'Closures';
 // var species1Name = 'Individual';
 // var attribute1Name = 'state';
-// const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Basic.gaml';
-// const experimentName = 'GratteCielErasme';
-// const species1Name = 'people';
-// const attribute1Name = 'type';
-// const species2Name = 'Building';
-// const attribute2Name = 'zone_id';
-
 
 const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
 experiment.connect(on_connected, on_disconnected);
@@ -111,20 +94,25 @@ function start_renderer() {
 
 			} else {
 
-				var gjs = JSON.parse(message);
-				if (gjs.content && gjs.type === "CommandExecutedSuccessfully") {
-					var tmp = gjs.content;
-					geojson = null;
+				try {
 
-					geojson = tmp;
-					// console.log(geojson);
+					var gjs = JSON.parse(message);
+					if (gjs.content && gjs.type === "CommandExecutedSuccessfully") {
+						var tmp = gjs.content;
+						geojson = null;
 
-					map.getSource('source1').setData(tmp);
-					canCallStaticLayer = true;
+						geojson = tmp;
+						// console.log(geojson);
+
+						map.getSource('source1').setData(tmp);
+					}
+				} catch (Exc) {
+					console.log(message);
 				}
+				canCallStaticLayer = true;
 			}
 		}, true);
-	}, 100);
+	}, 1);
 }
 const map = new mapboxgl.Map({
 	container: 'map', // container id
@@ -165,7 +153,7 @@ map.on('load', async () => {
 		'layout': {},
 		'paint': {
 			"circle-radius": 5,
-			"circle-color": 'yellow'
+			"circle-color": 'red'
 
 		},
 	});
