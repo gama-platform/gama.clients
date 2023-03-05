@@ -6,15 +6,15 @@ import { Card, Button, CardTitle, Spinner } from "reactstrap";
 const options_server = [];
 const options_model = [];
 
-if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA){
-  const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET ? 'wss' : 'ws') + '://localhost:'+ process.env.REACT_APP_LOCALHOST_GAMA_PORT;
+if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA) {
+  const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET ? 'wss' : 'ws') + '://localhost:' + process.env.REACT_APP_LOCALHOST_GAMA_PORT;
   options_server.push({ value: url, label: 'Local GAMA' });
 
   options_model.push({ value: process.env.REACT_APP_LOCALHOST_COMOKIT_GIT_WORKSPACE + '/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml@Closures', label: '[LOCAL] MESO - Closures' });
   options_model.push({ value: process.env.REACT_APP_LOCALHOST_COMOKIT_GIT_WORKSPACE + '/Macro/Models/Experiments/No containment.gaml@No Containment', label: '[LOCAL] MACRO - No Containment' });
 }
 
-if (process.env.REACT_APP_ENABLE_REMOTE_GAMA){
+if (process.env.REACT_APP_ENABLE_REMOTE_GAMA) {
   const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET ? 'wss' : 'ws') + '://' + process.env.REACT_APP_REMOTE_GAMA_IP + ':' + process.env.REACT_APP_REMOTE_GAMA_PORT;
   options_server.push({ value: url, label: 'Remote GAMA' });
 
@@ -261,7 +261,7 @@ class Experiment extends React.Component {
 
                     <Creatable options={options_server}
 
-                      defaultInputValue={(options_server.find(obj => obj.value === this.state.url))?(options_server.find(obj => obj.value === this.state.url)).label:this.state.url}
+                      defaultInputValue={(options_server.find(obj => obj.value === this.state.url)) ? (options_server.find(obj => obj.value === this.state.url)).label : this.state.url}
                       onChange={this.handleChangeServer} />
                   </td>
                 </tr>
@@ -275,13 +275,13 @@ class Experiment extends React.Component {
                 </td></tr>
 
                 <tr><td align='left'>Model:</td>
-                  <td> 
+                  <td>
 
                     <Creatable options={options_model}
                       ref={ref => {
                         this.mySelRef = ref;
                       }}
-                      defaultInputValue={(options_model.find(obj => obj.value === this.state.model_path))?(options_model.find(obj => obj.value === this.state.model_path)).label:this.state.model_path}
+                      defaultInputValue={(options_model.find(obj => obj.value === this.state.model_path)) ? (options_model.find(obj => obj.value === this.state.model_path)).label : this.state.model_path}
                       onChange={this.handleChangeModel} />
                   </td></tr>
 
@@ -296,7 +296,7 @@ class Experiment extends React.Component {
 
                 <tr><td colSpan={2}><div>
                   <table><tbody><tr width="100%">
-                    {this.state.loaded && <td><Button color="primary" size="sm" onClick={this.tryAutoStep}>↹</Button> </td>}
+                    {/* {this.state.loaded && <td><Button color="primary" size="sm" onClick={this.tryAutoStep}>↹</Button> </td>} */}
 
                     {this.state.loaded && <td><Button color="primary" size="sm" onClick={this.tryPlay}>▷</Button> </td>}
 
@@ -313,7 +313,7 @@ class Experiment extends React.Component {
 
 
 
-                <tr><td colSpan={2}>
+                <tr><td colSpan={2} align="left">
                   {
                     (this.state.waiting) &&
                     <Button variant="primary" disabled>
@@ -368,16 +368,19 @@ class Experiment extends React.Component {
     // }
     if (this.gama.current && this.gama.current.wSocket && this.gama.current.wSocket.readyState === 1) {
       // console.log(this.props.grid);
+      this.setState((prevState) => ({
+        loaded: false
+      }));
       this.props.grid.waiting(true);
       this.waiting(true);
       // console.log(this.mySelRef);
       // console.log(this.mySelRef.props.inputValue); 
       // console.log((options_model.find(obj => obj.label === this.mySelRef.props.inputValue))); 
-      var mm=(options_model.find(obj => obj.label === this.mySelRef.props.inputValue));
-      if(mm===undefined){
-        mm=this.mySelRef.props.inputValue;
-      }else{
-        mm=mm.value;
+      var mm = (options_model.find(obj => obj.label === this.mySelRef.props.inputValue));
+      if (mm === undefined) {
+        mm = this.mySelRef.props.inputValue;
+      } else {
+        mm = mm.value;
       }
       this.gama.current.modelPath = mm.split("@")[0];
       this.gama.current.experimentName = mm.split("@")[1];

@@ -2,6 +2,7 @@ import React from 'react'
 // import GAMA from "./GAMA";
 import { Fab, Action } from 'react-tiny-fab';
 import 'react-tiny-fab/dist/styles.css';
+import { Button } from 'reactstrap';
 
 const default_Nav_state = {
   // url: "ws://51.255.46.42:6001",
@@ -111,36 +112,29 @@ class NavigationBar extends React.Component {
   }
 
   render() {
-    const renderComponents = c =>
-      c.map(({ mainButtonStyles, actionButtonStyles, position, event, alwaysShowTitle }, i) => (
-        <Fab
-          mainButtonStyles={mainButtonStyles}
-          style={position}
-          icon="☰"
-          event={event}
-          key={i}
-          alwaysShowTitle={alwaysShowTitle}
-        >
-          <Action
-            style={actionButtonStyles}
-            text="Import"
-            onClick={this.tryLoad}
-          >
-            O
-          </Action>
-          <Action style={actionButtonStyles} text="Export" onClick={this.trySave}>
-            S
-          </Action>
-          <Action style={actionButtonStyles} text="Add widget" onClick={this.tryAdd}>
-            +
-          </Action>
-          <Action style={actionButtonStyles} text="Edit layout" onClick={this.tryEdit}>
-            ✎
-          </Action>
-        </Fab>
-      ));
-     return <>
-      {renderComponents(components)}
+    // const renderComponents = c =>
+      // c.map(({ mainButtonStyles, actionButtonStyles, position, event, alwaysShowTitle }, i) => (
+        const renderComponents = (   <div>
+          
+        <Button  
+        onClick={this.tryLoad}
+      >
+        O
+      </Button>
+      <Button  onClick={this.trySave}>
+        S
+      </Button>
+      <Button  text="Add widget" onClick={this.tryAdd}>
+        +
+      </Button>
+      <Button  text="Edit layout" onClick={this.tryEdit}>
+        ✎
+      </Button>
+
+      </div>);
+ 
+     return <> 
+      {renderComponents}
       <input hidden ref={this.fileUploadInput} id="fileUpload" type="file" onChange={this.onFileChange} accept="text/plain" />
     </> 
 

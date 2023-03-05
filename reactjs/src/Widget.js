@@ -149,7 +149,7 @@ class Widget extends React.Component {
   }
 
   onParentTrigger() {
-    this.toEdit();
+    this.toEdit(0);
 
     // Let's call the passed variable from parent if it's a function
     if (this.props.triggerChildFunc && {}.toString.call(this.props.triggerChildFunc) === '[object Function]') {
@@ -323,10 +323,11 @@ class Widget extends React.Component {
     //   );
   }
 
-  toEdit() {
+  toEdit(vv) {
     if (this.grid.state && (this._id !== this.grid.state.id_param)) {
 
-      if (this.state.data.length < 1) {
+      // if (this.state.data.length < 1) {
+      if(vv==0){
         this.setState((prevState) => ({
           data: [0],
           loading: false
@@ -361,7 +362,7 @@ class Widget extends React.Component {
               className="closeBtn"
               color="info"
               size="sm"
-              onClick={() => this.toEdit()}
+              onClick={() => this.toEdit(this.state.data.length)}
               disabled={false && this.grid.state.waiting}
             >⚙</Button></td>
             <td> <Button
