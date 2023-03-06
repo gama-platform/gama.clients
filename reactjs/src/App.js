@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from "react";
 import "./assets/rgl.css";
 import "./assets/styles.css";
 import { Container } from "reactstrap";
@@ -8,6 +8,16 @@ import NavigationBar from "./Navbar";
 // import 'react-tabs/style/react-tabs.css';
 import * as FlexLayout from "flexlayout-react";
 import 'flexlayout-react/style/light.css';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';   // theme
+import 'primereact/resources/primereact.css';                       // core css
+import 'primeicons/primeicons.css';                                 // icons 
+
+import { useFormik } from 'formik';
+import { ListBox } from 'primereact/listbox';
+import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
+import {models} from './data.js';
+
 
 // import { Tabs, TabLink, TabContent } from 'react-tabs-redux';
 // const bstyle = {
@@ -25,21 +35,17 @@ var json = {
   "borders": [
     {
       "type": "border",
+      "selected": 0,
       "location": "left",
       "children": [
         {
           "type": "tab",
           "id": "#24",
           "name": "Navigation",
+          weight: 75,
           "component": "Navigation",
           "enableClose": false
-        }
-      ]
-    },
-    {
-      "type": "border",
-      "location": "right",
-      "children": [
+        },
         {
           "type": "tab",
           "id": "#3",
@@ -54,7 +60,7 @@ var json = {
     },
     {
       "type": "border",
-      "selected": 1,
+      "selected": -1,
       "location": "bottom",
       "children": [
         {
@@ -82,16 +88,27 @@ var json = {
   ],
   layout: {
     type: "row",
-    weight: 100,
-    children: [ 
+    // weight: 100,
+    children: [
+      // {
+      //   type: "tabset",
+      //   weight: 75,
+      //   children: [
+      //     {
+      //       type: "tab",
+      //       name: "Modeling",
+      //       component: "Modeling",
+      //     }
+      //   ]
+      // },
       {
-        type: "tabset",
-        weight: 75,
+        type: "tabset", 
         children: [
           {
             type: "tab",
             name: "Simulation",
-            component: "button",
+            component: "Simulation",
+            "enableClose": false
           }
         ]
       }
@@ -113,12 +130,6 @@ class App extends React.Component {
   }
 
 
-  factory(node) {
-    var component = node.getComponent();
-    if (component === "text") {
-      return (<div className="panel">Panel {node.getName()}</div>);
-    }
-  }
   componentDidMount() {
     mql.addListener(this.mediaQueryChanged);
   }
@@ -134,20 +145,72 @@ class App extends React.Component {
   mediaQueryChanged() {
     this.setState({ sidebarDocked: mql.matches, sidebarOpen: false });
   }
-
   factory = (node) => {
     var component = node.getComponent();
     var mygrid = React.createRef();
-    if (component === "button") {
+    if (component === "Simulation") {
       return <Container fluid={true}>
 
         <Grid ref={mygrid} ></Grid>
 
       </Container>;
     }
+    if (component === "Navigation") {
 
+      const toast = useRef(null);
+
+      const show = () => {
+        toast.current.show({ severity: 'success', summary: 'Form Submitted', detail: formik.values.item.name+ " "+formik.values.item.code });
+      };
+
+      const formik = useFormik({
+        initialValues: {
+          item: ''
+        },
+        validate: (data) => {
+          let errors = {};
+
+          if (!data.item) {
+            errors.item = 'City is required.';
+          }
+
+          return errors;
+        },
+        onSubmit: (data) => {
+          data.item && show(data);
+          formik.resetForm();
+        }
+      });
+
+      const isFormFieldInvalid = (name) => !!(formik.touched[name] && formik.errors[name]);
+
+      const getFormErrorMessage = (name) => {
+        return isFormFieldInvalid(name) ? <small className="p-error">{formik.errors[name]}</small> : <small className="p-error">&nbsp;</small>;
+      };
+
+      return ( 
+          <form onSubmit={formik.handleSubmit} className="flex flex-column align-items-left">
+            <Button type="submit" label="Launch"  />
+            <Toast ref={toast} />
+            <ListBox
+              id="item"
+              name="item"
+              filter 
+              value={formik.values.item}
+              options={models}
+              optionLabel="name"
+              placeholder="Select a Experiment"
+              onChange={(e) => {
+                formik.setFieldValue('item', e.value);
+              }} 
+              style={{ width: '100%',textAlign: "left"  }}
+            />
+            {getFormErrorMessage('item')}
+          </form> 
+      );
+    }
     if (component === "Options") {
-      return <NavigationBar grid={mygrid} />
+      return <NavigationBar grid={mygrid} />;
     }
   }
   render() {
