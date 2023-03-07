@@ -1,6 +1,8 @@
 import React, { useRef } from "react";
 import "./assets/rgl.css";
 import "./assets/styles.css";
+
+import GAMA from "./controller/GAMA";
 import { Container } from "reactstrap";
 import Grid from "./Grid";
 import OptionsBar from "./Options";
@@ -12,15 +14,6 @@ import 'flexlayout-react/style/light.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';   // theme
 import 'primereact/resources/primereact.css';                       // core css
 import 'primeicons/primeicons.css';                                 // icons 
-
-import { useFormik } from 'formik';
-import { ListBox } from 'primereact/listbox';
-import { ConfirmPopup } from 'primereact/confirmpopup'; // To use <ConfirmPopup> tag
-import { confirmPopup } from 'primereact/confirmpopup'; // To use confirmPopup method
-
-
-import { Toast } from 'primereact/toast';
-import { models } from './data.js';
 
 
 // import { Tabs, TabLink, TabContent } from 'react-tabs-redux';
@@ -39,7 +32,7 @@ var json = {
   "borders": [
     {
       "type": "border",
-      "selected": 0,
+      "selected": 1,
       "location": "left",
       "children": [
         {
@@ -119,64 +112,48 @@ var json = {
     ]
   }
 };
-const mql = window.matchMedia(`(min-width: 800px)`);
+// const mql = window.matchMedia(`(min-width: 800px)`);
 class App extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      sidebarDocked: mql.matches,
-      sidebarOpen: true,
       model: FlexLayout.Model.fromJson(json)
     };
-    this.mediaQueryChanged = this.mediaQueryChanged.bind(this);
-    this.onSetSidebarOpen = this.onSetSidebarOpen.bind(this);
+    this.gama = React.createRef();
   }
 
 
-  componentDidMount() {
-    mql.addListener(this.mediaQueryChanged);
-  }
-
-  componentWillUnmount() {
-    mql.removeListener(this.mediaQueryChanged);
-  }
-
-  onSetSidebarOpen(open) {
-    this.setState({ sidebarOpen: open });
-  }
-
-  mediaQueryChanged() {
-    this.setState({ sidebarDocked: mql.matches, sidebarOpen: false });
-  }
   factory = (node) => {
     var component = node.getComponent();
-    var mygrid = React.createRef();
+    // var mygrid = React.createRef();
     if (component === "Simulation") {
       return <Container fluid={true}>
 
-        <Grid ref={mygrid} ></Grid>
+        <Grid></Grid>
 
       </Container>;
     }
     if (component === "Navigation") {
 
-      return <NavigatorBar grid={mygrid} />;
+      return <NavigatorBar/>;
     }
     if (component === "Options") {
-      return <OptionsBar grid={mygrid} />;
+      return <OptionsBar gama={this.gama} />;
     }
   }
   render() {
     var mygrid = React.createRef();
 
     return (
-      <div className="App">
 
-        <FlexLayout.Layout
-          model={this.state.model}
-          factory={this.factory.bind(this)} />
-      </div>
+      <><GAMA ref={this.gama}></GAMA>
+        <div className="App">
+
+          <FlexLayout.Layout
+            model={this.state.model}
+            factory={this.factory.bind(this)} />
+        </div></>
     );
   }
 }

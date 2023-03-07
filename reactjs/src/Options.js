@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import GAMA from "./controller/GAMA";
 import { Fab, Action } from 'react-tiny-fab';
 import 'react-tiny-fab/dist/styles.css';
 import { Button } from 'reactstrap';
@@ -7,14 +6,9 @@ import { Dropdown } from 'primereact/dropdown';
 
 
 const options_server = [{ value: "ws://51.255.46.42:6001", label: 'ovh' }];
-const options_model = [{ value: "/Users/hqn88/git/gama", label: 'mym1' }]; 
-const cities = [
-  { name: 'New York', code: 'NY' },
-  { name: 'Rome', code: 'RM' },
-  { name: 'London', code: 'LDN' },
-  { name: 'Istanbul', code: 'IST' },
-  { name: 'Paris', code: 'PRS' }
-];
+const options_model = [{ value: "/Users/hqn88/git/gama", label: 'mym1' },
+{value: "/var/www/github/gama", label: 'ovh'}]; 
+
 if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA) {
   const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET ? 'wss' : 'ws') + '://localhost:' + process.env.REACT_APP_LOCALHOST_GAMA_PORT;
   options_server.push({ value: url, label: 'Local GAMA' });
@@ -69,8 +63,7 @@ class OptionsBar extends React.Component {
     this.mySelRef = React.createRef();
     this.id = "m" + param.id;
     this.state = this.getNFromLS("Nav") || default_Nav_state;
-    this.gama = React.createRef();
-    this.grid = param.grid; 
+    this.gama = param.grid;  
     this.fileUploadInput = React.createRef();
 
     this.checkConnect = this.checkConnect.bind(this);
@@ -78,15 +71,13 @@ class OptionsBar extends React.Component {
     this.onFileChange = this.onFileChange.bind(this);
     this.handleChangeServer = this.handleChangeServer.bind(this);
     this.handleChangeModel = this.handleChangeModel.bind(this);
-    this.tryAdd = this.tryAdd.bind(this);
-    this.tryExperiment = this.tryExperiment.bind(this);
-    this.tryEdit = this.tryEdit.bind(this);
+    this.tryConnect = this.tryConnect.bind(this);
+    // this.tryAdd = this.tryAdd.bind(this);
+    // this.tryExperiment = this.tryExperiment.bind(this);
+    // this.tryEdit = this.tryEdit.bind(this);
     // this.trySave = this.trySave.bind(this);
     // this.tryLoad = this.tryLoad.bind(this);
     this.waiting = this.waiting.bind(this);
-    this.tryConnect = this.tryConnect.bind(this);
-    this.tryLaunch = this.tryLaunch.bind(this);
-    this.tryGenParam = this.tryGenParam.bind(this);
   }
 
   componentDidMount(props) {
@@ -180,105 +171,29 @@ class OptionsBar extends React.Component {
     </div></>);
 
     return <>
-      <GAMA ref={this.gama} ></GAMA>
       {renderComponents}
       <input hidden ref={this.fileUploadInput} id="fileUpload" type="file" onChange={this.onFileChange} accept="text/plain" />
     </>
 
   }
 
-
-  tryConnect() {
+  tryConnect() { 
     var _this = this;
-    if (!this.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
-      this.waiting(true);
+    if (!this.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
+        // this.waiting(true);
 
-      this.gama.current.connect(this.state.url, () => {
-        _this.checkConnect(true);
-        _this.waiting(false);
-        console.log("connected");
-      }, () => {
-        _this.waiting(false);
-        console.log("disconnected");
-      });
-
-    }
-    // window.$gama.doConnect();
-  }
-  tryLaunch() {
-    // if (!this.gama.current.wSocket) {
-    //   this.tryConnect();
-    // }
-    if (this.gama.current && this.gama.current.wSocket && this.gama.current.wSocket.readyState === 1) {
-      // console.log(this.props.grid);
-      this.setState((prevState) => ({
-        loaded: false
-      }));
-      this.props.grid.waiting(true);
-      this.waiting(true);
-      // console.log(this.mySelRef);
-      // console.log(this.mySelRef.props.inputValue); 
-      // console.log((options_model.find(obj => obj.label === this.mySelRef.props.inputValue))); 
-      var mm = (options_model.find(obj => obj.label === this.mySelRef.props.inputValue));
-      if (mm === undefined) {
-        mm = this.mySelRef.props.inputValue;
-      } else {
-        mm = mm.value;
-      }
-      this.gama.current.modelPath = mm.split("@")[0];
-      this.gama.current.experimentName = mm.split("@")[1];
-
-      // var modelPath = 'C:/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
-      // var experimentName = 'road_traffic';
-      var _this = this;
-      this.gama.current.launch((e) => {
-        // console.log(e);
-        if (e.type === "CommandExecutedSuccessfully") {
-          window.$loaded = true;
-          this.setState((prevState) => ({
-            loaded: true
-          }));
-          console.log("loaded " + this.state.loaded);
-          _this.tryGenParam();
-        }
-        this.props.grid.waiting(false);
-        this.waiting(false);
-      });
-      // this.gama.current.launch(_this.tryPlay);
+        this.props.gama.current.connect(this.state.url, () => {
+            // _this.checkConnect(true);
+            // _this.waiting(false);
+            console.log("connected");
+        }, () => {
+            // _this.waiting(false);
+            console.log("disconnected");
+        });
 
     }
     // window.$gama.doConnect();
-  }
-
-  tryGenParam() {
-
-    if (this.gama.current && this.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
-
-      var _this = this;
-      this.gama.current.evalExpr("experiment.parameters.pairs", function (ee) {
-
-        if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
-          _this.props.grid.addParam(ee);
-          _this.props.grid.onShowClick(function () { console.log("shown") });
-        }
-      });
-    }
-  }
-  // tryLoad() {
-  //   this.fileUploadInput.current.click();
-  // }
-  // trySave() {
-  //   getLocalstorageToFile("layout.txt");
-  // }
-  tryAdd() {
-    this.props.grid.current.addWidget();
-  }
-  tryExperiment() {
-    this.props.grid.current.addExperiment();
-  }
-  tryEdit() {
-    this.props.grid.current.toggleEdit();
-  }
+}
   getNFromLS(key) {
     let ls = {};
     if (global.localStorage) {
