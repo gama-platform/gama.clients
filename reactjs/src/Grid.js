@@ -9,7 +9,7 @@ const default_Layout = {
   exps: [{ id: 1 }],
   editing: true,
   widgetSequence: 1,
-  expSequence: 1,
+  // expSequence: 1,
   id_param: -1,
   waiting: true,
   param_str: [],
@@ -25,8 +25,8 @@ class Grid extends React.Component {
     this.addParam = this.addParam.bind(this);
     this.addWidget = this.addWidget.bind(this);
     this.removeWidget = this.removeWidget.bind(this);
-    this.addExperiment = this.addExperiment.bind(this);
-    this.removeExperiment = this.removeExperiment.bind(this);
+    // this.addExperiment = this.addExperiment.bind(this);
+    // this.removeExperiment = this.removeExperiment.bind(this);
     this.toggleEdit = this.toggleEdit.bind(this);
     this.waiting = this.waiting.bind(this);
     this.onShowClick = this.onShowClick.bind(this);
@@ -132,12 +132,12 @@ class Grid extends React.Component {
     }));
   }
 
-  addExperiment() {
-    this.setState((prevState) => ({
-      exps: [...prevState.exps, { id: prevState.expSequence + 1 }],
-      expSequence: prevState.expSequence + 1
-    }));
-  }
+  // addExperiment() {
+  //   this.setState((prevState) => ({
+  //     exps: [...prevState.exps, { id: prevState.expSequence + 1 }],
+  //     expSequence: prevState.expSequence + 1
+  //   }));
+  // }
 
   removeWidget(id, conf) {
     if (conf) {
@@ -161,21 +161,21 @@ class Grid extends React.Component {
     }
   }
 
-  removeExperiment(id, conf) {
-    if (conf) {
-      if (window.confirm('Are you sure to disconnect?')) {
-        this.setState((prevState) => ({
-          exps: prevState.exps.filter((item) => item.id !== id),
-          expSequence: prevState.expSequence
-        }));
-      }
-    } else { 
-      this.setState((prevState) => ({
-        exps: prevState.exps.filter((item) => item.id !== id), 
-        expSequence: prevState.expSequence
-      }));
-    }
-  }
+  // removeExperiment(id, conf) {
+  //   if (conf) {
+  //     if (window.confirm('Are you sure to disconnect?')) {
+  //       this.setState((prevState) => ({
+  //         exps: prevState.exps.filter((item) => item.id !== id),
+  //         expSequence: prevState.expSequence
+  //       }));
+  //     }
+  //   } else { 
+  //     this.setState((prevState) => ({
+  //       exps: prevState.exps.filter((item) => item.id !== id), 
+  //       expSequence: prevState.expSequence
+  //     }));
+  //   }
+  // }
 
   onLayoutChange(layout, layouts) {
     window.dispatchEvent(new Event("resize"));
@@ -202,13 +202,13 @@ class Grid extends React.Component {
       </div>
     ));
 
-    const layoutsExperiment = this.state.exps.map((item) => (
-      <div className="widget" key={"c"+item.id} data-grid={config}>
-        <div className="mscroll" style={{ width: "100%", height: "100%" }}>
-          <Experiment grid={this} id={item.id}></Experiment>
-        </div>
-      </div>
-    ));
+    // const layoutsExperiment = this.state.exps.map((item) => (
+    //   <div className="widget" key={"c"+item.id} data-grid={config}>
+    //     <div className="mscroll" style={{ width: "100%", height: "100%" }}>
+    //       <Experiment grid={this} id={item.id}></Experiment>
+    //     </div>
+    //   </div>
+    // ));
 
     return (
       <><div>
@@ -227,7 +227,7 @@ class Grid extends React.Component {
           layouts={this.state.layouts}
           onLayoutChange={(layout, layouts) => this.onLayoutChange(layout, layouts)}
         >
-          {layoutsExperiment}
+          {/* {layoutsExperiment} */}
           {layouts}
         </ResponsiveGridLayout>
       </div></>

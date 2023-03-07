@@ -23,6 +23,7 @@ class GAMA extends React.Component {
         this.outputs = new Map();
         this.logger = void 0;
         this.address = "";
+        this.rootPath = "";
         this.modelPath = "";
         this.pendingoutput = 0;
         this.experimentName = "";
@@ -44,15 +45,16 @@ class GAMA extends React.Component {
         window.$gama = this;
         // this.connect(this.on_connected, this.on_disconnected);
 
-        this.tryLaunch = this.tryLaunch.bind(this);
-        this.tryGenParam = this.tryGenParam.bind(this);
+        // this.tryLaunch = this.tryLaunch.bind(this);
+        // this.tryGenParam = this.tryGenParam.bind(this);
 
     }
     // doConnect(c, dc) {
     //     this.connect(c, dc);
     // }
-    connect(a, opened_callback, closed_callback) {
+    connect(a, rp, opened_callback, closed_callback) {
         this.address = a;
+        this.rootPath = rp;
         // this.modelPath = m;
         // this.experimentName = e;
         // this.map = this.address.map;
@@ -311,66 +313,6 @@ class GAMA extends React.Component {
         return "";
     }
 
-
-    tryLaunch() {
-        // if (!this.gama.current.wSocket) {
-        //   this.tryConnect();
-        // }
-        if (this.gama.current && this.gama.current.wSocket && this.gama.current.wSocket.readyState === 1) {
-            // console.log(this.props.grid);
-            this.setState((prevState) => ({
-                loaded: false
-            }));
-            this.props.grid.waiting(true);
-            this.waiting(true);
-            // console.log(this.mySelRef);
-            // console.log(this.mySelRef.props.inputValue); 
-            // console.log((options_model.find(obj => obj.label === this.mySelRef.props.inputValue))); 
-            var mm = (options_model.find(obj => obj.label === this.mySelRef.props.inputValue));
-            if (mm === undefined) {
-                mm = this.mySelRef.props.inputValue;
-            } else {
-                mm = mm.value;
-            }
-            this.gama.current.modelPath = mm.split("@")[0];
-            this.gama.current.experimentName = mm.split("@")[1];
-
-            // var modelPath = 'C:/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
-            // var experimentName = 'road_traffic';
-            var _this = this;
-            this.gama.current.launch((e) => {
-                // console.log(e);
-                if (e.type === "CommandExecutedSuccessfully") {
-                    window.$loaded = true;
-                    this.setState((prevState) => ({
-                        loaded: true
-                    }));
-                    console.log("loaded " + this.state.loaded);
-                    _this.tryGenParam();
-                }
-                this.props.grid.waiting(false);
-                this.waiting(false);
-            });
-            // this.gama.current.launch(_this.tryPlay);
-
-        }
-        // window.$gama.doConnect();
-    }
-
-    tryGenParam() {
-
-        if (this.gama.current && this.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
-
-            var _this = this;
-            this.gama.current.evalExpr("experiment.parameters.pairs", function (ee) {
-
-                if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
-                    _this.props.grid.addParam(ee);
-                    _this.props.grid.onShowClick(function () { console.log("shown") });
-                }
-            });
-        }
-    }
     // tryLoad() {
     //   this.fileUploadInput.current.click();
     // }

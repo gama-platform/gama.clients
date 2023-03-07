@@ -7,6 +7,7 @@ import { Dropdown } from 'primereact/dropdown';
 
 const options_server = [{ value: "ws://51.255.46.42:6001", label: 'ovh' }];
 const options_model = [{ value: "/Users/hqn88/git/gama", label: 'mym1' },
+{value: "C:/git/gama/msi.gama.models/models", label: 'win' },
 {value: "/var/www/github/gama", label: 'ovh'}]; 
 
 if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA) {
@@ -63,7 +64,7 @@ class OptionsBar extends React.Component {
     this.mySelRef = React.createRef();
     this.id = "m" + param.id;
     this.state = this.getNFromLS("Nav") || default_Nav_state;
-    this.gama = param.grid;  
+    // this.gama = param.gama;  
     this.fileUploadInput = React.createRef();
 
     this.checkConnect = this.checkConnect.bind(this);
@@ -182,7 +183,7 @@ class OptionsBar extends React.Component {
     if (!this.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
         // this.waiting(true);
 
-        this.props.gama.current.connect(this.state.url, () => {
+        this.props.gama.current.connect(this.state.url,this.state.model_path, () => {
             // _this.checkConnect(true);
             // _this.waiting(false);
             console.log("connected");

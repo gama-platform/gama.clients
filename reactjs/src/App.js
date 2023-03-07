@@ -135,8 +135,7 @@ class App extends React.Component {
       </Container>;
     }
     if (component === "Navigation") {
-
-      return <NavigatorBar/>;
+      return <NavigatorBar gama={this.gama}/>;
     }
     if (component === "Options") {
       return <OptionsBar gama={this.gama} />;
