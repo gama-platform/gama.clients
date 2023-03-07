@@ -5,11 +5,9 @@ import Widget from "./Widget";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 const default_Layout = {
-  widgets: [{ id: 1 }],
-  exps: [{ id: 1 }],
+  widgets: [],
   editing: true,
-  widgetSequence: 1,
-  // expSequence: 1,
+  widgetSequence: 0,
   id_param: -1,
   waiting: true,
   param_str: [],
@@ -18,11 +16,12 @@ const default_Layout = {
 };
 
 class Grid extends React.Component {
-  constructor() {
-    super();
-    this.state = getFromLS("Layout") || default_Layout;
-    this.reloadLayout = this.reloadLayout.bind(this);
+  constructor(param) {
+    super(param);
+    this.props.gama.current.setGrid(this);
+    this.state = default_Layout;     
     this.addParam = this.addParam.bind(this);
+    this.remParam = this.remParam.bind(this);
     this.addWidget = this.addWidget.bind(this);
     this.removeWidget = this.removeWidget.bind(this);
     // this.addExperiment = this.addExperiment.bind(this);
@@ -46,10 +45,42 @@ class Grid extends React.Component {
   }
 
   componentDidMount(props) {
-    this.removeWidget(this.state.id_param);
-    this.waiting(true);
+    if (this.state.id_param > 0) {
+      // console.log("componentDidMount " + this.state.id_param);
+      // this.removeWidget(this.state.id_param);
+      // this.waiting(true);
+    }
   }
 
+  remParam() {
+    // if (this.state.id_param > 0) {
+    console.log("remParam " + this.state.id_param);
+      // this.removeWidget(this.state.id_param);
+      // this.setState((prevState) => ({
+      //   widgets: prevState.widgets.filter((item) => item.id !== this.state.id_param),
+      //   id_param: this.state.id_param === prevState.id_param ? -1 : prevState.id_param,
+      //   //do not decrement sequence, since each new widget must
+      //   //have unique value
+      //   widgetSequence: prevState.widgetSequence
+      // }));
+      
+      this.setState((prevState) => ({
+        widgets: [], 
+        id_param: -1,
+        //do not decrement sequence, since each new widget must
+        //have unique value
+        widgetSequence: prevState.widgetSequence
+      }));
+      
+      // this.setState(default_Layout);
+      // this.state.id_param = -1;
+    // }
+    // this.setState((prevState) => ({
+    //   widgets: [],
+    //   widgetSequence: 0,
+    //   id_param: -1,
+    // })); this.state.id_param = -1;
+  }
   addParam(ee) {
 
     // console.log(JSON.parse(ee).content);
@@ -77,22 +108,23 @@ class Grid extends React.Component {
       param_str: parameters,
       param_str_new: parameters
     }));
-    saveToLS("Layout", this.state);
+    // saveToLS("Layout", this.state);
 
-    if (!this.state.id_param || this.state.id_param < 0) {
+    // if (!this.state.id_param || this.state.id_param < 0) {
+      console.log("addParam " + this.state.id_param);
       this.setState((prevState) => ({
         widgets: [...prevState.widgets, { id: prevState.widgetSequence + 1 }],
         id_param: prevState.widgetSequence + 1,
         widgetSequence: prevState.widgetSequence + 1
       }));
-    }
+    // }
   }
 
   updateParam(ee) {
     this.setState((prevState) => ({
       param_str_new: ee
     }));
-    saveToLS("Layout", this.state);
+    // saveToLS("Layout", this.state);
   }
 
   toggleEdit() {
@@ -101,33 +133,10 @@ class Grid extends React.Component {
     }));
   }
 
-  reloadLayout(ee) {
-    // console.log(this.state);
-    // console.log(JSON.parse(ee["rdv_layout"])["Layout"]);
-    // console.log(ee);
-    Object.keys(ee).forEach(function(key) {
-      // console.log(key);
-      
-      if (global.localStorage) {
-        global.localStorage.setItem(
-          key,ee[key]
-        );
-      }
-    });
-    this.setState(JSON.parse(ee["rdv_layout"])["Layout"], function () {
-      // console.log(this.state);
-
-      this.setState({ triggerFunc2: () => {  } })
-      // saveToLS("Layout", this.state);
-      // window.location.reload(false);
-      // ee.map((e, index) =>  { 
-      // });
-      // this.getWFromLS("Widget" + this.id);
-    });
-  }
+  
   addWidget() {
     this.setState((prevState) => ({
-      widgets: [...prevState.widgets, { id: prevState.widgetSequence + 1 }],
+      widgets: [...prevState.widgets, { id: prevState.widgetSequence + 1 ,type:'geojson'}],
       widgetSequence: prevState.widgetSequence + 1
     }));
   }
@@ -150,7 +159,7 @@ class Grid extends React.Component {
           widgetSequence: prevState.widgetSequence
         }));
       }
-    } else { 
+    } else {
       this.setState((prevState) => ({
         widgets: prevState.widgets.filter((item) => item.id !== id),
         id_param: id === prevState.id_param ? -1 : prevState.id_param,
@@ -182,14 +191,14 @@ class Grid extends React.Component {
     this.setState({
       layouts: layouts
     });
-    saveToLS("Layout", this.state);
+    // saveToLS("Layout", this.state);
   }
 
   render() {
     const config = {
       x: 0,
       y: 0,
-      w: 3,
+      w: 6,
       h: 2,
       maxH: 10,
       maxW: 16
@@ -197,7 +206,7 @@ class Grid extends React.Component {
     const layouts = this.state.widgets.map((item) => (
       <div className="widget" key={item.id} data-grid={config}>
         <div className="mscroll" style={{ width: "100%", height: "100%" }}>
-          <Widget triggerChildFunc={this.state.triggerFunc} triggerChildFunc2={this.state.triggerFunc2} grid={this} id={item.id}></Widget>
+          <Widget triggerChildFunc={this.state.triggerFunc} triggerChildFunc2={this.state.triggerFunc2} grid={this} id={item.id} type={item.type}></Widget>
         </div>
       </div>
     ));
@@ -235,36 +244,6 @@ class Grid extends React.Component {
   }
 }
 
-function getFromLS(key) {
-  let ls = {};
-  if (global.localStorage) {
-    try {
-      ls = JSON.parse(global.localStorage.getItem("rdv_layout")) || {};
-      // console.log(ls[key] );
-      if(ls[key]){
-        Object.keys(default_Layout).forEach(function (k) {
-          // console.log(k); 
-          // console.log(ls[key][k]===undefined);
-          if (ls[key][k]===undefined) { throw new Error('undefined '+k); }
-        });
-      }
-    } catch (e) {
-      console.log(e);
-      return default_Layout;
-    }
-  }
-  return ls[key];
-}
 
-function saveToLS(key, value) {
-  if (global.localStorage) {
-    global.localStorage.setItem(
-      "rdv_layout",
-      JSON.stringify({
-        [key]: value
-      })
-    );
-  }
-}
 
 export default Grid;

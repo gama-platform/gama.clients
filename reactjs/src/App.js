@@ -130,7 +130,7 @@ class App extends React.Component {
     if (component === "Simulation") {
       return <Container fluid={true}>
 
-        <Grid></Grid>
+        <Grid gama={this.gama}></Grid>
 
       </Container>;
     }

@@ -133,7 +133,9 @@ class NavigationBar extends React.Component {
       this.props.gama.evalExpr("experiment.parameters.pairs", function (ee) {
 
         if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
-          _this.props.grid.addParam(ee);
+          _this.props.gama.grid.remParam();
+          _this.props.gama.grid.addWidget();
+          _this.props.gama.grid.addParam(ee);
         }
       });
     }

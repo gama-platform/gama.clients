@@ -7,7 +7,7 @@ import React from 'react'
 class GAMA extends React.Component {
     constructor() {
 
-        super();
+        super(); 
         this.socket_id = 0;
         this.exp_id = 0;
         this.wSocket = void 0;
@@ -48,6 +48,9 @@ class GAMA extends React.Component {
         // this.tryLaunch = this.tryLaunch.bind(this);
         // this.tryGenParam = this.tryGenParam.bind(this);
 
+    }
+    setGrid(g){
+        this.grid=g;
     }
     // doConnect(c, dc) {
     //     this.connect(c, dc);

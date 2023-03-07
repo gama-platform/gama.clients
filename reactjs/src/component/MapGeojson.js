@@ -32,17 +32,22 @@ class MapGeojson extends React.Component {
         this.state.title.text = (this.title);
         let _this = this;
         // console.log( props.props.props.mapbox);
-        this.mapdata.forEach((value, index, array) => {
-            _this.state.sources.push({
-                species: value.species,
-                attr: value.attributes,
-                style: value.style,
-                type: value.type
-            });
-        }
-        );
+        // this.mapdata.forEach((value, index, array) => {
+        //     _this.state.sources.push({
+        //         species: value.species,
+        //         attr: value.attributes,
+        //         style: value.style,
+        //         type: value.type
+        //     });
+        // }
+        // ); 
+        
+
+        window.$gama.evalExpr("species(world).microspecies", createSources);
+	// gama.evalExpr("experiment.parameters.pairs", createParameters);
+
         window.$gama.addOutput(this, this);
-        // console.log(window.$gama.outputs);
+        // // console.log(window.$gama.outputs);
         setTimeout(() => {
 
             var myself = this;
@@ -51,7 +56,30 @@ class MapGeojson extends React.Component {
 
     }
 
-
+    createSources(ee) {
+        ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
+        var eee = ee.split(",");
+        eee.forEach((e) => {
+            geojsonMap.set(e, {
+                'type': 'FeatureCollection',
+                'features': [
+                    {
+                        'type': 'Feature',
+                        'geometry': {
+                            'type': 'Point',
+                            'coordinates': [0, 0]
+                        }
+                    }
+                ]
+            });
+            map.addSource(`source${e}`, {
+                type: 'geojson',
+                data: geojsonMap.get(e)
+            });
+        });
+        gama.endRequest();
+        geojsonMap.forEach(logMapElements);
+    }
 
     on_connected(myself) {
         // const attribute1Name = this.state.sources[0].attr;
@@ -100,44 +128,34 @@ class MapGeojson extends React.Component {
                     'layout': {},
                     'paint': v.style ? JSON.parse(v.style) : defaultstyle,
                 });
-            });
-            // this.props.map.current.addSource('source1', {
-            //     type: 'geojson',
-            //     data: mymyself.geojson
-            // }); 
-            // this.props.map.current.addLayer({
-            //     'id': 'source2',
-            //     type: 'fill',
-            //     'source': 'source2',
-            //     'layout': {},
-            //     'paint': {
-            //         'fill-color': ['match', ['get', attribute2Name], // get the property
-            //             "commerce", 'green',
-            //             "gare", 'red', "Musee", 'red',
-            //             "habitat", 'blue', "culte", 'blue', "Industrial", 'blue',
-            //             'gray'],
-
-            //     },
-            // });
-            // myself.start_renderer();
+            }); 
         });
 
         // window.$gama.evalExpr("species(world).microspecies", function (ee) {
         //     console.log(ee);
         // });
-        window.$gama.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", function (ee) {
+ 
+        
+        window.$gama.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
             // console.log(ee);
             if (JSON.parse(ee).type === "CommandExecutedSuccessfully") {
-                ee = JSON.parse(ee).content.replace(/[{}]/g, "");
-                var eee = ee.split(",");
-                console.log(eee[0]);
-                console.log(eee[1]);
-                myself.props.map.current.flyTo({
-                    center: [eee[0], eee[1]],
-                    essential: true,
-                    duration: 0,
-                    zoom: 15
-                });
+                // ee = JSON.parse(ee).content.replace(/[{}]/g, "");
+                ee = JSON.parse(ee).content.replace(/[{}]/g, "").replace(/['"]+/g, '');
+                var eee = ee.split(","); 
+                const bbox = [
+                    [eee[0], eee[1]], // southwestern corner of the bounds
+                    [eee[3], eee[4]], // northeastern corner of the bounds
+                ];
+                myself.props.map.current.fitBounds(bbox, {
+					padding: 50,
+					duration: 0,
+				});
+                // myself.props.map.current.flyTo({
+                //     center: [eee[0], eee[1]],
+                //     essential: true,
+                //     duration: 0,
+                //     zoom: 15
+                // });
                 // document.getElementById('div-loader').remove();
                 // window.$gama.request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
             }
