@@ -3,7 +3,7 @@ import "./assets/rgl.css";
 import "./assets/styles.css";
 import { Container } from "reactstrap";
 import Grid from "./Grid";
-import NavigationBar from "./Navbar";
+import OptionsBar from "./Options";
 // import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 // import 'react-tabs/style/react-tabs.css';
 import * as FlexLayout from "flexlayout-react";
@@ -234,11 +234,12 @@ class App extends React.Component {
                   break;
                 case 2:
 
+                  console.log(mygrid); 
                   // formik.setFieldValue('item', e.value);
                   // console.log(e.target);
                   // console.log(formik.values.item);
                   // show(e.value.code);
-                  confirm1(e);
+                  // confirm1(e);
                   break;
                 case 3:
                   // console.log("triple click");
@@ -252,7 +253,7 @@ class App extends React.Component {
       );
     }
     if (component === "Options") {
-      return <NavigationBar grid={mygrid} />;
+      return <OptionsBar grid={mygrid} />;
     }
   }
   render() {
