@@ -1,11 +1,11 @@
 import React from 'react'
 import reactCSS from 'reactcss'
 import { SketchPicker } from 'react-color'
-import Charts from "./SeriesChart";
-import AreaCharts from "./AreaChart";
-import SingleCharts from "./SingleChart";
+import Charts from "./component/SeriesChart";
+import AreaCharts from "./component/AreaChart";
+import SingleCharts from "./component/SingleChart";
 import { Input, Card, Button, CardTitle } from "reactstrap";
-import BaseMap from "./BaseMap";
+import BaseMap from "./component/BaseMap";
 
 const lst_type = ['series', 'area']; 
 const styles = reactCSS({

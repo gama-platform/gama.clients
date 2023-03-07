@@ -1,5 +1,5 @@
 import React from 'react'
-import GAMA from "./GAMA";
+import GAMA from "./controller/GAMA";
 import Creatable from 'react-select/creatable';
 import { Card, Button, CardTitle, Spinner } from "reactstrap";
 
