@@ -30,7 +30,7 @@ class MapGeojson extends React.Component {
         this.title = props.props.props.title;
         this.mapdata = props.props.props.mapbox;
         this.state.title.text = (this.title);
-        let _this = this;
+        // let _this = this;
         // console.log( props.props.props.mapbox);
         // this.mapdata.forEach((value, index, array) => {
         //     _this.state.sources.push({
@@ -41,44 +41,54 @@ class MapGeojson extends React.Component {
         //     });
         // }
         // ); 
-        
 
-        window.$gama.evalExpr("species(world).microspecies", createSources);
-	// gama.evalExpr("experiment.parameters.pairs", createParameters);
+        this.createSources = this.createSources.bind(this);
+        this.on_connected = this.on_connected.bind(this);
+
+        window.$gama.evalExpr("species(world).microspecies", this.createSources);
+        // gama.evalExpr("experiment.parameters.pairs", createParameters);
 
         window.$gama.addOutput(this, this);
         // // console.log(window.$gama.outputs);
-        setTimeout(() => {
+        // setTimeout(() => {
 
-            var myself = this;
-            this.on_connected(myself);
-        }, 20);
+        //     var myself = this;
+        //     this.on_connected(myself);
+        // }, 20);
 
     }
 
     createSources(ee) {
+        let _this = this;
         ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
         var eee = ee.split(",");
         eee.forEach((e) => {
-            geojsonMap.set(e, {
-                'type': 'FeatureCollection',
-                'features': [
-                    {
-                        'type': 'Feature',
-                        'geometry': {
-                            'type': 'Point',
-                            'coordinates': [0, 0]
-                        }
-                    }
-                ]
+            _this.state.sources.push({
+                species: e.trim(),
+                attr: "color",
+                style: "",
+                type: "fill"
             });
-            map.addSource(`source${e}`, {
-                type: 'geojson',
-                data: geojsonMap.get(e)
-            });
+            // geojsonMap.set(e, {
+            //     'type': 'FeatureCollection',
+            //     'features': [
+            //         {
+            //             'type': 'Feature',
+            //             'geometry': {
+            //                 'type': 'Point',
+            //                 'coordinates': [0, 0]
+            //             }
+            //         }
+            //     ]
+            // });
+            // map.addSource(`source${e}`, {
+            //     type: 'geojson',
+            //     data: geojsonMap.get(e)
+            // });
         });
-        gama.endRequest();
-        geojsonMap.forEach(logMapElements);
+
+        window.$gama.addOutput(this, this);
+        this.on_connected(this);
     }
 
     on_connected(myself) {
@@ -90,6 +100,7 @@ class MapGeojson extends React.Component {
         this.props.map.current.on('load', async () => {
             // Add the source1 location as a source.
             this.state.sources.forEach((v) => {
+                console.log(v.species);
                 this.props.map.current.addSource("S" + v.species, {
                     type: 'geojson',
                     data: mymyself.geojson
@@ -113,14 +124,14 @@ class MapGeojson extends React.Component {
                         'gray'],
 
                 };
-                var fill_defaultstyle = { 
+                var fill_defaultstyle = {
                     'fill-outline-color': "black",
                     'fill-color': ['get', v.attr]
-                    };
-                var line_defaultstyle = { 
+                };
+                var line_defaultstyle = {
                     'line-color': ['get', v.attr]
-                    };
-                var defaultstyle = v.type==='line'?line_defaultstyle:(v.type==="fill"?fill_defaultstyle:(circle_defaultstyle));
+                };
+                var defaultstyle = v.type === 'line' ? line_defaultstyle : (v.type === "fill" ? fill_defaultstyle : (circle_defaultstyle));
                 this.props.map.current.addLayer({
                     'id': "S" + v.species,
                     type: v.type ? (v.type) : 'circle',
@@ -128,28 +139,28 @@ class MapGeojson extends React.Component {
                     'layout': {},
                     'paint': v.style ? JSON.parse(v.style) : defaultstyle,
                 });
-            }); 
+            });
         });
 
         // window.$gama.evalExpr("species(world).microspecies", function (ee) {
         //     console.log(ee);
         // });
- 
-        
+
+
         window.$gama.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
             // console.log(ee);
             if (JSON.parse(ee).type === "CommandExecutedSuccessfully") {
                 // ee = JSON.parse(ee).content.replace(/[{}]/g, "");
                 ee = JSON.parse(ee).content.replace(/[{}]/g, "").replace(/['"]+/g, '');
-                var eee = ee.split(","); 
+                var eee = ee.split(",");
                 const bbox = [
                     [eee[0], eee[1]], // southwestern corner of the bounds
                     [eee[3], eee[4]], // northeastern corner of the bounds
                 ];
                 myself.props.map.current.fitBounds(bbox, {
-					padding: 50,
-					duration: 0,
-				});
+                    padding: 50,
+                    duration: 0,
+                });
                 // myself.props.map.current.flyTo({
                 //     center: [eee[0], eee[1]],
                 //     essential: true,
@@ -191,10 +202,10 @@ class MapGeojson extends React.Component {
             if (typeof message.data == "object") {
 
             } else {
-                var gjs ;
-                try{
+                var gjs;
+                try {
                     gjs = JSON.parse(message);
-                }catch(exce){
+                } catch (exce) {
                     console.log(message);
                 }
                 if (gjs && gjs.content && gjs.type === "CommandExecutedSuccessfully") {

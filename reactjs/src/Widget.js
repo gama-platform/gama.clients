@@ -6,14 +6,14 @@ import AreaCharts from "./component/AreaChart";
 import SingleCharts from "./component/SingleChart";
 import { Input, Card, Button, CardTitle } from "reactstrap";
 import BaseMap from "./component/BaseMap";
- 
+
 const default_Widget_state = {
   data: [],
   loading: false,
   title: "",
   chartType: "single",
   param: [],
- 
+
 };
 class Widget extends React.Component {
   // static id;
@@ -29,12 +29,17 @@ class Widget extends React.Component {
     this.id = "m" + param.id;
     this.state = default_Widget_state;
     this.grid = param.grid;
-    this.type=param.type;
-    this.state.chartType=param.type;
- 
-    this.fetchFile = this.fetchFile.bind(this); 
+    this.type = param.type;
+    this.state.chartType = param.type;
+
+    this.fetchFile = this.fetchFile.bind(this);
+    this.tryPlay = this.tryPlay.bind(this);
+    this.tryPause = this.tryPause.bind(this);
+    this.tryStep = this.tryStep.bind(this);
+    this.tryReload = this.tryReload.bind(this);
+    this.tryClose = this.tryClose.bind(this);
   }
-  
+
   componentDidUpdate(prevProps) {
     if (this.props.triggerChildFunc !== prevProps.triggerChildFunc) {
       this.onParentTrigger();
@@ -54,7 +59,7 @@ class Widget extends React.Component {
   }
   onParentTrigger2() {
     this.setState(
-      this.getWFromLS("Widget" + this.id)
+
     )
 
     // Let's call the passed variable from parent if it's a function
@@ -63,15 +68,15 @@ class Widget extends React.Component {
     }
   }
   componentDidMount(props) {
-    // this.saveWToLS("Widget" + this.id, this.state);
     // if (this._id === this.grid.state.id_param) {
-    this.setState({ param: this.grid.state.param_str ,
-      chartType: this.type}, () => {
-      this.saveWToLS("Widget" + this.id, this.state);
+    this.setState({
+      param: this.grid.state.param_str,
+      chartType: this.type
+    }, () => {
 
       // this.setState(this.getWFromLS("Widget" + this.id))
       // this.getWFromLS("Widget" + this.id);
-    }); 
+    });
   }
 
   fetchFile() {
@@ -90,34 +95,9 @@ class Widget extends React.Component {
       }));
     }
 
-    // fetch(url)
-    //   .then((res) => res.json())
-    //   .then(
-    //     (result) => {
-    //       result.chart = { type: chartType };
-    //       console.log(result);
-    //       this.setState({
-    //         data: result,
-    //         loading: false
-    //       });
-    //     },
-    //     (error) => {
-    //       console.log(error);
-    //       alert(error);
-    //     }
-    //   );
   }
 
   render() {
-    // if (this.state.loading)
-    //   return (
-    //     <div style={{ height: "300px", lineHeight: "300px" }}>
-    //       <Spinner color="secondary" />
-    //     </div>
-    //   );
-
-    // console.log(this.state.expressions);
-    // console.log(this.grid.state.param_str);
     const widgetHeader = (
       <table>
         <tbody>
@@ -125,26 +105,11 @@ class Widget extends React.Component {
           <tr>
             <td width="100%"><div className="dragHandle">
             </div></td>
-            {/* <td> <Button
-              className="closeBtn"
-              color="info"
-              size="sm"
-              onClick={() => this.toEdit(this.state.data.length)}
-              disabled={false && this.grid.state.waiting}
-            >⚙</Button></td>
-            <td> <Button
-              className="closeBtn"
-              color="danger"
-              size="sm"
-              onClick={() => this.grid.removeWidget(this._id, true)}
-            >x</Button></td> */}
-            </tr>
+
+          </tr>
         </tbody>
       </table>);
-    // if (this.state.data.length < 1) {
-      if(this.grid.state && (this._id === this.grid.state.id_param)){
-      // console.log(this._id);
-      // console.log(this.grid.state.id_param); 
+    if (this.grid.state && (this._id === this.grid.state.id_param)) {
 
       const param_layouts = (this.grid.state && (this._id === this.grid.state.id_param)) ? this.state.param.map((e, index) => (
         <tr key={e['key']} ><td width={50}>{e['key']}</td>
@@ -202,46 +167,80 @@ class Widget extends React.Component {
     }
     if (this.props.updateMethod) {
       this.Method();
-    } 
+    }
     return (<><div className="widgetHeader">
       {(this.grid.state && (this.grid.state.editing)) && widgetHeader}
     </div><BaseMap parent={this} props={this.state} /></>
-    )
-      ;
+    );
   }
 
 
+  tryPlay() {
+    // console.log(this.props.grid.props.gama.current);
+    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
 
-  // getWFromLS(key) {
-  //   let ls = {};
-  //   if (global.localStorage) {
-  //     try {
-  //       ls = JSON.parse(global.localStorage.getItem("rdv_widget" + key)) || {};
-  //       if (ls[key]) {
-  //         ls[key].mapbox.map((element, index) => (<></>
-  //         ));
-  //         ls[key].expressions.map((element, index) => (<></>
-  //         ));
-  //       }
-  //       // console.log(ls);
-  //     } catch (e) {
-  //       console.log(e + " " + key + " " + ls[key]);
-  //       return default_Widget_state;
-  //     }
-  //   }
-  //   return ls[key];
-  // }
-
-  saveWToLS(key, value) {
-    // if (global.localStorage) {
-    //   global.localStorage.setItem(
-    //     "rdv_widget" + key,
-    //     JSON.stringify({
-    //       [key]: value
-    //     })
-    //   );
-    // }
+      this.props.grid.props.gama.current.queue.length = 0;
+      // this.gama.current.autoStep(console.log("autoStep"));
+      // this.gama.current.step(console.log("step"));
+      this.props.grid.props.gama.current.play(() => { console.log("play") });
+    }
+    // window.$gama.doConnect();
   }
+
+  tryStep() {
+    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      this.props.grid.props.gama.current.queue.length = 0; 
+      this.props.grid.props.gama.current.step(() => {
+        console.log("step"); 
+      });
+    }
+    // window.$gama.doConnect();
+  }
+  tryPause() {
+    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      this.props.grid.props.gama.current.queue.length = 0;
+      this.props.grid.props.gama.current.pause();
+    }
+    // window.$gama.doConnect();
+  }
+  tryReload() {
+    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      this.props.grid.props.gama.current.queue.length = 0;
+      var pp = [];
+      this.props.grid.state.param_str_new.forEach((value, key, map) => {
+        var v = value['value'];
+        var t = "string";
+        if (!isNaN(v)) {
+          t = "float";
+          if (v.indexOf('.') === -1) { t = "int"; }
+        }
+        pp.push({ "name": "" + value['key'], "value": v, "type": t });
+      });
+
+      this.props.grid.props.gama.current.setParameters(pp); 
+      this.props.grid.props.gama.current.reload(() => {
+        console.log("reloaded"); 
+      });
+    }
+    // window.$gama.doConnect();
+  }
+  tryClose() {
+    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      this.props.grid.props.gama.current.queue.length = 0;
+      this.props.grid.props.gama.current.pause(() => {
+        console.log("disconnected");
+        this.setState((prevState) => ({
+          loaded: false
+        }));
+        this.props.grid.props.gama.current.wSocket = null;
+        this.checkConnect(false);
+        this.props.grid.onShowClick(null);
+      });
+      // this.gama.current.reload(() => { console.log("reloaded"); });
+    }
+    // window.$gama.doConnect();
+  }
+
 }
 
 export default Widget;
