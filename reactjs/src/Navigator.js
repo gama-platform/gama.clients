@@ -1,4 +1,4 @@
-import React, {useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import 'primereact/resources/themes/lara-light-indigo/theme.css';   // theme
 import 'primereact/resources/primereact.css';                       // core css
 import 'primeicons/primeicons.css';                                 // icons 
@@ -16,61 +16,17 @@ class NavigationBar extends React.Component {
   constructor(param) {
     super(param);
     this.mySelRef = React.createRef();
-    this.id = "m" + param.id; 
+    this.id = "m" + param.id;
   }
- 
+
 
   render() {
-  
+
     const toast = this.props.toast;
+    const formik = this.props.formik;
+    const confirm1 = this.props.confirm1;
 
 
-    const show = (e) => {
-      toast.current.show({ severity: 'success', summary: 'Experiment', detail: e });
-    };
-
-    const formik = useFormik({
-      initialValues: {
-        item: ''
-      },
-      validate: (data) => {
-        let errors = {};
-
-        if (!data.item) {
-          errors.item = 'City is required.';
-        }
-
-        return errors;
-      },
-      onSubmit: (data) => {
-        data.item && show(formik.values.item.name + " " + formik.values.item.code);
-        formik.resetForm();
-      }
-    });
-
-    const isFormFieldInvalid = (name) => !!(formik.touched[name] && formik.errors[name]);
-
-    const getFormErrorMessage = (name) => {
-      return isFormFieldInvalid(name) ? <small className="p-error">{formik.errors[name]}</small> : <small className="p-error">&nbsp;</small>;
-    };
-
-    const accept = () => {
-      toast.current.show({ severity: 'info', summary: 'Confirmed', detail: 'Experiment '+formik.values.item.code, life: 3000 });
-    };
-
-    const reject = () => {
-      // toast.current.show({ severity: 'warn', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
-    };
-
-    const confirm1 = (event) => {
-      confirmPopup({
-        target: event.currentTarget,
-        message: 'Are you sure you want to launch?',
-        icon: 'pi pi-exclamation-triangle',
-        accept,
-        reject
-      });
-    };
     return (
       <form onSubmit={formik.handleSubmit} className="flex flex-column align-items-left">
         {/* <Button type="submit" label="Launch"  /> */}
@@ -97,12 +53,12 @@ class NavigationBar extends React.Component {
                 break;
               case 2:
 
-                console.log(mygrid); 
+                // console.log(mygrid); 
                 // formik.setFieldValue('item', e.value);
                 // console.log(e.target);
                 // console.log(formik.values.item);
                 // show(e.value.code);
-                // confirm1(e);
+                confirm1(e);
                 break;
               case 3:
                 // console.log("triple click");
@@ -111,20 +67,60 @@ class NavigationBar extends React.Component {
           }}
           style={{ width: '100%', textAlign: "left" }}
         />
-        {getFormErrorMessage('item')}
       </form>
     );
   }
 
- 
-} 
+
+}
 // export default NavigationBar;
 
 
-export default () => { 
+export default () => {
 
-  const toast =React.createRef();// useRef(null);
+  const toast = useRef(null);
+
+  const show = (e) => {
+    toast.current.show({ severity: 'success', summary: 'Experiment', detail: e });
+  };
+
+  const formik = useFormik({
+    initialValues: {
+      item: ''
+    },
+    validate: (data) => {
+      let errors = {};
+
+      if (!data.item) {
+        errors.item = 'City is required.';
+      }
+
+      return errors;
+    },
+    onSubmit: (data) => {
+      data.item && show(formik.values.item.name + " " + formik.values.item.code);
+      formik.resetForm();
+    }
+  });
+
+  const accept = () => {
+    toast.current.show({ severity: 'info', summary: 'Confirmed', detail: 'Experiment ' + formik.values.item.code, life: 3000 });
+  };
+
+  const reject = () => {
+    // toast.current.show({ severity: 'warn', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
+  };
+
+  const confirm1 = (event) => {
+    confirmPopup({
+      target: event.currentTarget,
+      message: 'Are you sure you want to launch?',
+      icon: 'pi pi-exclamation-triangle',
+      accept,
+      reject
+    });
+  };
   return (
-      <NavigationBar toast={toast} />
+    <NavigationBar toast={toast} confirm1={confirm1} formik={formik} />
   )
 }

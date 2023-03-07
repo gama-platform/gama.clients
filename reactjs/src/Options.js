@@ -6,8 +6,8 @@ import { Button } from 'reactstrap';
 import { Dropdown } from 'primereact/dropdown';
 
 
-const options_server = [{ value: "/Users/hqn88/git/gama", label: 'macos' }];
-const options_model = [];
+const options_server = [{ value: "ws://51.255.46.42:6001", label: 'ovh' }];
+const options_model = [{ value: "/Users/hqn88/git/gama", label: 'mym1' }]; 
 const cities = [
   { name: 'New York', code: 'NY' },
   { name: 'Rome', code: 'RM' },
@@ -76,12 +76,13 @@ class OptionsBar extends React.Component {
     this.checkConnect = this.checkConnect.bind(this);
     this.fetchFile = this.fetchFile.bind(this);
     this.onFileChange = this.onFileChange.bind(this);
-    this.handleChange = this.handleChange.bind(this);
+    this.handleChangeServer = this.handleChangeServer.bind(this);
+    this.handleChangeModel = this.handleChangeModel.bind(this);
     this.tryAdd = this.tryAdd.bind(this);
     this.tryExperiment = this.tryExperiment.bind(this);
     this.tryEdit = this.tryEdit.bind(this);
-    this.trySave = this.trySave.bind(this);
-    this.tryLoad = this.tryLoad.bind(this);
+    // this.trySave = this.trySave.bind(this);
+    // this.tryLoad = this.tryLoad.bind(this);
     this.waiting = this.waiting.bind(this);
     this.tryConnect = this.tryConnect.bind(this);
     this.tryLaunch = this.tryLaunch.bind(this);
@@ -101,16 +102,29 @@ class OptionsBar extends React.Component {
       waiting: b
     }));
   }
+ 
 
-  handleChange(e) {
-    console.log(e.target.name);
+  handleChangeServer(e) {
+    // console.log(e);
     this.setState({
-      model_path: e.target.value
+      url: e.value
     }, () => {
       this.saveNToLS("Nav", this.state);
       // this.getWFromLS("Widget" + this.id);
     });
   }
+
+
+  handleChangeModel(e) {
+    // console.log(e);
+    this.setState({
+      model_path: e.value
+    }, () => {
+      this.saveNToLS("Nav", this.state);
+      // this.getWFromLS("Widget" + this.id);
+    });
+  }
+
   checkConnect() {
     this.setState((prevState) => ({
       connected: true
@@ -147,24 +161,14 @@ class OptionsBar extends React.Component {
     // c.map(({ mainButtonStyles, actionButtonStyles, position, event, alwaysShowTitle }, i) => (
     const renderComponents = (<><div>
       <table><tbody>
-        <tr><td><Button
-          onClick={this.tryLoad}
-        >
-          Load layout
-        </Button></td></tr>
-        <tr><td> <Button onClick={this.trySave}>
-          Export layout
-        </Button></td></tr>
-        <tr><td> <Button text="Add widget" onClick={this.tryAdd}>
-          Add widget
-        </Button></td></tr>
-        <tr><td><Button text="Edit layout" onClick={this.tryEdit}>
-          Edit layout
-        </Button></td></tr>
-        <tr><td>
+        
+      <tr><td> 
+          <Dropdown value={this.state.url} options={options_server} optionLabel="label" onChange={this.handleChangeServer}
+            editable placeholder="url" className="w-full md:w-14rem" />
+         
           <Button color="primary" style={{ width: "80px" }} size="sm" onClick={this.tryConnect}>Connect</Button>
 
-          <Dropdown value={this.state.model_path} options={options_server} optionLabel="label" onChange={this.handleChange}
+          <Dropdown value={this.state.model_path} options={options_model} optionLabel="label" onChange={this.handleChangeModel}
             editable placeholder="Root path" className="w-full md:w-14rem" />
         </td></tr>
       </tbody></table>
@@ -260,12 +264,12 @@ class OptionsBar extends React.Component {
       });
     }
   }
-  tryLoad() {
-    this.fileUploadInput.current.click();
-  }
-  trySave() {
-    getLocalstorageToFile("layout.txt");
-  }
+  // tryLoad() {
+  //   this.fileUploadInput.current.click();
+  // }
+  // trySave() {
+  //   getLocalstorageToFile("layout.txt");
+  // }
   tryAdd() {
     this.props.grid.current.addWidget();
   }
