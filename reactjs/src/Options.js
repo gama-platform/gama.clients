@@ -6,9 +6,9 @@ import { Dropdown } from 'primereact/dropdown';
 
 
 const options_server = [{ value: "ws://51.255.46.42:6001", label: 'ovh' }];
-const options_model = [{ value: "/Users/hqn88/git/gama", label: 'mym1' },
+const options_model = [{ value: "/Users/hqn88/git/gama/msi.gama.models/models", label: 'mym1' },
 {value: "C:/git/gama/msi.gama.models/models", label: 'win' },
-{value: "/var/www/github/gama", label: 'ovh'}]; 
+{value: "/var/www/github/gama/msi.gama.models/models", label: 'ovh'}]; 
 
 if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA) {
   const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET ? 'wss' : 'ws') + '://localhost:' + process.env.REACT_APP_LOCALHOST_GAMA_PORT;

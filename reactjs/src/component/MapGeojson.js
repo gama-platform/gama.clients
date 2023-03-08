@@ -106,39 +106,26 @@ class MapGeojson extends React.Component {
                     data: mymyself.geojson
                 });
 
-                var circle_defaultstyle = {
-                    'circle-radius': {
-                        'base': 1,
-                        'stops': [
-                            [12, 5],
-                            [22, 10]
-                        ]
-                    },
-                    'circle-color': ['match', ['get', v.attr], // get the property
-                        "susceptible", 'green',
-                        "latent", 'orange',
-                        "presymptomatic", 'red',
-                        "asymptomatic", 'red',
-                        "symptomatic", 'red',
-                        "removed", 'blue',
-                        'gray'],
+                // var circle_defaultstyle = {
+                //     'circle-radius': 1,
+                //     'circle-color': ['get', v.attr],
 
-                };
-                var fill_defaultstyle = {
-                    'fill-outline-color': "black",
-                    'fill-color': ['get', v.attr]
-                };
-                var line_defaultstyle = {
-                    'line-color': ['get', v.attr]
-                };
-                var defaultstyle = v.type === 'line' ? line_defaultstyle : (v.type === "fill" ? fill_defaultstyle : (circle_defaultstyle));
-                this.props.map.current.addLayer({
-                    'id': "S" + v.species,
-                    type: v.type ? (v.type) : 'circle',
-                    'source': "S" + v.species,
-                    'layout': {},
-                    'paint': v.style ? JSON.parse(v.style) : defaultstyle,
-                });
+                // };
+                // var fill_defaultstyle = {
+                //     'fill-outline-color': "black",
+                //     'fill-color': ['get', v.attr]
+                // };
+                // var line_defaultstyle = {
+                //     'line-color': ['get', v.attr]
+                // };
+                // var defaultstyle = v.type === 'line' ? line_defaultstyle : (v.type === "fill" ? fill_defaultstyle : (circle_defaultstyle));
+                // this.props.map.current.addLayer({
+                //     'id': "S" + v.species,
+                //     type: v.type ? (v.type) : 'circle',
+                //     'source': "S" + v.species,
+                //     'layout': {},
+                //     'paint': v.style ? JSON.parse(v.style) : defaultstyle,
+                // });
             });
         });
 
@@ -213,6 +200,35 @@ class MapGeojson extends React.Component {
                     myself.geojson = null;
 
                     myself.geojson = tmp;
+
+                    if (!myself.props.map.current.style.getLayer("S" + species1Name)) {
+                        // console.log("layer added");
+                        // addLayer(tmp.features[0].geometry.type, key);
+
+                        var circle_defaultstyle = {
+                            'circle-radius': 5,
+                            'circle-color': ['get', attribute1Name],
+
+                        };
+                        var fill_defaultstyle = {
+                            'fill-outline-color': "black",
+                            'fill-color': ['get', attribute1Name]
+                        };
+                        var line_defaultstyle = {
+                            'line-color': ['get', attribute1Name]
+                        };
+                        var gtype = myself.geojson.features[0].geometry.type;
+                        gtype = (gtype === 'LineString' ? 'line' : (gtype === 'Point' ? 'circle' : ('fill')));
+                        var defaultstyle = gtype === 'line' ? line_defaultstyle : (gtype === "fill" ? fill_defaultstyle : (circle_defaultstyle));
+
+                        myself.props.map.current.addLayer({
+                            'id': "S" + species1Name,
+                            type: gtype,
+                            'source': "S" + species1Name,
+                            'layout': {},
+                            'paint': defaultstyle,
+                        });
+                    }
                     if (myself.props.map.current.getSource("S" + species1Name))
                         myself.props.map.current.getSource("S" + species1Name).setData(myself.geojson);
                 }

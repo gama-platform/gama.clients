@@ -1,5 +1,7 @@
 
 export const models = [
+    // { name: 'Model 05.gaml|road_traffic', code: 'Tutorials/Road Traffic/models/Model 05.gaml|road_traffic' },
+
     // { name: 'Clean Line Network.gaml|clean_network', code: 'Data/Data Cleaning/models/Clean Line Network.gaml|clean_network' },
     // { name: 'Save Graphs.gaml|main', code: 'Data/Data Exportation/models/Save Graphs.gaml|main' },
     // { name: 'Save to ASC.gaml|main', code: 'Data/Data Exportation/models/Save to ASC.gaml|main' },

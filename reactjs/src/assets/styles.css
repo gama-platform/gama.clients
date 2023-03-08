@@ -2,6 +2,9 @@ body {
   background: #f0f3f5;
   padding-bottom: 30px;
 } 
+.mapboxgl-ctrl-logo {
+  display: none !important;
+}
 .form-inline {  
   display: flex;
   flex-flow: row wrap;
