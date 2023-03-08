@@ -27,19 +27,18 @@ import 'primeicons/primeicons.css';                                 // icons
 //   zIndex:9999999
 // };
 var json = {
-  global: { "tabEnableFloat": true },
+  global: { "tabEnableFloat": true, "tabEnableRenderOnDemand": false },
 
   "borders": [
     {
       "type": "border",
-      "selected": 1,
+      "selected": 0,
       "location": "left",
       "children": [
         {
           "type": "tab",
           "id": "#24",
           "name": "Navigation",
-          weight: 75,
           "component": "Navigation",
           "enableClose": false
         },
@@ -55,33 +54,33 @@ var json = {
         }
       ]
     },
-    {
-      "type": "border",
-      "selected": -1,
-      "location": "bottom",
-      "children": [
-        {
-          "type": "tab",
-          "id": "#2",
-          "name": "Activity Blotter",
-          "component": "grid",
-          "config": {
-            "id": "1"
-          },
-          "enableClose": false
-        },
-        {
-          "type": "tab",
-          "id": "#1",
-          "name": "Execution Blotter",
-          "component": "grid",
-          "config": {
-            "id": "1"
-          },
-          "enableClose": false
-        }
-      ]
-    }
+    // {
+    //   "type": "border",
+    //   "selected": -1,
+    //   "location": "bottom",
+    //   "children": [
+    //     {
+    //       "type": "tab",
+    //       "id": "#2",
+    //       "name": "Activity Blotter",
+    //       "component": "grid",
+    //       "config": {
+    //         "id": "1"
+    //       },
+    //       "enableClose": false
+    //     },
+    //     {
+    //       "type": "tab",
+    //       "id": "#1",
+    //       "name": "Execution Blotter",
+    //       "component": "grid",
+    //       "config": {
+    //         "id": "1"
+    //       },
+    //       "enableClose": false
+    //     }
+    //   ]
+    // }
   ],
   layout: {
     type: "row",
@@ -135,7 +134,7 @@ class App extends React.Component {
       </Container>;
     }
     if (component === "Navigation") {
-      return <NavigatorBar gama={this.gama}/>;
+      return <NavigatorBar gama={this.gama} />;
     }
     if (component === "Options") {
       return <OptionsBar gama={this.gama} />;

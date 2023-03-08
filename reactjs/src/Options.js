@@ -40,23 +40,23 @@ const default_Nav_state = {
   model_path: 'C:/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml@road_traffic'
 };
 
-const components = [
-  {
-    position: {
-      bottom: 0,
-      left: 0,
-    },
-    event: 'hover',
-    alwaysShowTitle: true,
-    mainButtonStyles: {
-      backgroundColor: 'dodgerblue', borderRadius: 8
-    },
-    actionButtonStyles: {
-      backgroundColor: 'dodgerblue', borderRadius: 8,
-      color: '#fff',
-    },
-  },
-];
+// const components = [
+//   {
+//     position: {
+//       bottom: 0,
+//       left: 0,
+//     },
+//     event: 'hover',
+//     alwaysShowTitle: true,
+//     mainButtonStyles: {
+//       backgroundColor: 'dodgerblue', borderRadius: 8
+//     },
+//     actionButtonStyles: {
+//       backgroundColor: 'dodgerblue', borderRadius: 8,
+//       color: '#fff',
+//     },
+//   },
+// ];
 
 class OptionsBar extends React.Component {
   constructor(param) {
@@ -86,6 +86,7 @@ class OptionsBar extends React.Component {
       connected: false,
       loaded: false
     }));
+    this.tryConnect();
     // this.waiting(true);
   }
 
@@ -117,9 +118,9 @@ class OptionsBar extends React.Component {
     });
   }
 
-  checkConnect() {
+  checkConnect(b) {
     this.setState((prevState) => ({
-      connected: true
+      connected: b
     }));
   }
 
@@ -147,8 +148,10 @@ class OptionsBar extends React.Component {
     reader.readAsText(file);
   }
 
-  render() {
-
+  render() { 
+    // if(!this.state.connected){
+    //   this.tryConnect();
+    // }
     // const renderComponents = c =>
     // c.map(({ mainButtonStyles, actionButtonStyles, position, event, alwaysShowTitle }, i) => (
     const renderComponents = (<><div>
@@ -179,12 +182,12 @@ class OptionsBar extends React.Component {
   }
 
   tryConnect() { 
-    var _this = this;
+    this.checkConnect(true);
+    var _this = this; 
     if (!this.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
         // this.waiting(true);
 
         this.props.gama.current.connect(this.state.url,this.state.model_path, () => {
-            // _this.checkConnect(true);
             // _this.waiting(false);
             console.log("connected");
         }, () => {
@@ -219,42 +222,7 @@ class OptionsBar extends React.Component {
     }
   }
 }
-
-function getLocalstorageToFile(fileName) {
-
-  /* dump local storage to string */
-
-  var a = {};
-  for (var i = 0; i < localStorage.length; i++) {
-    var k = localStorage.key(i);
-    var v = localStorage.getItem(k);
-    a[k] = v;
-  }
-
-  /* save as blob */
-
-  var textToSave = JSON.stringify(localStorage);
-  // console.log((localStorage));
-
-  var textToSaveAsBlob = new Blob([textToSave], {
-    type: "text/plain"
-  });
-  var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
-
-  /* download without button hack */
-
-  var downloadLink = document.createElement("a");
-  downloadLink.download = fileName;
-  downloadLink.innerHTML = "Download File";
-  downloadLink.href = textToSaveAsURL;
-  downloadLink.onclick = function (event) {
-    document.body.removeChild(event.target);
-  };
-  downloadLink.style.display = "none";
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-
-}
+ 
 
 export default OptionsBar;
 

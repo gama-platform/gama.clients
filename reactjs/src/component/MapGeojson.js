@@ -145,7 +145,7 @@ class MapGeojson extends React.Component {
                     [eee[3], eee[4]], // northeastern corner of the bounds
                 ];
                 myself.props.map.current.fitBounds(bbox, {
-                    padding: 50,
+                    padding: 10,
                     duration: 0,
                 });
                 // myself.props.map.current.flyTo({
@@ -166,9 +166,11 @@ class MapGeojson extends React.Component {
     }
 
     componentWillUnmount() {
-
-        window.$gama.outputs.delete(this);
-        // console.log(window.$gama.outputs);
+        console.log("componentWillUnmount");
+        this.state.sources=[];
+        // window.$gama.outputs.delete(this); 
+        window.$gama.outputs.clear();
+        console.log(window.$gama.outputs);
     }
     reset(c) {
 

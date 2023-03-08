@@ -233,7 +233,7 @@ class GAMA extends React.Component {
         this.execute(this.status, c);
         this.output_executor = setInterval(() => {
             this.updateOutputs();
-        }, 100);
+        }, 1);
     }
     resetOutputs() {
         this.pendingoutput = 0;
@@ -247,7 +247,7 @@ class GAMA extends React.Component {
         if (this.pendingoutput <= 0) {
             this.pendingoutput = this.outputs.size;
             this.outputs.forEach((values, keys) => {
-
+                // console.log(values);
                 values.update(function () { _this.pendingoutput-- });
             });
         }

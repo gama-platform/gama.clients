@@ -15,7 +15,8 @@ import { models } from './data.js';
 class NavigationBar extends React.Component {
   constructor(param) {
     super(param);
-    this.mySelRef = React.createRef();
+    // this.mySelRef = React.createRef();
+    this.item="";
     this.id = "m" + param.id;
     this.tryLaunch = this.tryLaunch.bind(this);
     this.tryGenParam = this.tryGenParam.bind(this);
@@ -26,12 +27,12 @@ class NavigationBar extends React.Component {
   render() {
 
     const toast = this.props.toast;
-    const formik = this.props.formik;
+    // const formik = this.props.formik;
     const confirm1 = this.props.confirm1;
 
 
     return (
-      <form onSubmit={formik.handleSubmit} className="flex flex-column align-items-left">
+      <form onSubmit={this.props.formik.handleSubmit} className="flex flex-column align-items-left">
         {/* <Button type="submit" label="Launch"  /> */}
         <Toast ref={toast} />
         <ConfirmPopup />
@@ -39,21 +40,19 @@ class NavigationBar extends React.Component {
           id="item"
           name="item"
           filter
-          value={formik.values.item}
+          value={this.props.formik.values.item}
           options={models}
           optionLabel="name"
           placeholder="Select a Experiment"
           onChange={(e) => {
-            formik.setFieldValue('item', e.value);
-            // console.log(e);
+            this.item= e.value.code;
+            // console.log(e.value);
+            // console.log(this.item);
             // show(e.value.code);
             // confirm1(e);
           }}
           onClick={(e) => {
             switch (e.detail) {
-              case 1:
-                // console.log("click");
-                break;
               case 2:
 
                 // console.log(this.props.gama); 
@@ -63,9 +62,6 @@ class NavigationBar extends React.Component {
                 // show(e.value.code);
                 this.tryLaunch();
                 // confirm1(e);
-                break;
-              case 3:
-                // console.log("triple click");
                 break;
             }
           }}
@@ -95,7 +91,7 @@ class NavigationBar extends React.Component {
       // } else {
       //     mm = mm.value;
       // }
-      var mm = this.props.gama.rootPath + "/" + this.props.formik.values.item.code;
+      var mm = this.props.gama.rootPath + "/" + this.item;
       this.props.gama.modelPath = mm.split("|")[0];
       this.props.gama.experimentName = mm.split("|")[1];
       // console.log( this.props.gama.modelPath);
