@@ -16,7 +16,7 @@ class NavigationBar extends React.Component {
   constructor(param) {
     super(param);
     // this.mySelRef = React.createRef();
-    this.item="";
+    this.item = "";
     this.id = "m" + param.id;
     this.tryLaunch = this.tryLaunch.bind(this);
     this.tryGenParam = this.tryGenParam.bind(this);
@@ -45,7 +45,7 @@ class NavigationBar extends React.Component {
           optionLabel="name"
           placeholder="Select a Experiment"
           onChange={(e) => {
-            this.item= e.value.code;
+            this.item = e.value.code;
             // console.log(e.value);
             // console.log(this.item);
             // show(e.value.code);
@@ -100,19 +100,22 @@ class NavigationBar extends React.Component {
       // var modelPath = 'C:/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
       // var experimentName = 'road_traffic';
       var _this = this;
-      this.props.gama.launch((e) => {
-        // console.log(e);
-        if (e.type === "CommandExecutedSuccessfully") {
-          window.$loaded = true;
-          // this.setState((prevState) => ({
-          //     loaded: true
-          // }));
-          this.props.toast.current.show({ severity: 'success', summary: 'Loaded', detail: mm });
-          console.log("loaded ");
-          _this.tryGenParam();
-        }
-        // this.props.grid.waiting(false);
-        // this.waiting(false);
+
+      this.props.gama.stop(() => {
+        this.props.gama.launch((e) => {
+          // console.log(e);
+          if (e.type === "CommandExecutedSuccessfully") {
+            window.$loaded = true;
+            // this.setState((prevState) => ({
+            //     loaded: true
+            // }));
+            this.props.toast.current.show({ severity: 'success', summary: 'Loaded', detail: mm });
+            console.log("loaded ");
+            _this.tryGenParam();
+          }
+          // this.props.grid.waiting(false);
+          // this.waiting(false);
+        });
       });
       // this.gama.current.launch(_this.tryPlay);
 

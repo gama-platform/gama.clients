@@ -54,7 +54,7 @@ class Grid extends React.Component {
 
   remParam() {
     // if (this.state.id_param > 0) {
-    console.log("remParam " + this.state.id_param);
+    // console.log("remParam " + this.state.id_param);
       // this.removeWidget(this.state.id_param);
       // this.setState((prevState) => ({
       //   widgets: prevState.widgets.filter((item) => item.id !== this.state.id_param),
@@ -111,7 +111,7 @@ class Grid extends React.Component {
     // saveToLS("Layout", this.state);
 
     // if (!this.state.id_param || this.state.id_param < 0) {
-      console.log("addParam " + this.state.id_param);
+      // console.log("addParam " + this.state.id_param);
       this.setState((prevState) => ({
         widgets: [...prevState.widgets, { id: prevState.widgetSequence + 1 }],
         id_param: prevState.widgetSequence + 1,

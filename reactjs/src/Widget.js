@@ -189,9 +189,9 @@ class Widget extends React.Component {
 
   tryStep() {
     if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
-      this.props.grid.props.gama.current.queue.length = 0; 
+      this.props.grid.props.gama.current.queue.length = 0;
       this.props.grid.props.gama.current.step(() => {
-        console.log("step"); 
+        console.log("step");
       });
     }
     // window.$gama.doConnect();
@@ -217,28 +217,25 @@ class Widget extends React.Component {
         pp.push({ "name": "" + value['key'], "value": v, "type": t });
       });
 
-      this.props.grid.props.gama.current.setParameters(pp); 
+      this.props.grid.props.gama.current.setParameters(pp);
       this.props.grid.props.gama.current.reload(() => {
-        console.log("reloaded"); 
+        console.log("reloaded");
       });
     }
     // window.$gama.doConnect();
   }
   tryClose() {
     if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
-      this.props.grid.props.gama.current.queue.length = 0;
-      this.props.grid.props.gama.current.pause(() => {
-        console.log("disconnected");
-        this.setState((prevState) => ({
-          loaded: false
-        }));
-        this.props.grid.props.gama.current.wSocket = null;
-        this.checkConnect(false);
-        this.props.grid.onShowClick(null);
+      this.props.grid.props.gama.current.stop(() => {
+        console.log("exp closed");
       });
-      // this.gama.current.reload(() => { console.log("reloaded"); });
     }
-    // window.$gama.doConnect();
+  }
+
+
+
+  componentWillUnmount() {
+    // this.tryClose();
   }
 
 }

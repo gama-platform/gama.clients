@@ -302,6 +302,14 @@ class GAMA extends React.Component {
         });
     }
 
+    stop(c) {
+        this.queue.length = 0;
+        clearInterval(this.output_executor);
+        this.status = "stop";
+        this.execute(this.status, () => {
+            if (c) c();
+        });
+    }
     addOutput(id, o) {
         this.outputs.set(id, o);
     }

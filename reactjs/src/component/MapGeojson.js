@@ -166,11 +166,11 @@ class MapGeojson extends React.Component {
     }
 
     componentWillUnmount() {
-        console.log("componentWillUnmount");
+        // console.log("componentWillUnmount");
         this.state.sources=[];
         // window.$gama.outputs.delete(this); 
         window.$gama.outputs.clear();
-        console.log(window.$gama.outputs);
+        // console.log(window.$gama.outputs);
     }
     reset(c) {
 
