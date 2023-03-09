@@ -44,6 +44,7 @@ class MapGeojson extends React.Component {
 
         this.createSources = this.createSources.bind(this);
         this.on_connected = this.on_connected.bind(this);
+        window.$gama.evalExpr("experiment.project_path", (ee)=>{console.log(ee)});
 
         window.$gama.evalExpr("species(world).microspecies", this.createSources);
         // gama.evalExpr("experiment.parameters.pairs", createParameters);
