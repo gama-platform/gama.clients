@@ -17,7 +17,11 @@ class NavigationBar extends React.Component {
     super(param);
     // this.mySelRef = React.createRef();
     this.item = "";
+    this.state = {
+      loading: false,
+    };
     this.id = "m" + param.id;
+    this.loading = false;
     this.tryLaunch = this.tryLaunch.bind(this);
     this.tryGenParam = this.tryGenParam.bind(this);
 
@@ -42,6 +46,7 @@ class NavigationBar extends React.Component {
           filter
           value={this.props.formik.values.item}
           options={models}
+          disabled={this.state.loading}
           optionLabel="name"
           placeholder="Select a Experiment"
           onChange={(e) => {
@@ -60,6 +65,9 @@ class NavigationBar extends React.Component {
                 // console.log(e.target);
                 // console.log(formik.values.item);
                 // show(e.value.code);
+                this.setState(({
+                  loading: true
+                }));
                 this.tryLaunch();
                 // confirm1(e);
                 break;
@@ -135,6 +143,10 @@ class NavigationBar extends React.Component {
           _this.props.gama.grid.remParam();
           _this.props.gama.grid.addWidget();
           _this.props.gama.grid.addParam(ee);
+
+          _this.setState(({
+            loading: false
+          }));
         }
       });
     }
