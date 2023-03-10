@@ -23,12 +23,12 @@ RUN cd /opt/gama-platform
 # 	unzip gama.zip -d /opt/gama-platform
 # COPY /mnt/c/git/gama/ummisco.gama.product/target/products/Gama1.7-linux.gtk.x86_64.tar.gz gama.tar.gz
 
-# COPY gama.tar.gz /opt/gama-platform 
-# RUN tar -zxf /opt/gama-platform/gama.tar.gz -C /opt/gama-platform
+COPY gama.tar.gz /opt/gama-platform 
+RUN tar -zxf /opt/gama-platform/gama.tar.gz -C /opt/gama-platform
 
 
-COPY gama.zip /opt/gama-platform 
-RUN unzip /opt/gama-platform/gama.zip -d /opt/gama-platform
+# COPY gama.zip /opt/gama-platform 
+# RUN unzip /opt/gama-platform/gama.zip -d /opt/gama-platform
 # Set absolute path
 RUN sed -i 's/$( dirname "${BASH_SOURCE\[0\]}" )/\/opt\/gama-platform\/headless/g' /opt/gama-platform/headless/gama-headless.sh
 

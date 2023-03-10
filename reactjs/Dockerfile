@@ -1,5 +1,5 @@
-FROM node:19
-
+FROM node:19-alpine
+#export DOCKER_BUILDKIT=0 &&  docker build . --file Dockerfile --tag gamaweb/ui:alpha 
 # Create app directory
 WORKDIR /usr/src/app
 
@@ -13,5 +13,12 @@ RUN npm install
 # Bundle app source
 COPY . .
 
+RUN npm run build
+
+RUN npm install -g serve
+
+RUN rm -rf node_modules
 EXPOSE 3000
-CMD [ "npm", "run", "ostart" ]
+# CMD [ "npm", "run", "ostart" ]
+
+CMD ["serve", "-s", "build"]
