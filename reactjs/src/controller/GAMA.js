@@ -41,7 +41,7 @@ class GAMA extends React.Component {
                 }
             ]
         };
-
+        this.editor=null;
         window.$gama = this;
         // this.connect(this.on_connected, this.on_disconnected);
 
@@ -149,7 +149,7 @@ class GAMA extends React.Component {
     evalExpr(q, c, es) {
 
         var cmd = {
-            "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
+            // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "expression",
             "model": this.modelPath,
             "experiment": this.experimentName,
@@ -161,6 +161,48 @@ class GAMA extends React.Component {
             "escaped": es ? es : false,
             "sync": true,
             "expr": q,
+            "callback": c
+        };
+        // console.log("eval " + cmd.expr);
+        this.requestCommand(cmd);
+    }
+    
+    push(f,cnt, c, es) {
+        var cmd = {
+            // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
+            "type": "fetch",
+            "access":"up",
+            "content":cnt,
+            "model": this.modelPath,
+            "experiment": this.experimentName,
+            "socket_id": this.socket_id,
+            "exp_id": this.exp_id,
+            "console": false,
+            "status": false,
+            "dialog": false,
+            "escaped": es ? es : false,
+            "sync": true,
+            "file": f,
+            "callback": c
+        };
+        // console.log("eval " + cmd.expr);
+        this.requestCommand(cmd);
+    }
+    fetch(f, c, es) {
+        var cmd = {
+            // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
+            "type": "fetch",
+            "access":"down",
+            "model": this.modelPath,
+            "experiment": this.experimentName,
+            "socket_id": this.socket_id,
+            "exp_id": this.exp_id,
+            "console": false,
+            "status": false,
+            "dialog": false,
+            "escaped": es ? es : false,
+            "sync": true,
+            "file": f,
             "callback": c
         };
         // console.log("eval " + cmd.expr);

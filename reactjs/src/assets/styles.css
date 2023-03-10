@@ -117,6 +117,13 @@ body {
   color: rgb(145, 145, 145);
   margin-right: 10px;
 }
+
+.card1 {
+  background: var(--surface-card);
+  padding: 2rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
 .card {
   border: none;
 }

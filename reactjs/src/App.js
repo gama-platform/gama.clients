@@ -7,6 +7,7 @@ import { Container } from "reactstrap";
 import Grid from "./Grid";
 import OptionsBar from "./Options";
 import NavigatorBar from "./Navigator";
+import ModelingBar from "./Modeling";
 // import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 // import 'react-tabs/style/react-tabs.css';
 import * as FlexLayout from "flexlayout-react";
@@ -86,20 +87,27 @@ var json = {
     type: "row",
     // weight: 100,
     children: [
-      // {
-      //   type: "tabset",
-      //   weight: 75,
-      //   children: [
-      //     {
-      //       type: "tab",
-      //       name: "Modeling",
-      //       component: "Modeling",
-      //     }
-      //   ]
-      // },
+      {
+        type: "tabset",
+        weight: 75,
+        children: [
+          {
+            type: "tab",
+            name: "Modeling",
+            component: "Modeling",
+            "enableClose": false
+          }
+        ]
+      },
       {
         type: "tabset",
         children: [
+          // {
+          //   type: "tab",
+          //   name: "Modeling",
+          //   component: "Modeling",
+          //   "enableClose": false
+          // },
           {
             type: "tab",
             name: "Simulation",
@@ -120,6 +128,7 @@ class App extends React.Component {
       model: FlexLayout.Model.fromJson(json)
     };
     this.gama = React.createRef();
+    this.editor = React.createRef();
   }
 
 
@@ -132,6 +141,9 @@ class App extends React.Component {
         <Grid gama={this.gama}></Grid>
 
       </Container>;
+    }
+    if (component === "Modeling") {
+      return <ModelingBar gama={this.gama} />;
     }
     if (component === "Navigation") {
       return <NavigatorBar gama={this.gama} />;
