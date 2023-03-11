@@ -148,7 +148,7 @@ class OptionsBar extends React.Component {
     };
     reader.readAsText(file);
   }
-
+  
   render() { 
     // if(!this.state.connected){
     //   this.tryConnect();
@@ -167,6 +167,9 @@ class OptionsBar extends React.Component {
           <Dropdown value={this.state.model_path} options={options_model} optionLabel="label" onChange={this.handleChangeModel}
             editable placeholder="Root path" className="w-full md:w-14rem" />
         </td></tr>
+        <tr><td><button style={{ width: 200, height: 40, textAlign: 'center' }} onClick={this.props.login.logout}>
+            Logout
+          </button></td></tr>
       </tbody></table>
 
 

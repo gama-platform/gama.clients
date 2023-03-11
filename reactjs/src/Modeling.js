@@ -19,7 +19,8 @@ class Modeling extends React.Component {
     };
     this.id = "m" + param.id;
     this.loading = false;
-    this.props.gama.editor = this; 
+    // console.log(this.props);
+    // this.props.editor = this; 
   }
 
 
@@ -174,7 +175,8 @@ export default (props) => {
     return isFormFieldInvalid(name) ? <small className="p-error">{formik.errors[name]}</small> : <small className="p-error">&nbsp;</small>;
   };
 
+  // console.log(props);
   return (
-    <Modeling toast={toast} formik={formik} isFormFieldInvalid={isFormFieldInvalid} getFormErrorMessage={getFormErrorMessage} gama={props.gama.current} />
+    <Modeling toast={toast} formik={formik} isFormFieldInvalid={isFormFieldInvalid} getFormErrorMessage={getFormErrorMessage} gama={props.gama} />
   )
 }

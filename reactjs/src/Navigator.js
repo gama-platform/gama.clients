@@ -10,7 +10,7 @@ import { confirmPopup } from 'primereact/confirmpopup'; // To use confirmPopup m
 
 
 import { Toast } from 'primereact/toast';
-import { models } from './data.js';
+import { models } from './assets/data.js';
 
 class NavigationBar extends React.Component {
   constructor(param) {
@@ -148,6 +148,6 @@ export default (props) => {
   };
   // console.log(props.gama.current);
   return (
-    <NavigationBar toast={toast} confirm1={confirm1} formik={formik} gama={props.gama.current} />
+    <NavigationBar toast={toast} confirm1={confirm1} formik={formik} gama={props.gama} />
   )
 }

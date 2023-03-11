@@ -5,6 +5,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
   <meta name="theme-color" content="#000000" />
+  <meta name="google-signin-client_id" content="870967407366-30ujg0nn7i5gcjbn8p0monc5t2tbe4hs.apps.googleusercontent.com">
+
   <!--
       manifest.json provides metadata used when your web app is added to the
       homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
@@ -22,6 +24,18 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
   <title>GAMA demo</title>
+  <script src="https://apis.google.com/js/platform.js?onload=triggerGoogleLoaded" async defer></script>
+  <script type="text/javascript">
+      function triggerGoogleLoaded() {
+        console.log("google event loaded");
+          gapi.load('auth2', () => {
+              gapi.auth2.init().then(() => {
+                  // DO NOT ATTEMPT TO RENDER BUTTON UNTIL THE 'Init' PROMISE RETURNS
+                  window.dispatchEvent(new Event('google-loaded'));
+              });
+          });
+      }
+  </script>
   <link id="external-css" rel="stylesheet" type="text/css"
     href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" media="all">
   <link id="external-css" rel="stylesheet" type="text/css"
