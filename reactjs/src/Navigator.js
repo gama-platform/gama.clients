@@ -79,20 +79,20 @@ class NavigationBar extends React.Component {
     );
   }
 
-  tryEdit() {
-    if (this.props.gama.editor) {
+  tryEdit() { 
+    if (window.$gama.editor) {
 
-      var mm = this.props.gama.rootPath + "/" + this.item;
-      this.props.gama.modelPath = mm.split("|")[0];
+      var mm = window.$gama.rootPath + "/" + this.item;
+      window.$gama.modelPath = mm.split("|")[0];
       // console.log("edit " + this.props.gama.modelPath);
       // console.log(this.props.gama.editor.props.formik);
-      this.props.gama.fetch(this.props.gama.modelPath, (e) => {
+      this.props.gama.current.fetch(window.$gama.modelPath, (e) => {
         var ee = JSON.parse(e).content;
         // console.log(ee);
-        this.props.gama.editor.item=mm;
-        this.props.gama.editor.props.formik.resetForm();
-        this.props.gama.editor.props.formik.setFieldValue('path', mm);
-        this.props.gama.editor.props.formik.setFieldValue('description', ee);
+        window.$gama.editor.item=mm;
+        window.$gama.editor.props.formik.resetForm();
+        window.$gama.editor.props.formik.setFieldValue('path', mm);
+        window.$gama.editor.props.formik.setFieldValue('description', ee);
       });
 
     }

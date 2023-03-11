@@ -25,7 +25,6 @@ class TabLayout extends React.Component {
     // console.log(this.props.login);
     this.login=this.props.login;
     // this.props.gama.editor = this;
-    this.editor = React.createRef();
   }
 
   factory = (node) => {
@@ -39,10 +38,10 @@ class TabLayout extends React.Component {
       </Container>;
     }
     if (component === "Modeling") {
-      return <ModelingBar gama={this.props.gama} editor={this.editor}/>;
+      return <ModelingBar gama={this.props.gama} />;
     }
     if (component === "Navigation") {
-      return <NavigatorBar gama={this.props.gama} editor={this.editor} />;
+      return <NavigatorBar gama={this.props.gama}  />;
     }
     if (component === "Options") {
       return <OptionsBar gama={this.props.gama} login={this.props.login}/>;
@@ -51,6 +50,10 @@ class TabLayout extends React.Component {
   render() {
     // console.log(this.login);
     //   console.log(this.login?this.login.state.isLoggedIn:"" );
+    
+    // if(!this.props.login.isLoggedIn){
+    //   return "";
+    // }
     return (
       <div className="App">
         <Layout

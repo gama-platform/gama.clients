@@ -20,7 +20,8 @@ class Modeling extends React.Component {
     this.id = "m" + param.id;
     this.loading = false;
     // console.log(this.props);
-    // this.props.editor = this; 
+    // this.props.gama.editor = this; 
+    window.$gama.editor=this;
   }
 
 
@@ -67,7 +68,7 @@ export default (props) => {
   const toast = useRef(null);
 
   const show = () => {
-    toast.current.show({ severity: 'success', summary: 'Form Submitted', detail: "Saved" });
+    toast.current.show({ severity: 'success', summary: 'Model launch', detail: "Saved" });
   };
 
   const formik = useFormik({
@@ -85,7 +86,7 @@ export default (props) => {
     },
     onSubmit: (data) => {
       // data && show(); 
-      console.log(props.gama.current);
+      // console.log(props.gama.current);
       props.gama.current.push(props.gama.current.modelPath, data.description, (e) => {
         data && show();
         var ee = JSON.parse(e).content;
@@ -177,6 +178,6 @@ export default (props) => {
 
   // console.log(props);
   return (
-    <Modeling toast={toast} formik={formik} isFormFieldInvalid={isFormFieldInvalid} getFormErrorMessage={getFormErrorMessage} gama={props.gama} />
+    <Modeling toast={toast} formik={formik} isFormFieldInvalid={isFormFieldInvalid} getFormErrorMessage={getFormErrorMessage} gama={props.gama} editor={props.editor}/>
   )
 }
