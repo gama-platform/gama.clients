@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani&display=swap');
+
+@font-face {
+    font-family: 'NexaRust';
+    src: url('../../assests/fonts/NexaRustHandmade-Extended.otf');
+}
+
+.navfontfamily {
+    /* font-family: 'Marcellus', gotham; */
+    font-family: 'Rajdhani', gotham;
+    font-weight: 600;
+    font-size: 0.1rem !important;
+}
+
+.nav_ac {
+    font-family: 'NexaRust' !important;
+    padding: 5px 15px;
+    border: unset;
+    font-size: 1.25rem;
+    color: white !important;
+    line-height: 2;
+    height: 40px;
+    z-index: 1000;
+    text-shadow:
+        0 0 2px hsla(177, 100%, 5%, 1),
+        0 0 3px hsla(183, 98%, 49%, 0.3),
+        0 0 5px hsla(183, 98%, 49%, 0.3),
+        0 0 8px hsla(183, 98%, 49%, 0.3);
+}
+
+.myNavLink {
+    color: white;
+    font-weight: 500;
+    text-decoration: none;
+    position: relative;
+    transition: color 300ms ease 0.1s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9rem !important;
+    opacity: 0.7 !important;
+    letter-spacing: 0.16rem;
+}
+
+.myNavLink:hover,
+.myNavLink:active,
+.myNavLink:focus {
+    opacity: 1 !important;
+}
+
+.myNavLink::after {
+    top: 73%;
+    border-radius: 2em;
+    content: '';
+    position: absolute;
+    right: 8px;
+    left: 8px;
+    height: 4px;
+    background: rgb(0, 229, 255);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 400ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.myNavLink:hover::after,
+.myNavLink:active::after,
+.myNavLink:focus::after {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+.navbar {
+    background-color: rgb(18, 18, 18);
+    z-index: 900 !important;
+    position: fixed !important;
+    padding: 0.3rem 0rem 0.3rem 2rem !important;
+    font-size: 1.2rem !important;
+    backdrop-filter: blur(15px) !important;
+}
+
+.navbar-toggler {
+    position: relative !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    backdrop-filter: blur(3px) !important;
+    box-shadow: 0 0 3px 1px rgba(255, 255, 255, 0.305);
+}
+
+.navbar-toggler:focus,
+.navbar-toggler:active {
+    box-shadow: 0 0 5px 3px rgba(255, 255, 255, 0.305);
+    outline: 0 !important;
+}
+
+.navbar-nav .nav-link {
+    text-transform: uppercase !important;
+    color: white !important;
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
+}
+
+.nav-link {
+    padding: 0.8rem 1rem !important;
+}
+
+
+.navbar-nav .nav-item {
+    position: relative;
+    margin-left: 20px;
+}
+
+.navbar-nav .nav-item a {
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 767px) {
+    .nav-link {
+        padding: 0.7rem 1rem !important;
+    }
+}
