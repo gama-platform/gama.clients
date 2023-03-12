@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import classes from './App.module.css';
 import 'bootstrap/dist/css/bootstrap.min.css'
 
-import NavBar from './compenents/NavBar/NavBar';
+// import NavBar from './compenents/NavBar/NavBar';
 import ScrollToTop from './compenents/ScrollToTop/ScrollToTop';
 import LoadingSpinner from './compenents/LoadingSpinner/LoadingSpinner';
 
@@ -51,7 +51,7 @@ const App = () => {
 
     return (
         <div className={classes.App}>
-            <NavBar />
+            {/* <NavBar /> */}
             <Message />
             {/* <FooterFAB /> */}
             <ScrollToTop />

@@ -40,11 +40,11 @@ const AccountMenu = ({ setExpand }) => {
     }
 
     const loginHandler = () => {
-        setExpand(false);
+        // setExpand(false);
         navigator('/login')
     }
     const registerHandler = () => {
-        setExpand(false);
+        // setExpand(false);
         navigator('/register')
     }
     const logoutHandler = event => {
@@ -53,15 +53,15 @@ const AccountMenu = ({ setExpand }) => {
         dispatch(logout());
     }
     const accountHandler = () => {
-        setExpand(false);
+        // setExpand(false);
         navigator('/account')
     }
     const dashboardHandler = () => {
-        setExpand(false);
+        // setExpand(false);
         navigator('/dashboard')
     }
     const changePassHandler = () => {
-        setExpand(false);
+        // setExpand(false);
         navigator('/changePassword')
     }
 
@@ -74,7 +74,7 @@ const AccountMenu = ({ setExpand }) => {
                 Account
                 <span className="dropdown-caret"></span>
             </Nav.Link>
-            <Menu
+            {/* <Menu
                 anchorEl={anchorEl}
                 id="account-menu"
                 open={open}
@@ -108,8 +108,8 @@ const AccountMenu = ({ setExpand }) => {
                 }}
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            >
-                {loginState.loggedIn === true &&
+            > */}
+                {/* {loginState.loggedIn === true &&
                     <MenuItem onClick={accountHandler}>
                         <Avatar /> {loginState.username}
                     </MenuItem>
@@ -154,7 +154,7 @@ const AccountMenu = ({ setExpand }) => {
                         <LockOpen fontSize="small" />
                     </ListItemIcon>
                     Change Password
-                </MenuItem>
+                </MenuItem> */}
                 {loginState.loggedIn === true &&
                     <MenuItem onClick={logoutHandler}>
                         <ListItemIcon>
@@ -169,7 +169,7 @@ const AccountMenu = ({ setExpand }) => {
                         }
                     </MenuItem>
                 }
-            </Menu>
+            {/* </Menu> */}
         </Fragment>
     );
 }

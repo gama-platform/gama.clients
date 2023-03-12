@@ -1,0 +1,145 @@
+body {
+  background: #f0f3f5;
+  padding-bottom: 30px;
+} 
+.mapboxgl-ctrl-logo {
+  display: none !important;
+}
+.form-inline {  
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+}
+
+.form-inline label {
+  margin: 5px 10px 5px 0;
+}
+
+.form-inline input {
+  vertical-align: middle;
+  margin: 5px 10px 5px 0;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+
+.button-section {
+  margin: 3%;
+}
+.button {
+  padding: 10px 20px;
+  background-color: dodgerblue;
+  border: 1px solid #ddd;
+  color: white;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: royalblue;
+}
+
+.remove {
+  background-color: rgb(192, 53, 53);
+}
+.remove:hover {
+  background-color: rgb(187, 43, 43);
+}
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.App {
+  font-family: "Open Sans", sans-serif;
+  text-align: center;
+}
+
+.toolBar {
+  text-align: left;
+}
+
+.toolBar button {
+  margin: 0 5px 0 5px;
+}
+
+.widget {
+  background: white;
+  border-radius: 0.25em;
+  box-shadow: 0 0 0.7142857142857143rem #cccccc;
+  padding: 0px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.navBar {
+  background: white;
+  margin-bottom: 15px;
+  -webkit-box-shadow: 1px 2px 5px 0px rgba(0, 0, 0, 0.4);
+  -moz-box-shadow: 1px 2px 5px 0px rgba(0, 0, 0, 0.4);
+  box-shadow: 1px 2px 5px 0px rgba(0, 0, 0, 0.4);
+}
+
+.navBar a {
+  color: rgb(100, 100, 100) !important;
+}
+
+.closeBtn {
+  padding: 0px;
+  margin: 0px;
+  /* border-radius: 30px; */
+  height: 30px;
+  width: 30px;
+  float: left;
+  font-size:larger;
+  vertical-align: middle;
+}
+
+.widgetHeader { 
+  width: 100%;
+  text-align: left;
+  border-bottom: 0px solid #eee;
+	z-index: 1000;  
+	position: absolute;
+}
+
+.dragHandle {
+  display: inline-block;
+  width: 100%;
+  cursor: move;
+  border-radius: 0.5em;
+  padding: 6px;
+  text-align: left;
+  font-size: normal;
+  color: rgb(145, 145, 145);
+}
+
+.dragIcon {
+  font-size: 15px;
+  color: rgb(145, 145, 145);
+  margin-right: 10px;
+}
+
+.card1 {
+  background: var(--surface-card);
+  padding: 2rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+.card {
+  border: none;
+}
+
+.chartContainer {
+  height: 300px;
+  width: 100%;
+}
+
+.mscroll{
+  overflow:auto;
+}
+
+.singleM { 
+  vertical-align: middle;
+  margin: 5px 10px 5px 0;
+  padding: 10px;
+  background-color: #fff; 
+}
