@@ -168,6 +168,7 @@ class GAMA extends React.Component {
     }
     
     push(f,cnt, c, es) {
+        this.modelPath=f;
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "fetch",
@@ -188,7 +189,8 @@ class GAMA extends React.Component {
         // console.log("eval " + cmd.expr);
         this.requestCommand(cmd);
     }
-    fetch(f, c, es) {
+    fetch(f, c, es) {        
+        this.modelPath=f;
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "fetch",

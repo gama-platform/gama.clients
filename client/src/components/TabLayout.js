@@ -1,4 +1,4 @@
-import React from 'react'
+import React,{useState} from 'react'
 
 // import { Container } from "reactstrap";
 // import Grid from "./Grid";
@@ -26,8 +26,9 @@ function TabLayout(props) {
   //     // console.log(this.props.login);
   //     this.login=this.props.login;
   //     // this.props.gama.editor = this;
-  //   }
-
+  //   } 
+  const child1Method_ref = React.useRef(null);
+ 
   const factory = (node) => {
     var component = node.getComponent();
 
@@ -39,10 +40,10 @@ function TabLayout(props) {
     //   </Container>;
     // }
     if (component === "Modeling") {
-      return <ModelingBar gama={props.gama} />;
+      return <ModelingBar gama={props.gama} child1Method_ref={child1Method_ref} />;
     }
     if (component === "Navigation") {
-      return <NavigatorBar gama={props.gama} />;//gama={this.props.gama}
+      return <NavigatorBar gama={props.gama} child1Method_ref={child1Method_ref}/>;//gama={this.props.gama}
     }
     if (component === "Options") {
       return <OptionsBar gama={props.gama} />;//

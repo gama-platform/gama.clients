@@ -1,4 +1,4 @@
-import React, { useRef,useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import 'primereact/resources/themes/lara-light-indigo/theme.css';   // theme
 import 'primereact/resources/primereact.css';                       // core css
 import 'primeicons/primeicons.css';                                 // icons 
@@ -25,16 +25,6 @@ function Modeling(props) {
   //     window.$gama.editor=this;
   //   }
 
-
-
-  useEffect(() => {
-    if (!connected) {
-      setTimeout(() => {
-        tryConnect();
-      }, 1);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected]);
 
   const toast = useRef(null);
 
@@ -124,13 +114,13 @@ function Modeling(props) {
   const tryGenParam = () => {
 
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
- 
+
       props.gama.current.evalExpr("experiment.parameters.pairs", function (ee) {
 
         if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
-          props.gama.current.grid.remParam();
-          props.gama.current.grid.addWidget();
-          props.gama.current.grid.addParam(ee);
+          // props.gama.current.grid.remParam();
+          // props.gama.current.grid.addWidget();
+          // props.gama.current.grid.addParam(ee);
 
           // _this.setState(({
           //   loading: false
@@ -145,6 +135,21 @@ function Modeling(props) {
   //   return isFormFieldInvalid(name) ? <small className="p-error">{formik.errors[name]}</small> : <small className="p-error">&nbsp;</small>;
   // };
 
+
+  const child1Method = React.useCallback((ee) => {
+    // console.log('I am a Child 1 method!!!');
+    console.log(ee);
+    // props.gama.editor.props.formik.resetForm();
+    // props.gama.editor.props.formik.setFieldValue('path', mm);
+    // props.gama.editor.props.formik.setFieldValue('description', ee);
+    formik.resetForm();
+    formik.setFieldValue('path', ee[0]);
+    formik.setFieldValue('description', ee[1]);
+  }, [formik]);
+
+  React.useEffect(() => {
+    props.child1Method_ref.current = child1Method
+  }, [child1Method, props.child1Method_ref]);
 
   return (
     <div className="card flex justify-content-center">

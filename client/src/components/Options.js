@@ -62,7 +62,7 @@ function OptionsBar(props) {
 
       props.gama.current.connect(serverURL, modelURL, () => {
         // _this.waiting(false);
-        console.log("connected");
+        console.log("connected "+modelURL);
         setConnected(true);
       }, () => {
         // _this.waiting(false);

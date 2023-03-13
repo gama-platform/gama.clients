@@ -56,21 +56,26 @@ function NavigationBar(props) {
   });
 
   const tryEdit = () => {
-    // console.log(props.gama);
+    // console.log(props);
     setLoading(false);
-    if (props.gama.editor) {
+    // if (props.gama.editor) {
+    if(props.child1Method_ref){
 
-      var mm = props.gama.rootPath + "/" + formik.values.item.code;
-      props.gama.modelPath = mm.split("|")[0];
+      var mm = props.gama.current.rootPath + "/" + formik.values.item.code;
+      
+      console.log(props.gama.current.rootPath);
+      props.gama.current.modelPath = mm.split("|")[0];
       // console.log("edit " + this.props.gama.modelPath);
       // console.log(this.props.gama.editor.props.formik);
-      props.gama.current.fetch(props.gama.modelPath, (e) => {
+      props.gama.current.fetch(props.gama.current.modelPath, (e) => {
         var ee = JSON.parse(e).content;
+        
+    props.child1Method_ref.current([mm,ee]);
         // console.log(ee);
-        props.gama.editor.item = mm;
-        props.gama.editor.props.formik.resetForm();
-        props.gama.editor.props.formik.setFieldValue('path', mm);
-        props.gama.editor.props.formik.setFieldValue('description', ee);
+        // props.gama.editor.item = mm;
+        // props.gama.editor.props.formik.resetForm();
+        // props.gama.editor.props.formik.setFieldValue('path', mm);
+        // props.gama.editor.props.formik.setFieldValue('description', ee);
       });
 
     }
