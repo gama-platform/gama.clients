@@ -1,11 +1,6 @@
-import React from 'react'
-import reactCSS from 'reactcss'
-import { SketchPicker } from 'react-color'
-import Charts from "./component/SeriesChart";
-import AreaCharts from "./component/AreaChart";
-import SingleCharts from "./component/SingleChart";
+import React from 'react' 
 import { Input, Card, Button, CardTitle } from "reactstrap";
-import BaseMap from "./component/BaseMap";
+import BaseMap from "./BaseMap";
 
 const default_Widget_state = {
   data: [],

@@ -1,14 +1,14 @@
 import React from 'react'
 
-import { Container } from "reactstrap";
-import Grid from "./Grid";
+// import { Container } from "reactstrap";
+// import Grid from "./Grid";
+// import ModelingBar from "./Modeling";
 import OptionsBar from "./Options";
 import NavigatorBar from "./Navigator";
-import ModelingBar from "./Modeling";
 
 import { Layout, Model } from "flexlayout-react";
 
-import { flex_layout_default } from './assets/layout.js';
+import { flex_layout_default } from '../assets/layout.js';
 import 'flexlayout-react/style/light.css';
 
 class TabLayout extends React.Component {
@@ -29,7 +29,7 @@ class TabLayout extends React.Component {
 
   factory = (node) => {
     var component = node.getComponent();
-    // var mygrid = React.createRef();
+    
     // if (component === "Simulation") {
     //   return <Container fluid={true}>
 

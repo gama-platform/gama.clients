@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef } from 'react'
 import 'primereact/resources/themes/lara-light-indigo/theme.css';   // theme
 import 'primereact/resources/primereact.css';                       // core css
 import 'primeicons/primeicons.css';                                 // icons 
@@ -10,7 +10,7 @@ import { confirmPopup } from 'primereact/confirmpopup'; // To use confirmPopup m
 
 
 import { Toast } from 'primereact/toast';
-import { models } from './assets/data.js';
+import { models } from '../assets/data.js';
 
 class NavigationBar extends React.Component {
   constructor(param) {

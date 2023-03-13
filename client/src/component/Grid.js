@@ -1,6 +1,5 @@
 import React from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
-import Experiment from "./Experiment";
 import Widget from "./Widget";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);

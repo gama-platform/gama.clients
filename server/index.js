@@ -28,7 +28,7 @@ const { Socket } = require('./socketHandler');
 // Establish Connection to Database
 connectDB();
 // Initiate All Docker Containers
-initAllDockerContainers();
+// initAllDockerContainers();
 
 // parse json request body
 app.use(express.json());
