@@ -28,7 +28,7 @@ if (process.env.REACT_APP_ENABLE_REMOTE_GAMA) {
   options_model.push({ value: process.env.REACT_APP_REMOTE_COMOKIT_GIT_WORKSPACE + '/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml@Closures', label: '[REMOTE] MESO - Closures' });
   options_model.push({ value: process.env.REACT_APP_REMOTE_COMOKIT_GIT_WORKSPACE + '/Macro/Models/Experiments/No containment.gaml@No Containment', label: '[REMOTE] MACRO - No Containment' });
 }
- 
+
 
 // const components = [
 //   {
@@ -47,25 +47,15 @@ if (process.env.REACT_APP_ENABLE_REMOTE_GAMA) {
 //     },
 //   },
 // ];
-function OptionsBar(props) { 
-  const [serverURL, setServerURL]= useLocalStorage("serverURL", "ws://51.255.46.42:6001");
+function OptionsBar(props) {
+  const [serverURL, setServerURL] = useLocalStorage("serverURL", "ws://51.255.46.42:6001");
   // = useState('ws://51.255.46.42:6001');
   const [modelURL, setModelURL] = useLocalStorage("modelURL", "C:/git/gama/msi.gama.models/models");
   // useState('/Users/hqn88/git/gama/msi.gama.models/models');
   const [connected, setConnected] = useState(false);
- 
-
-  useEffect(() => { 
-    if(!connected){
-      setTimeout(() => {
-        tryConnect();
-      }, 1);
-    }
-  }, [connected]);
- 
 
   const tryConnect = () => {
-    // console.log(props.gama)
+    console.log(props.gama)
     // this.checkConnect(true);
     if (!props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
       // this.waiting(true);
@@ -81,7 +71,17 @@ function OptionsBar(props) {
 
     }
     // window.$gama.doConnect();
-  } 
+  }
+
+
+  useEffect(() => {
+    if (!connected) {
+      setTimeout(() => {
+        tryConnect();
+      }, 1);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
 
   return (<>
     <AccountMenu />
@@ -92,7 +92,7 @@ function OptionsBar(props) {
           <Dropdown value={serverURL} options={options_server} optionLabel="label" onChange={(e) => setServerURL(e.target.value)}
             editable placeholder="url" className="w-full md:w-14rem" />
 
-          <Button color="primary" style={{ width: "80px" }} size="sm" onClick={tryConnect}>Connect</Button>
+          {!connected && <Button color="primary" style={{ width: "80px" }} size="sm" onClick={tryConnect}>Connect</Button>}
 
           <Dropdown value={modelURL} options={options_model} optionLabel="label" onChange={(e) => setModelURL(e.target.value)}
             editable placeholder="Root path" className="w-full md:w-14rem" />
