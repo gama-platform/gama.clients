@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-// import { Fab, Action } from 'react-tiny-fab';
+// import { Fab, Action } from 'react-tiny-fab'; 
 import 'react-tiny-fab/dist/styles.css';
 import { Button } from 'reactstrap';
 import { Dropdown } from 'primereact/dropdown';
+import { useLocalStorage } from '../utils';
 import AccountMenu from '../compenents/NavBar/AccountMenu/AccountMenu';
 
 
@@ -27,20 +28,7 @@ if (process.env.REACT_APP_ENABLE_REMOTE_GAMA) {
   options_model.push({ value: process.env.REACT_APP_REMOTE_COMOKIT_GIT_WORKSPACE + '/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml@Closures', label: '[REMOTE] MESO - Closures' });
   options_model.push({ value: process.env.REACT_APP_REMOTE_COMOKIT_GIT_WORKSPACE + '/Macro/Models/Experiments/No containment.gaml@No Containment', label: '[REMOTE] MACRO - No Containment' });
 }
-
-const default_Nav_state = {
-  // url: "ws://51.255.46.42:6001",
-  // model_path: "/var/www/github/COMOKIT-Model/COMOKIT/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml@Closures",
-  url: "ws://localhost:6868",
-  // model_path:"C:/git/PROJECT/COMOKIT-Model/COMOKIT/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml",
-  //C:/git/PROJECT/COMOKIT-Model/COMOKIT/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml@Closures
-  // exp_name: "Closures",
-
-  connected: false,
-  loading: false,
-  waiting: false,
-  model_path: 'C:/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml@road_traffic'
-};
+ 
 
 // const components = [
 //   {
@@ -59,129 +47,33 @@ const default_Nav_state = {
 //     },
 //   },
 // ];
-function OptionsBar() {
-  // class OptionsBar extends React.Component {
-  // constructor(param) {
-  //   super(param);
-  //   this.mySelRef = React.createRef();
-  //   this.id = "m" + param.id;
-  //   this.state = this.getNFromLS("Nav") || default_Nav_state;
-  //   // this.gama = param.gama;  
-  //   this.fileUploadInput = React.createRef();
-
-  //   this.checkConnect = this.checkConnect.bind(this);
-  //   this.fetchFile = this.fetchFile.bind(this);
-  //   this.onFileChange = this.onFileChange.bind(this);
-  //   this.handleChangeServer = this.handleChangeServer.bind(this);
-  //   this.handleChangeModel = this.handleChangeModel.bind(this);
-  //   this.tryConnect = this.tryConnect.bind(this);
-  //   // this.tryAdd = this.tryAdd.bind(this);
-  //   // this.tryExperiment = this.tryExperiment.bind(this);
-  //   // this.tryEdit = this.tryEdit.bind(this);
-  //   // this.trySave = this.trySave.bind(this);
-  //   // this.tryLoad = this.tryLoad.bind(this);
-  //   this.waiting = this.waiting.bind(this);
-  // }
-
-  // componentDidMount(props) {
-  //   this.setState((prevState) => ({
-  //     connected: false,
-  //     loaded: false
-  //   }));
-  //   this.tryConnect();
-  //   // this.waiting(true);
-  // }
-
-  // waiting(b) {
-  //   this.setState((prevState) => ({
-  //     waiting: b
-  //   }));
-  // }
-
-
-  // // handleChangeServer(e) {
-  // //   // console.log(e);
-  // //   this.setState({
-  // //     url: e.value
-  // //   }, () => {
-  // //     this.saveNToLS("Nav", this.state);
-  // //     // this.getWFromLS("Widget" + this.id);
-  // //   });
-  // // }
-  const [serverURL, setServerURL] = useState('ws://51.255.46.42:6001');
-  const [modelURL, setModelURL] = useState('/Users/hqn88/git/gama/msi.gama.models/models');
+function OptionsBar(props) { 
+  const [serverURL, setServerURL]= useLocalStorage("serverURL", "ws://51.255.46.42:6001");
+  // = useState('ws://51.255.46.42:6001');
+  const [modelURL, setModelURL] = useLocalStorage("modelURL", "C:/git/gama/msi.gama.models/models");
+  // useState('/Users/hqn88/git/gama/msi.gama.models/models');
   const [connected, setConnected] = useState(false);
-
-  const handleChangeServer = e => {
-    setServerURL({ serverURL: e.target.value }, () => {
-      // this.saveNToLS("Nav", this.state);
-    });
-  };
-
-  const handleChangeModel = e => {
-    setModelURL({ modelURL: e.target.value }, () => {
-      // this.saveNToLS("Nav", this.state);
-    });
-  };
+ 
 
   useEffect(() => { 
     if(!connected){
       setTimeout(() => {
         tryConnect();
-      }, 5);
+      }, 1);
     }
-  });
-
-  // handleChangeModel(e) {
-  //   // console.log(e);
-  //   this.setState({
-  //     model_path: e.value
-  //   }, () => {
-  //     this.saveNToLS("Nav", this.state);
-  //     // this.getWFromLS("Widget" + this.id);
-  //   });
-  // }
-
-  // checkConnect(b) {
-  //   this.setState((prevState) => ({
-  //     connected: b
-  //   }));
-  // }
-
-
-  // fetchFile() {
-  //   this.setState((prevState) => ({
-  //     loaded: true
-  //   }));
-  // }
-
-  // onFileChange(evt) {
-  //   // console.log(evt.target.files);
-
-  //   let files = evt.target.files;
-  //   if (!files.length) {
-  //     alert('No file select');
-  //     return;
-  //   }
-  //   let file = files[0];
-  //   let reader = new FileReader();
-  //   var _this = this;
-  //   reader.onload = function (e) {
-  //     _this.props.grid.current.reloadLayout(JSON.parse(e.target.result));
-  //   };
-  //   reader.readAsText(file);
-  // }
-
+  }, [connected]);
+ 
 
   const tryConnect = () => {
-    // setConnected(true);
+    // console.log(props.gama)
     // this.checkConnect(true);
-    if (!this.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
+    if (!props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
       // this.waiting(true);
 
-      this.props.gama.current.connect(this.state.url, this.state.model_path, () => {
+      props.gama.current.connect(serverURL, modelURL, () => {
         // _this.waiting(false);
         console.log("connected");
+        setConnected(true);
       }, () => {
         // _this.waiting(false);
         console.log("disconnected");
@@ -189,37 +81,7 @@ function OptionsBar() {
 
     }
     // window.$gama.doConnect();
-  }
-  // const getNFromLS = (key) => {
-  //   let ls = {};
-  //   if (global.localStorage) {
-  //     try {
-  //       ls = JSON.parse(global.localStorage.getItem("rdv_nav")) || {};
-  //       // console.log(ls);
-  //     } catch (e) {
-  //       console.log(e);
-  //     }
-  //   }
-  //   return ls[key];
-  // }
-
-  // const saveNToLS = (key, value) => {
-  //   if (global.localStorage) {
-  //     global.localStorage.setItem(
-  //       "rdv_nav",
-  //       JSON.stringify({
-  //         [key]: value
-  //       })
-  //     );
-  //   }
-  // }
-
-  // if(!this.state.connected){
-  //   this.tryConnect();
-  // }
-  // const renderComponents = c =>
-  // c.map(({ mainButtonStyles, actionButtonStyles, position, event, alwaysShowTitle }, i) => (
-  // const renderComponents =()=> (<></>);
+  } 
 
   return (<>
     <AccountMenu />
@@ -227,12 +89,12 @@ function OptionsBar() {
       <table><tbody>
 
         <tr><td>
-          <Dropdown value={serverURL} options={options_server} optionLabel="label" onChange={handleChangeServer}
+          <Dropdown value={serverURL} options={options_server} optionLabel="label" onChange={(e) => setServerURL(e.target.value)}
             editable placeholder="url" className="w-full md:w-14rem" />
 
           <Button color="primary" style={{ width: "80px" }} size="sm" onClick={tryConnect}>Connect</Button>
 
-          <Dropdown value={modelURL} options={options_model} optionLabel="label" onChange={handleChangeModel}
+          <Dropdown value={modelURL} options={options_model} optionLabel="label" onChange={(e) => setModelURL(e.target.value)}
             editable placeholder="Root path" className="w-full md:w-14rem" />
         </td></tr>
       </tbody></table>
@@ -242,6 +104,7 @@ function OptionsBar() {
 
 
 }
+
 
 
 export default OptionsBar;

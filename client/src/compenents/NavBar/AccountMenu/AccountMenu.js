@@ -1,75 +1,75 @@
-import React, { Fragment, useState } from 'react';
-import { useNavigate } from 'react-router';
+import React, { Fragment } from 'react';
+// import { useNavigate } from 'react-router';
 import { useDispatch, useSelector } from "react-redux"
 
 import {
-    Avatar,
-    Menu,
+    // Avatar,
+    // Menu,
     MenuItem,
     ListItemIcon,
-    Divider,
+    // Divider,
 } from '@mui/material';
 
 import {
-    Login,
+    // Login,
     Logout,
-    PersonAdd,
-    LockOpen
+    // PersonAdd,
+    // LockOpen
 } from '@mui/icons-material';
 
 import Nav from "react-bootstrap/Nav"
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUserSecret } from '@fortawesome/free-solid-svg-icons'
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+// import { faUserSecret } from '@fortawesome/free-solid-svg-icons'
 
 import { logout } from "../../../store/Auth/auth-actions"
 
 const AccountMenu = ({ setExpand }) => {
 
-    const [anchorEl, setAnchorEl] = useState(null);
-    const open = Boolean(anchorEl);
-    const navigator = useNavigate();
+    // const [ setAnchorEl] = useState(null);//anchorEl,
+    // const open = Boolean(anchorEl);
+    // const navigator = useNavigate();
 
     const loginState = useSelector(state => state.auth);
     const dispatch = useDispatch();
 
-    const handleClick = event => {
-        setAnchorEl(event.currentTarget);
-    }
-    const handleClose = () => {
-        setAnchorEl(null);
-    }
+    // const handleClick = event => {
+    //     // setAnchorEl(event.currentTarget);
+    // }
+    // const handleClose = () => {
+    //     setAnchorEl(null);
+    // }
 
-    const loginHandler = () => {
-        // setExpand(false);
-        navigator('/login')
-    }
-    const registerHandler = () => {
-        // setExpand(false);
-        navigator('/register')
-    }
+    // const loginHandler = () => {
+    //     // setExpand(false);
+    //     navigator('/login')
+    // }
+    // const registerHandler = () => {
+    //     // setExpand(false);
+    //     navigator('/register')
+    // }
     const logoutHandler = event => {
         event.stopPropagation();
         if (loginState.isLoading) return;
         dispatch(logout());
     }
-    const accountHandler = () => {
-        // setExpand(false);
-        navigator('/account')
-    }
-    const dashboardHandler = () => {
-        // setExpand(false);
-        navigator('/dashboard')
-    }
-    const changePassHandler = () => {
-        // setExpand(false);
-        navigator('/changePassword')
-    }
+    // const accountHandler = () => {
+    //     // setExpand(false);
+    //     navigator('/account')
+    // }
+    // const dashboardHandler = () => {
+    //     // setExpand(false);
+    //     navigator('/dashboard')
+    // }
+    // const changePassHandler = () => {
+    //     // setExpand(false);
+    //     navigator('/changePassword')
+    // }
 
     return (
         <Fragment>
             <Nav.Link
                 className='myNavLink'
-                onClick={handleClick}
+                // onClick={handleClick}
             >
                 Account
                 <span className="dropdown-caret"></span>

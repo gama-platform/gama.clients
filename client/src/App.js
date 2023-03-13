@@ -15,6 +15,7 @@ import Message from './compenents/Message/Message';
 import { messageActions } from './store/Message/message-slice'
 // import FooterFAB from './compenents/FooterFAB/FooterFAB';
 
+import GAMA from "./controller/GAMA";
 const Home = React.lazy(() => import('./pages/Home/Home'));
 const NotFound = React.lazy(() => import('./pages/NotFound/NotFound'));
 const Account = React.lazy(() => import('./pages/Account/Account'));
@@ -35,6 +36,7 @@ export const errorFormatter = err => {
     return <div style={{ display: 'inline', whiteSpace: 'pre-line' }}>{errorString}</div>;
 }
 
+const gama = React.createRef();
 const App = () => {
 
     const dispatch = useDispatch();
@@ -50,6 +52,7 @@ const App = () => {
     }, [dispatch]);
 
     return (
+        <><GAMA ref={gama}></GAMA>
         <div className={classes.App}>
             {/* <NavBar /> */}
             <Message />
@@ -59,15 +62,16 @@ const App = () => {
                 <Suspense
                     fallback={<div className='centered'><LoadingSpinner /></div>}>
                     <Routes>
-                        <Route exact path='/' element={!loginState.loggedIn ? <Customform pageType={LOGIN} /> : <Home />} />
+                        <Route exact path='/' element={!loginState.loggedIn ? <Customform pageType={LOGIN} /> : <Home gama={gama} />} />
                         <Route exact path='/login' element={!loginState.loggedIn ? <Customform pageType={LOGIN} /> : <Navigate replace to='/questions' />} />
                         <Route exact path='/register' element={!loginState.loggedIn ? <Customform pageType={REGISTER} /> : <Navigate replace to='/questions' />} />
-                        <Route exact path='/changePassword' element={<Customform pageType={CHANGEPASSWORD} />} /> <Route exact path='/account' element={<Account />} />
+                        <Route exact path='/changePassword' element={<Customform pageType={CHANGEPASSWORD} />} /> 
+                        <Route exact path='/account' element={<Account />} />
                         <Route exact path='*' element={<NotFound />} />
                     </Routes>
                 </Suspense>
             </div>
-        </div>
+        </div></>
     );
 }
 

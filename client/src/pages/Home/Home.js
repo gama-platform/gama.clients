@@ -1,11 +1,10 @@
 import React, { Fragment }  from 'react' 
 import TabLayout from '../../component/TabLayout';
 
-const Home = () => {
+const Home = (props) => {
     return (
         <Fragment>
- 
-            <TabLayout /> 
+            <TabLayout gama={props.gama}/> 
         </Fragment>
         // <div>Home
         //     <div>This site is still in development</div>

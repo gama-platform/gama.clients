@@ -10,26 +10,27 @@ import { Layout, Model } from "flexlayout-react";
 
 import { flex_layout_default } from '../assets/layout.js';
 import 'flexlayout-react/style/light.css';
+const model = Model.fromJson(flex_layout_default);
+function TabLayout(props) {
+  // class TabLayout extends React.Component {
+  //   constructor(param) {
+  //     super(param);
+  //     // this.mySelRef = React.createRef();
+  //     this.item = "";
+  //     this.state = {
+  //       model: Model.fromJson(flex_layout_default),
+  //       loading: false,
+  //     }; 
+  //     this.id = "m" + param.id;
+  //     this.loading = false;
+  //     // console.log(this.props.login);
+  //     this.login=this.props.login;
+  //     // this.props.gama.editor = this;
+  //   }
 
-class TabLayout extends React.Component {
-  constructor(param) {
-    super(param);
-    // this.mySelRef = React.createRef();
-    this.item = "";
-    this.state = {
-      model: Model.fromJson(flex_layout_default),
-      loading: false,
-    }; 
-    this.id = "m" + param.id;
-    this.loading = false;
-    // console.log(this.props.login);
-    this.login=this.props.login;
-    // this.props.gama.editor = this;
-  }
-
-  factory = (node) => {
+  const factory = (node) => {
     var component = node.getComponent();
-    
+
     // if (component === "Simulation") {
     //   return <Container fluid={true}>
 
@@ -41,27 +42,19 @@ class TabLayout extends React.Component {
     //   return <ModelingBar gama={this.props.gama} />;
     // }
     if (component === "Navigation") {
-      return <NavigatorBar gama={this.props.gama}  />;
+      return <NavigatorBar />;//gama={this.props.gama}
     }
     if (component === "Options") {
-      return <OptionsBar gama={this.props.gama} login={this.props.login}/>;
+      return <OptionsBar gama={props.gama} />;//
     }
   }
-  render() {
-    // console.log(this.login);
-    //   console.log(this.login?this.login.state.isLoggedIn:"" );
-    
-    // if(!this.props.login.isLoggedIn){
-    //   return "";
-    // }
-    return (
-      <div className="App">
-        <Layout
-          model={this.state.model}
-          factory={this.factory.bind(this)} />
-      </div>
-    );
-  }
+  return (
+    <div className="App">
+      <Layout
+        model={model}
+        factory={factory.bind(this)} />
+    </div>
+  );
 
 }
 export default TabLayout;
