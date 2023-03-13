@@ -1,5 +1,5 @@
 import React, { Fragment }  from 'react' 
-import TabLayout from '../../component/TabLayout';
+import TabLayout from '../../components/TabLayout';
 
 const Home = (props) => {
     return (

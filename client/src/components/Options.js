@@ -4,7 +4,7 @@ import 'react-tiny-fab/dist/styles.css';
 import { Button } from 'reactstrap';
 import { Dropdown } from 'primereact/dropdown';
 import { useLocalStorage } from '../utils';
-import AccountMenu from '../compenents/NavBar/AccountMenu/AccountMenu';
+import AccountMenu from '../components/NavBar/AccountMenu/AccountMenu';
 
 
 const options_server = [{ value: "ws://51.255.46.42:6001", label: 'ovh' }];
@@ -55,7 +55,7 @@ function OptionsBar(props) {
   const [connected, setConnected] = useState(false);
 
   const tryConnect = () => {
-    console.log(props.gama)
+    // console.log(props.gama)
     // this.checkConnect(true);
     if (!props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
       // this.waiting(true);

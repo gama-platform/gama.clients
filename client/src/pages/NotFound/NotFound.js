@@ -4,7 +4,7 @@ import classes from './styles.module.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGhost, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import SlidingBtn from '../../compenents/SlidingBtn/SlidingBtn'
+import SlidingBtn from '../../components/SlidingBtn/SlidingBtn'
 
 
 const NotFound = () => {

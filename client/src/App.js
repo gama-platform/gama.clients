@@ -5,12 +5,12 @@ import classes from './App.module.css';
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 // import NavBar from './compenents/NavBar/NavBar';
-import ScrollToTop from './compenents/ScrollToTop/ScrollToTop';
-import LoadingSpinner from './compenents/LoadingSpinner/LoadingSpinner';
+import ScrollToTop from './components/ScrollToTop/ScrollToTop';
+import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { getLoggedIn } from './store/Auth/auth-actions'
-import Message from './compenents/Message/Message';
+import Message from './components/Message/Message';
 
 import { messageActions } from './store/Message/message-slice'
 // import FooterFAB from './compenents/FooterFAB/FooterFAB';
@@ -19,7 +19,7 @@ import GAMA from "./controller/GAMA";
 const Home = React.lazy(() => import('./pages/Home/Home'));
 const NotFound = React.lazy(() => import('./pages/NotFound/NotFound'));
 const Account = React.lazy(() => import('./pages/Account/Account'));
-const Customform = React.lazy(() => import('./compenents/Customform/Customform'));
+const Customform = React.lazy(() => import('./components/Customform/Customform'));
 
 
 export const LOGIN = 'login', REGISTER = 'register', CHANGEPASSWORD = 'changePassword';

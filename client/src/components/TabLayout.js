@@ -2,7 +2,7 @@ import React from 'react'
 
 // import { Container } from "reactstrap";
 // import Grid from "./Grid";
-// import ModelingBar from "./Modeling";
+import ModelingBar from "./Modeling";
 import OptionsBar from "./Options";
 import NavigatorBar from "./Navigator";
 
@@ -38,11 +38,11 @@ function TabLayout(props) {
 
     //   </Container>;
     // }
-    // if (component === "Modeling") {
-    //   return <ModelingBar gama={this.props.gama} />;
-    // }
+    if (component === "Modeling") {
+      return <ModelingBar gama={props.gama} />;
+    }
     if (component === "Navigation") {
-      return <NavigatorBar />;//gama={this.props.gama}
+      return <NavigatorBar gama={props.gama} />;//gama={this.props.gama}
     }
     if (component === "Options") {
       return <OptionsBar gama={props.gama} />;//
