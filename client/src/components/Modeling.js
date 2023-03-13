@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import 'primereact/resources/themes/lara-light-indigo/theme.css';   // theme
 import 'primereact/resources/primereact.css';                       // core css
 import 'primeicons/primeicons.css';                                 // icons 
@@ -118,6 +118,8 @@ function Modeling(props) {
       props.gama.current.evalExpr("experiment.parameters.pairs", function (ee) {
 
         if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
+          
+        // props.editor_grid_link_ref.current(ee);
           // props.gama.current.grid.remParam();
           // props.gama.current.grid.addWidget();
           // props.gama.current.grid.addParam(ee);
@@ -136,9 +138,9 @@ function Modeling(props) {
   // };
 
 
-  const child1Method = React.useCallback((ee) => {
+  const editModelMethod = React.useCallback((ee) => {
     // console.log('I am a Child 1 method!!!');
-    console.log(ee);
+    // console.log(ee);
     // props.gama.editor.props.formik.resetForm();
     // props.gama.editor.props.formik.setFieldValue('path', mm);
     // props.gama.editor.props.formik.setFieldValue('description', ee);
@@ -148,8 +150,8 @@ function Modeling(props) {
   }, [formik]);
 
   React.useEffect(() => {
-    props.child1Method_ref.current = child1Method
-  }, [child1Method, props.child1Method_ref]);
+    props.editor_nav_link_ref.current = editModelMethod
+  }, [editModelMethod, props.editor_nav_link_ref]);
 
   return (
     <div className="card flex justify-content-center">

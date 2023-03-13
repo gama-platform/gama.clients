@@ -27,8 +27,8 @@ class MapGeojson extends React.Component {
             ]
         };
 
-        this.title = props.props.props.title;
-        this.mapdata = props.props.props.mapbox;
+        this.title = props.title;
+        this.mapdata = props.mapbox;
         this.state.title.text = (this.title);
         // let _this = this;
         // console.log( props.props.props.mapbox);

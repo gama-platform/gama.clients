@@ -1,4 +1,4 @@
-import React from 'react' 
+import React,{useState} from 'react'
 import { Input, Card, Button, CardTitle } from "reactstrap";
 import BaseMap from "./BaseMap";
 
@@ -10,59 +10,40 @@ const default_Widget_state = {
   param: [],
 
 };
-class Widget extends React.Component {
-  // static id;
-  constructor(param) {
-    super();
-    // if (typeof Widget.id === 'undefined') {
-    //   Widget.id = 0;
-    // } else {
-    //   Widget.id += 1;
-    // }
-    // this.id = "m" + Widget.id;
-    this._id = param.id;
-    this.id = "m" + param.id;
-    this.state = default_Widget_state;
-    this.grid = param.grid;
-    this.type = param.type;
-    this.state.chartType = param.type;
+function Widget(props) {
+  // class Widget extends React.Component {
+  //   // static id;
+  //   constructor(param) {
+  //     super();
+  //     // if (typeof Widget.id === 'undefined') {
+  //     //   Widget.id = 0;
+  //     // } else {
+  //     //   Widget.id += 1;
+  //     // }
+  //     // this.id = "m" + Widget.id;
+  //     this._id = param.id;
+  //     this.id = "m" + param.id;
+  //     this.state = default_Widget_state;
+  //     this.grid = param.grid;
+  //     this.type = param.type;
+  //     this.state.chartType = param.type;
 
-    this.fetchFile = this.fetchFile.bind(this);
-    this.tryPlay = this.tryPlay.bind(this);
-    this.tryPause = this.tryPause.bind(this);
-    this.tryStep = this.tryStep.bind(this);
-    this.tryReload = this.tryReload.bind(this);
-    this.tryClose = this.tryClose.bind(this);
-  }
+  //     this.fetchFile = this.fetchFile.bind(this);
+  //     this.tryPlay = this.tryPlay.bind(this);
+  //     this.tryPause = this.tryPause.bind(this);
+  //     this.tryStep = this.tryStep.bind(this);
+  //     this.tryReload = this.tryReload.bind(this);
+  //     this.tryClose = this.tryClose.bind(this);
+  //   }
 
-  componentDidUpdate(prevProps) {
+  const [_id, set_id] = useState(props.id);
+  const componentDidUpdate = (prevProps) => {
     if (this.props.triggerChildFunc !== prevProps.triggerChildFunc) {
       this.onParentTrigger();
     }
     if (this.props.triggerChildFunc2 !== prevProps.triggerChildFunc2) {
       this.onParentTrigger2();
     }
-  }
-
-  onParentTrigger() {
-    this.toEdit(0);
-
-    // Let's call the passed variable from parent if it's a function
-    if (this.props.triggerChildFunc && {}.toString.call(this.props.triggerChildFunc) === '[object Function]') {
-      this.props.triggerChildFunc();
-    }
-  }
-  onParentTrigger2() {
-    this.setState(
-
-    )
-
-    // Let's call the passed variable from parent if it's a function
-    if (this.props.triggerChildFunc2 && {}.toString.call(this.props.triggerChildFunc2) === '[object Function]') {
-      this.props.triggerChildFunc2();
-    }
-  }
-  componentDidMount(props) {
     // if (this._id === this.grid.state.id_param) {
     this.setState({
       param: this.grid.state.param_str,
@@ -74,7 +55,25 @@ class Widget extends React.Component {
     });
   }
 
-  fetchFile() {
+  const onParentTrigger = () => {
+    this.toEdit(0);
+
+    // Let's call the passed variable from parent if it's a function
+    if (this.props.triggerChildFunc && {}.toString.call(this.props.triggerChildFunc) === '[object Function]') {
+      this.props.triggerChildFunc();
+    }
+  }
+  const onParentTrigger2 = () => {
+    this.setState(
+
+    )
+
+    // Let's call the passed variable from parent if it's a function
+    if (this.props.triggerChildFunc2 && {}.toString.call(this.props.triggerChildFunc2) === '[object Function]') {
+      this.props.triggerChildFunc2();
+    }
+  }
+  const fetchFile = () => {
     // this.setState((prevState) => ({
     //   data: prevState.data,
     //   loading: true
@@ -92,115 +91,37 @@ class Widget extends React.Component {
 
   }
 
-  render() {
-    const widgetHeader = (
-      <table>
-        <tbody>
+  const tryPlay=()=> {
+    // console.log(props.gama.current);
+    if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
 
-          <tr>
-            <td width="100%"><div className="dragHandle">
-            </div></td>
-
-          </tr>
-        </tbody>
-      </table>);
-    if (this.grid.state && (this._id === this.grid.state.id_param)) {
-
-      const param_layouts = (this.grid.state && (this._id === this.grid.state.id_param)) ? this.state.param.map((e, index) => (
-        <tr key={e['key']} ><td width={50}>{e['key']}</td>
-          <td> <Input type="text" name={"param_" + e['key']}
-            value={e['value'] || ""} onChange={e => this.handleChangeCBBOX(index, e)}
-          />
-          </td>
-          <td width={50}><Input type="checkbox" value={e['value']} name={e['key']} id={"use_param_" + e['key']}
-            onChange={(e) => this.handleFuel(e)} /></td></tr>
-
-
-
-      )) : "";
-
-      return (
-        <><div className="widgetHeader">
-          {(this.grid.state && (this.grid.state.editing)) && widgetHeader}
-        </div>
-
-          <div
-            style={{
-              height: "300px",
-              width: "100%"
-            }}
-          >
-            <Card body><CardTitle>
-              {(this.grid.state && (this._id === this.grid.state.id_param)) && <div style={{ padding: 0 }}>Parameters</div>}
-            </CardTitle>
-
-              {(this.grid.state && (this._id === this.grid.state.id_param)) &&
-                <table width={'100%'}>
-                  <tbody>
-                    <tr><td colSpan={2}><div>
-                      <table><tbody><tr width="100%">
-                        {/* {this.state.loaded && <td><Button color="primary" size="sm" onClick={this.tryAutoStep}>↹</Button> </td>} */}
-
-                        {<td><Button color="primary" size="sm" onClick={this.tryPlay}>▷</Button> </td>}
-
-                        {<td><Button color="primary" size="sm" onClick={this.tryPause}>❚❚</Button> </td>}
-
-                        {<td><Button color="primary" size="sm" onClick={this.tryStep}>⏯</Button> </td>}
-
-                        {<td><Button color="primary" size="sm" onClick={this.tryReload}>↻</Button> </td>}
-
-                        {<td><Button color="primary" size="sm" onClick={this.tryClose}>✕</Button> </td>}
-                      </tr></tbody></table></div></td>
-                    </tr>
-                    {param_layouts}
-
-                  </tbody>
-                </table>}
-            </Card>
-          </div></>
-      );
-    }
-    if (this.props.updateMethod) {
-      this.Method();
-    }
-    return (<><div className="widgetHeader">
-      {(this.grid.state && (this.grid.state.editing)) && widgetHeader}
-    </div><BaseMap parent={this} props={this.state} /></>
-    );
-  }
-
-
-  tryPlay() {
-    // console.log(this.props.grid.props.gama.current);
-    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
-
-      this.props.grid.props.gama.current.queue.length = 0;
+      props.gama.current.queue.length = 0;
       // this.gama.current.autoStep(console.log("autoStep"));
       // this.gama.current.step(console.log("step"));
-      this.props.grid.props.gama.current.play(() => { console.log("play") });
+      props.gama.current.play(() => { console.log("play") });
     }
     // window.$gama.doConnect();
   }
 
-  tryStep() {
-    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
-      this.props.grid.props.gama.current.queue.length = 0;
-      this.props.grid.props.gama.current.step(() => {
+  const tryStep=()=> {
+    if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      props.gama.current.queue.length = 0;
+      props.gama.current.step(() => {
         console.log("step");
       });
     }
     // window.$gama.doConnect();
   }
-  tryPause() {
-    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
-      this.props.grid.props.gama.current.queue.length = 0;
-      this.props.grid.props.gama.current.pause();
+  const tryPause=()=> {
+    if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      props.gama.current.queue.length = 0;
+      props.gama.current.pause();
     }
     // window.$gama.doConnect();
   }
-  tryReload() {
-    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
-      this.props.grid.props.gama.current.queue.length = 0;
+  const tryReload=()=> {
+    if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      props.gama.current.queue.length = 0;
       var pp = [];
       this.props.grid.state.param_str_new.forEach((value, key, map) => {
         var v = value['value'];
@@ -212,26 +133,114 @@ class Widget extends React.Component {
         pp.push({ "name": "" + value['key'], "value": v, "type": t });
       });
 
-      this.props.grid.props.gama.current.setParameters(pp);
-      this.props.grid.props.gama.current.reload(() => {
+      props.gama.current.setParameters(pp);
+      props.gama.current.reload(() => {
         console.log("reloaded");
       });
     }
     // window.$gama.doConnect();
   }
-  tryClose() {
-    if (this.props.grid.props.gama.current && this.props.grid.props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
-      this.props.grid.props.gama.current.stop(() => {
+  const tryClose=()=> {
+    if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
+      props.gama.current.stop(() => {
         console.log("exp closed");
       });
     }
   }
 
-
-
-  componentWillUnmount() {
-    // this.tryClose();
+  const handleChangeCBBOX=(i, e)=> {
+    let formValues = this.state.param;
+    formValues[i]["value"] = e.target.value;
+    // console.log(formValues[i]);
+    this.setState({ param: formValues }, () => {
+      this.grid.updateParam(this.state.param);
+      this.saveWToLS("Widget" + this.id, this.state);
+      // this.getWFromLS("Widget" + this.id);
+    });
   }
+
+  const widgetHeader = (
+    <table>
+      <tbody>
+
+        <tr>
+          <td width="100%"><div className="dragHandle">
+          </div></td>
+
+        </tr>
+      </tbody>
+    </table>);
+  if ( ( _id === props.id_param)) {
+
+    const param_layouts = ( ( _id === props.id_param)) ? this.state.param.map((e, index) => (
+      <tr key={e['key']} ><td width={50}>{e['key']}</td>
+        <td> <Input type="text" name={"param_" + e['key']}
+          value={e['value'] || ""} onChange={e => handleChangeCBBOX(index, e)}
+        />
+        </td>
+        <td width={50}><Input type="checkbox" value={e['value']} name={e['key']} id={"use_param_" + e['key']}
+          onChange={(e) => this.handleFuel(e)} /></td></tr>
+
+
+
+    )) : "";
+
+    return (
+      <><div className="widgetHeader">
+        {widgetHeader}
+      </div>
+
+        <div
+          style={{
+            height: "300px",
+            width: "100%"
+          }}
+        >
+          <Card body><CardTitle>
+            {( ( _id === props.id_param)) && <div style={{ padding: 0 }}>Parameters</div>}
+          </CardTitle>
+
+            {(  ( _id === props.id_param)) &&
+              <table width={'100%'}>
+                <tbody>
+                  <tr><td colSpan={2}><div>
+                    <table><tbody><tr width="100%">
+                      {/* {this.state.loaded && <td><Button color="primary" size="sm" onClick={this.tryAutoStep}>↹</Button> </td>} */}
+
+                      {<td><Button color="primary" size="sm" onClick={tryPlay}>▷</Button> </td>}
+
+                      {<td><Button color="primary" size="sm" onClick={tryPause}>❚❚</Button> </td>}
+
+                      {<td><Button color="primary" size="sm" onClick={tryStep}>⏯</Button> </td>}
+
+                      {<td><Button color="primary" size="sm" onClick={tryReload}>↻</Button> </td>}
+
+                      {<td><Button color="primary" size="sm" onClick={tryClose}>✕</Button> </td>}
+                    </tr></tbody></table></div></td>
+                  </tr>
+                  {param_layouts}
+
+                </tbody>
+              </table>}
+          </Card>
+        </div></>
+    );
+  }else{
+    return (<><div className="widgetHeader">
+      {widgetHeader}
+    </div><BaseMap _id={_id} /></>
+    );
+  }
+  // if (this.props.updateMethod) {
+  //   this.Method();
+  // }
+
+
+
+
+  // componentWillUnmount() {
+  //   // this.tryClose();
+  // }
 
 }
 

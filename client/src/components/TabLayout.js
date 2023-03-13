@@ -1,7 +1,7 @@
-import React,{useState} from 'react'
+import React from 'react'
 
-// import { Container } from "reactstrap";
-// import Grid from "./Grid";
+import { Container } from "reactstrap";
+import Grid from "./Grid";
 import ModelingBar from "./Modeling";
 import OptionsBar from "./Options";
 import NavigatorBar from "./Navigator";
@@ -27,23 +27,24 @@ function TabLayout(props) {
   //     this.login=this.props.login;
   //     // this.props.gama.editor = this;
   //   } 
-  const child1Method_ref = React.useRef(null);
+  const editor_nav_link_ref = React.useRef(null);
+  const editor_grid_link_ref = React.useRef(null);
  
   const factory = (node) => {
     var component = node.getComponent();
 
-    // if (component === "Simulation") {
-    //   return <Container fluid={true}>
+    if (component === "Simulation") {
+      return <Container fluid={true}>
 
-    //     <Grid gama={this.props.gama}></Grid>
+        <Grid gama={props.gama} editor_grid_link_ref={editor_grid_link_ref} ></Grid>
 
-    //   </Container>;
-    // }
+      </Container>;
+    }
     if (component === "Modeling") {
-      return <ModelingBar gama={props.gama} child1Method_ref={child1Method_ref} />;
+      return <ModelingBar gama={props.gama} editor_nav_link_ref={editor_nav_link_ref} editor_grid_link_ref={editor_grid_link_ref} />;
     }
     if (component === "Navigation") {
-      return <NavigatorBar gama={props.gama} child1Method_ref={child1Method_ref}/>;//gama={this.props.gama}
+      return <NavigatorBar gama={props.gama} editor_nav_link_ref={editor_nav_link_ref}/>;//gama={this.props.gama}
     }
     if (component === "Options") {
       return <OptionsBar gama={props.gama} />;//

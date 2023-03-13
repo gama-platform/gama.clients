@@ -59,18 +59,18 @@ function NavigationBar(props) {
     // console.log(props);
     setLoading(false);
     // if (props.gama.editor) {
-    if(props.child1Method_ref){
+    if (props.editor_nav_link_ref) {
 
       var mm = props.gama.current.rootPath + "/" + formik.values.item.code;
-      
+
       console.log(props.gama.current.rootPath);
       props.gama.current.modelPath = mm.split("|")[0];
       // console.log("edit " + this.props.gama.modelPath);
       // console.log(this.props.gama.editor.props.formik);
       props.gama.current.fetch(props.gama.current.modelPath, (e) => {
         var ee = JSON.parse(e).content;
-        
-    props.child1Method_ref.current([mm,ee]);
+
+        props.editor_nav_link_ref.current([mm, ee]);
         // console.log(ee);
         // props.gama.editor.item = mm;
         // props.gama.editor.props.formik.resetForm();
