@@ -93,12 +93,20 @@ export const login = (username, email, password) => {
                 }))
                 return dispatch(authActions.setError({ error: response.error }));
             }
+            await dispatch(initDocker());
+            if (response.error) {
+                dispatch(messageActions.set({
+                    type: 'error',
+                    message: 'Init Docker Failed !',
+                    description: response.error
+                }))
+                return dispatch(authActions.setError({ error: response.error }));
+            }
             dispatch(messageActions.set({
                 type: 'success',
                 message: 'LogIn Successful !'
             }))
 
-            await dispatch(initDocker());
         } catch (error) {
             console.error(error);
             dispatch(authActions.setError({ error: JSON.stringify(error) }));

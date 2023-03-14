@@ -230,5 +230,6 @@ module.exports = {
     readFile, createFile,
     deleteFile, execCode,
     execCodeAgainstTestcases,
-    initAllDockerContainers
+    initAllDockerContainers,
+    initDockerContainer
 };
