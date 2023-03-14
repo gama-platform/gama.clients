@@ -21,7 +21,7 @@ const helmet = require("helmet");
 const hpp = require('hpp');
 const rateLimit = require("express-rate-limit");
 const { connectDB } = require('./DataBase/connectDB');
-const { initAllDockerContainers } = require('./CodeExecuter/codeExecutor_dockerv');
+// const { initAllDockerContainers } = require('./CodeExecuter/codeExecutor_dockerv');
 const { Socket } = require('./socketHandler');
 // const { loggingMiddleware } = require('./middlewares');
 

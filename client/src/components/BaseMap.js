@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import MapGeojson from "./MapGeojson";
 const tmp_geojson = {
   'type': 'FeatureCollection',
   'features': [
@@ -119,20 +118,20 @@ const BaseMap = (props) => {
 
   }
 
-  const on_disconnected = () => {
-    console.log("disconnected");
-  }
+  // const on_disconnected = () => {
+  //   console.log("disconnected");
+  // }
 
-  const componentWillUnmount = () => {
-    // console.log("componentWillUnmount");
-    sources = [];
-    // props.gama.current.outputs.delete(this); 
-    props.gama.current.outputs.clear();
-    // console.log(props.gama.current.outputs);
-  }
-  const reset = (c) => {
+  // const componentWillUnmount = () => {
+  //   // console.log("componentWillUnmount");
+  //   sources = [];
+  //   // props.gama.current.outputs.delete(this); 
+  //   props.gama.current.outputs.clear();
+  //   // console.log(props.gama.current.outputs);
+  // }
+  // const reset = (c) => {
 
-  }
+  // }
   const update = (c) => { 
     sources.forEach((v) => {
       singleUpdate( v.species, v.attr, c);

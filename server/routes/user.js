@@ -6,7 +6,7 @@ const {
     authProvider
 } = require('../middlewares');
 const {
-    loginController,
+    loginController,initDockerController,
     registerController,
     logoutController,
     loggedInController,
@@ -17,6 +17,7 @@ const { loggingMiddleware } = require('../middlewares');
 router.post('/login', loggingMiddleware, loginValidator, loginController);
 router.post('/register', loggingMiddleware, registerValidator, registerController);
 router.get('/logout', loggingMiddleware, logoutController);
+router.get('/initDocker', loggingMiddleware, initDockerController);
 router.get('/loggedIn', loggingMiddleware, loggedInController);
 router.put('/changePassword', loggingMiddleware, changePasswordController);
 

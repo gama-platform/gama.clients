@@ -28,13 +28,13 @@ function Grid(props) {
   //     this.waiting = this.waiting.bind(this);
   //     this.onShowClick = this.onShowClick.bind(this);
   //   }
-
-  const [widgets, setWidgets] = useState([]);
-  const [_layouts, setLayouts] = useState({});
-  const [widgetSequence, setwidgetSequence] = useState(0);
-  const [id_param, setid_param] = useState(-1);
-  const [param_str, setparam_str] = useState([]);
-  const [param_str_new, setparam_str_new] = useState([]);
+  const [state, setState] = useState(default_Layout);
+  // const [widgets, setWidgets] = useState([]);
+  // const [_layouts, setLayouts] = useState({});
+  // const [widgetSequence, setwidgetSequence] = useState(0);
+  // const [id_param, setid_param] = useState(-1);
+  // const [param_str, setparam_str] = useState([]);
+  // const [param_str_new, setparam_str_new] = useState([]);
 
 
   const onShowClick = (c) => {
@@ -54,8 +54,15 @@ function Grid(props) {
   // }
 
   const remParam = () => {
-    setWidgets([]);
-    setid_param(-1); 
+    // setWidgets([]);
+    // setid_param(-1);  
+    setState({
+      widgets: [],
+      id_param: -1,
+      //do not decrement sequence, since each new widget must
+      //have unique value
+      widgetSequence: state.widgetSequence
+    });
     // this.setState((prevState) => ({
     //   widgets: [],
     //   id_param: -1,
@@ -88,14 +95,16 @@ function Grid(props) {
       }
     });
     // t += '<tr><td> End Condition:</td><td> <input type="text" id="param_end_condition" value="cycle>1000"></td><td><input type="checkbox" value="1" id="use_param_end_condition" /></td></tr>';
-    setparam_str(parameters);
-    setparam_str_new(parameters);
-    // this.setState((prevState) => ({
-    //   param_str: parameters,
-    //   param_str_new: parameters
-    // }));
-    // saveToLS("Layout", this.state);
-
+    // setparam_str(parameters);
+    // setparam_str_new(parameters);
+    setState({
+      widgets: [...state.widgets, { id: state.widgetSequence + 1 }],
+      widgetSequence: state.widgetSequence + 1,
+      id_param: state.widgetSequence + 1,
+      //   widgetSequence: prevState.widgetSequence + 1
+      param_str: parameters,
+      param_str_new: parameters,
+    });
     // if (!this.state.id_param || this.state.id_param < 0) {
     // console.log("addParam " + this.state.id_param);
     // this.setState((prevState) => ({
@@ -103,14 +112,14 @@ function Grid(props) {
     //   id_param: prevState.widgetSequence + 1,
     //   widgetSequence: prevState.widgetSequence + 1
     // }));
-    setWidgets([...widgets, { id: widgetSequence + 1 }]);
-    setid_param(widgetSequence + 1);
-    setwidgetSequence(widgetSequence + 1);
+    // setwidgetSequence(widgetSequence+2);
+    // setWidgets([...widgets, { id: widgetSequence-1 }, { id: widgetSequence }]);
+    // setid_param(widgetSequence);
     // }
   }
 
   const updateParam = (ee) => {
-    setparam_str_new(ee);
+    // setparam_str_new(ee);
     // this.setState((prevState) => ({
     //   param_str_new: ee
     // }));
@@ -129,8 +138,14 @@ function Grid(props) {
     //   widgets: [...prevState.widgets, { id: prevState.widgetSequence + 1, type: 'geojson' }],
     //   widgetSequence: prevState.widgetSequence + 1
     // }));
-    setWidgets([...widgets, { id: widgetSequence + 1, type: 'geojson' }]);
-    setwidgetSequence(widgetSequence + 1);
+    // console.log("add " + widgetSequence);
+    // setwidgetSequence(widgetSequence + 1);
+    // console.log("add " + widgetSequence);
+    // setWidgets([...widgets, { id: widgetSequence, type: 'geojson' }]);
+    setState({
+      widgets: [...state.widgets, { id: state.widgetSequence + 1 }],
+      widgetSequence: state.widgetSequence + 1, 
+    });
   }
 
   const removeWidget = (id, conf) => {
@@ -145,8 +160,15 @@ function Grid(props) {
         // }));
       }
     } else {
-      setWidgets(widgets.filter((item) => item.id !== id));
-      setid_param(id === id_param ? -1 : id_param);
+      setState( {
+          widgets: state.widgets.filter((item) => item.id !== id),
+          id_param: id === state.id_param ? -1 : state.id_param,
+          //do not decrement sequence, since each new widget must
+          //have unique value
+          widgetSequence: state.widgetSequence
+        });
+      // setWidgets(widgets.filter((item) => item.id !== id));
+      // setid_param(id === id_param ? -1 : id_param);
 
       // this.setState((prevState) => ({
       //   widgets: prevState.widgets.filter((item) => item.id !== id),
@@ -160,7 +182,7 @@ function Grid(props) {
 
   const onLayoutChange = (layout, layouts) => {
     window.dispatchEvent(new Event("resize"));
-    setLayouts(layouts);
+    // setLayouts(layouts);
     // this.setState({
     //   layouts: layouts
     // });
@@ -169,10 +191,10 @@ function Grid(props) {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const launchModelMethod = ((ee) => {
-    
-          remParam();
-          addWidget();
-          addParam(ee);
+
+    remParam();
+    // addWidget();
+    addParam(ee);
   });
 
   React.useEffect(() => {
@@ -188,10 +210,10 @@ function Grid(props) {
     maxH: 10,
     maxW: 16
   };
-  const layouts = widgets.map((item) => (
+  const layouts = state.widgets.map((item) => (
     <div className="widget" key={item.id} data-grid={config}>
       <div className="mscroll" style={{ width: "100%", height: "100%" }}>
-        <Widget gama={props.gama} id={item.id} id_param={id_param} param={param_str}></Widget>
+        <Widget gama={props.gama} id={item.id} id_param={state.id_param} param={state.param_str}></Widget>
         {/* //triggerChildFunc={triggerFunc} triggerChildFunc2={triggerFunc2}  grid={this} id={item.id} type={item.type}*/}
       </div>
     </div>
@@ -211,7 +233,7 @@ function Grid(props) {
         cols={{ lg: 16, md: 16, sm: 8, xs: 4, xxs: 2 }}
         rowHeight={185}
         draggableHandle={".dragHandle"}
-        layouts={_layouts}
+        layouts={state._layouts}
         onLayoutChange={(layout, layouts) => onLayoutChange(layout, layouts)}
       >
         {/* {layoutsExperiment} */}

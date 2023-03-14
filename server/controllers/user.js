@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { dateTimeNowFormated, logger } = require('../utils');
 const { User } = require('../DataBase/database');
+const { initAllDockerContainers } = require('../CodeExecuter/codeExecutor_dockerv');
 
 const loginController = async (req, res) => {
     try {
@@ -67,6 +68,13 @@ const logoutController = (req, res) => {
     }).status(200).json({ msg: "Logged Out" });
 }
 
+const initDockerController = async (req, res) => {
+
+    await initAllDockerContainers(); 
+
+    return res.status(200).json({ msg: "inti docker" });
+}
+
 const loggedInController = async (req, res) => {
     try {
         if (!req.cookies || !req.cookies.token) return res.json(false);
@@ -118,7 +126,7 @@ const changePasswordController = async (req, res) => {
 }
 
 module.exports = {
-    loginController,
+    loginController,initDockerController,
     registerController,
     logoutController,
     loggedInController,

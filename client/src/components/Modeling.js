@@ -92,13 +92,11 @@ function Modeling(props) {
         props.gama.current.launch((e) => {
           // console.log(e);
           if (e.type === "CommandExecutedSuccessfully") {
-            window.$loaded = true;
+            // window.$loaded = true;
             // this.setState((prevState) => ({
             //     loaded: true
             // }));
-            toast.current.show({ severity: 'success', summary: 'Loaded', detail: mm });
-            console.log("loaded ");
-            tryGenParam();
+            tryGenParam(mm);
           }
           // this.props.grid.waiting(false);
           // this.waiting(false);
@@ -111,7 +109,7 @@ function Modeling(props) {
   }
 
 
-  const tryGenParam = () => {
+  const tryGenParam = (mm) => {
 
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
 
@@ -120,6 +118,8 @@ function Modeling(props) {
         if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
           
         props.editor_grid_link_ref.current(ee);
+        toast.current.show({ severity: 'success', summary: 'Loaded', detail: mm });
+        console.log("loaded ");
           // props.gama.current.grid.remParam();
           // props.gama.current.grid.addWidget();
           // props.gama.current.grid.addParam(ee);

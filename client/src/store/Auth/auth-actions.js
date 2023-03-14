@@ -16,7 +16,8 @@ export const getLoggedIn = () => {
                     credentials: 'include'
                 }
             ).then(data => data.json());
-            // console.log(response);
+            
+            // console.log(response1);
             dispatch(authActions.setLoggedIn({
                 loggedIn: response.status || false,
                 ...response
@@ -35,6 +36,32 @@ export const getLoggedIn = () => {
     };
 }
 
+export const initDocker = () => {
+    return async dispatch => { 
+        try { 
+            const response = await fetch(
+                `${SERVER_LINK}/api/user/initDocker`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'GET',
+                    credentials: 'include'
+                }
+            ).then(data => data.json());
+ 
+        } catch (error) {
+            console.error(error);
+            dispatch(authActions.setError({ error: JSON.stringify(error) }));
+            dispatch(messageActions.set({
+                type: 'error',
+                message: 'initDocker Failed !',
+                description: JSON.stringify(error)
+            }))
+        }  
+    }
+}
+ 
 export const login = (username, email, password) => {
     return async dispatch => {
         dispatch(messageActions.set({
@@ -69,6 +96,8 @@ export const login = (username, email, password) => {
                 type: 'success',
                 message: 'LogIn Successful !'
             }))
+
+            await dispatch(initDocker());
         } catch (error) {
             console.error(error);
             dispatch(authActions.setError({ error: JSON.stringify(error) }));
