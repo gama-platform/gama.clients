@@ -1,6 +1,8 @@
 import React, { Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
+import "./assets/rgl.css";
+import "./assets/styles.css";
 import classes from './App.module.css';
 import 'bootstrap/dist/css/bootstrap.min.css'
 

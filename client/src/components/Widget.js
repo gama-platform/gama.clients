@@ -1,4 +1,4 @@
-import React,{useState} from 'react'
+import React, { useState } from 'react'
 import { Input, Card, Button, CardTitle } from "reactstrap";
 import BaseMap from "./BaseMap";
 
@@ -37,42 +37,44 @@ function Widget(props) {
   //   }
 
   const [_id, set_id] = useState(props.id);
-  const componentDidUpdate = (prevProps) => {
-    if (this.props.triggerChildFunc !== prevProps.triggerChildFunc) {
-      this.onParentTrigger();
-    }
-    if (this.props.triggerChildFunc2 !== prevProps.triggerChildFunc2) {
-      this.onParentTrigger2();
-    }
-    // if (this._id === this.grid.state.id_param) {
-    this.setState({
-      param: this.grid.state.param_str,
-      chartType: this.type
-    }, () => {
+  // const [param, setParam] = useState([]);
 
-      // this.setState(this.getWFromLS("Widget" + this.id))
-      // this.getWFromLS("Widget" + this.id);
-    });
-  }
+  // const componentDidUpdate = (prevProps) => {
+  //   if (this.props.triggerChildFunc !== prevProps.triggerChildFunc) {
+  //     this.onParentTrigger();
+  //   }
+  //   if (this.props.triggerChildFunc2 !== prevProps.triggerChildFunc2) {
+  //     this.onParentTrigger2();
+  //   }
+  //   // if (this._id === this.grid.state.id_param) {
+  //   this.setState({
+  //     param: this.grid.state.param_str,
+  //     chartType: this.type
+  //   }, () => {
 
-  const onParentTrigger = () => {
-    this.toEdit(0);
+  //     // this.setState(this.getWFromLS("Widget" + this.id))
+  //     // this.getWFromLS("Widget" + this.id);
+  //   });
+  // }
 
-    // Let's call the passed variable from parent if it's a function
-    if (this.props.triggerChildFunc && {}.toString.call(this.props.triggerChildFunc) === '[object Function]') {
-      this.props.triggerChildFunc();
-    }
-  }
-  const onParentTrigger2 = () => {
-    this.setState(
+  // const onParentTrigger = () => {
+  //   this.toEdit(0);
 
-    )
+  //   // Let's call the passed variable from parent if it's a function
+  //   if (this.props.triggerChildFunc && {}.toString.call(this.props.triggerChildFunc) === '[object Function]') {
+  //     this.props.triggerChildFunc();
+  //   }
+  // }
+  // const onParentTrigger2 = () => {
+  //   this.setState(
 
-    // Let's call the passed variable from parent if it's a function
-    if (this.props.triggerChildFunc2 && {}.toString.call(this.props.triggerChildFunc2) === '[object Function]') {
-      this.props.triggerChildFunc2();
-    }
-  }
+  //   )
+
+  //   // Let's call the passed variable from parent if it's a function
+  //   if (this.props.triggerChildFunc2 && {}.toString.call(this.props.triggerChildFunc2) === '[object Function]') {
+  //     this.props.triggerChildFunc2();
+  //   }
+  // }
   const fetchFile = () => {
     // this.setState((prevState) => ({
     //   data: prevState.data,
@@ -91,7 +93,7 @@ function Widget(props) {
 
   }
 
-  const tryPlay=()=> {
+  const tryPlay = () => {
     // console.log(props.gama.current);
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
 
@@ -103,7 +105,7 @@ function Widget(props) {
     // window.$gama.doConnect();
   }
 
-  const tryStep=()=> {
+  const tryStep = () => {
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
       props.gama.current.queue.length = 0;
       props.gama.current.step(() => {
@@ -112,14 +114,14 @@ function Widget(props) {
     }
     // window.$gama.doConnect();
   }
-  const tryPause=()=> {
+  const tryPause = () => {
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
       props.gama.current.queue.length = 0;
       props.gama.current.pause();
     }
     // window.$gama.doConnect();
   }
-  const tryReload=()=> {
+  const tryReload = () => {
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
       props.gama.current.queue.length = 0;
       var pp = [];
@@ -140,7 +142,7 @@ function Widget(props) {
     }
     // window.$gama.doConnect();
   }
-  const tryClose=()=> {
+  const tryClose = () => {
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
       props.gama.current.stop(() => {
         console.log("exp closed");
@@ -148,15 +150,15 @@ function Widget(props) {
     }
   }
 
-  const handleChangeCBBOX=(i, e)=> {
+  const handleChangeCBBOX = (i, e) => {
     let formValues = this.state.param;
     formValues[i]["value"] = e.target.value;
     // console.log(formValues[i]);
-    this.setState({ param: formValues }, () => {
-      this.grid.updateParam(this.state.param);
-      this.saveWToLS("Widget" + this.id, this.state);
-      // this.getWFromLS("Widget" + this.id);
-    });
+    // this.setState({ param: formValues }, () => {
+    //   this.grid.updateParam(this.state.param);
+    //   this.saveWToLS("Widget" + this.id, this.state);
+    //   // this.getWFromLS("Widget" + this.id);
+    // });
   }
 
   const widgetHeader = (
@@ -164,22 +166,22 @@ function Widget(props) {
       <tbody>
 
         <tr>
-          <td width="100%"><div className="dragHandle">
+          <td width="100%"><div className="dragHandle">[]
           </div></td>
 
         </tr>
       </tbody>
     </table>);
-  if ( ( _id === props.id_param)) {
+  if (props.param && (_id === props.id_param)) {
 
-    const param_layouts = ( ( _id === props.id_param)) ? this.state.param.map((e, index) => (
+    const param_layouts = ((_id === props.id_param)) ? props.param.map((e, index) => (
       <tr key={e['key']} ><td width={50}>{e['key']}</td>
         <td> <Input type="text" name={"param_" + e['key']}
           value={e['value'] || ""} onChange={e => handleChangeCBBOX(index, e)}
         />
         </td>
         <td width={50}><Input type="checkbox" value={e['value']} name={e['key']} id={"use_param_" + e['key']}
-          onChange={(e) => this.handleFuel(e)} /></td></tr>
+        /></td></tr>
 
 
 
@@ -197,38 +199,35 @@ function Widget(props) {
           }}
         >
           <Card body><CardTitle>
-            {( ( _id === props.id_param)) && <div style={{ padding: 0 }}>Parameters</div>}
+            <div style={{ padding: 0 }}>Parameters</div>
           </CardTitle>
 
-            {(  ( _id === props.id_param)) &&
-              <table width={'100%'}>
-                <tbody>
-                  <tr><td colSpan={2}><div>
-                    <table><tbody><tr width="100%">
-                      {/* {this.state.loaded && <td><Button color="primary" size="sm" onClick={this.tryAutoStep}>↹</Button> </td>} */}
+            <table width={'100%'}>
+              <tbody>
+                <tr><td colSpan={2}><div>
+                  <table><tbody><tr width="100%">
+                    {<td><Button color="primary" size="sm" onClick={tryPlay}>▷</Button> </td>}
 
-                      {<td><Button color="primary" size="sm" onClick={tryPlay}>▷</Button> </td>}
+                    {<td><Button color="primary" size="sm" onClick={tryPause}>❚❚</Button> </td>}
 
-                      {<td><Button color="primary" size="sm" onClick={tryPause}>❚❚</Button> </td>}
+                    {<td><Button color="primary" size="sm" onClick={tryStep}>⏯</Button> </td>}
 
-                      {<td><Button color="primary" size="sm" onClick={tryStep}>⏯</Button> </td>}
+                    {<td><Button color="primary" size="sm" onClick={tryReload}>↻</Button> </td>}
 
-                      {<td><Button color="primary" size="sm" onClick={tryReload}>↻</Button> </td>}
+                    {<td><Button color="primary" size="sm" onClick={tryClose}>✕</Button> </td>}
+                  </tr></tbody></table></div></td>
+                </tr>
+                {param_layouts}
 
-                      {<td><Button color="primary" size="sm" onClick={tryClose}>✕</Button> </td>}
-                    </tr></tbody></table></div></td>
-                  </tr>
-                  {param_layouts}
-
-                </tbody>
-              </table>}
+              </tbody>
+            </table>
           </Card>
         </div></>
     );
-  }else{
+  } else {
     return (<><div className="widgetHeader">
       {widgetHeader}
-    </div><BaseMap _id={_id} /></>
+    </div><BaseMap _id={_id} gama={props.gama} /></>
     );
   }
   // if (this.props.updateMethod) {

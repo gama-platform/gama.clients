@@ -29,9 +29,9 @@ function Grid(props) {
   //     this.onShowClick = this.onShowClick.bind(this);
   //   }
 
-  const [widgets, setWidgets] = useState([{ id: 1 }]);
+  const [widgets, setWidgets] = useState([]);
   const [_layouts, setLayouts] = useState({});
-  const [widgetSequence, setwidgetSequence] = useState(1);
+  const [widgetSequence, setwidgetSequence] = useState(0);
   const [id_param, setid_param] = useState(-1);
   const [param_str, setparam_str] = useState([]);
   const [param_str_new, setparam_str_new] = useState([]);
@@ -54,14 +54,15 @@ function Grid(props) {
   // }
 
   const remParam = () => {
-
-    this.setState((prevState) => ({
-      widgets: [],
-      id_param: -1,
-      //do not decrement sequence, since each new widget must
-      //have unique value
-      widgetSequence: prevState.widgetSequence
-    }));
+    setWidgets([]);
+    setid_param(-1); 
+    // this.setState((prevState) => ({
+    //   widgets: [],
+    //   id_param: -1,
+    //   //do not decrement sequence, since each new widget must
+    //   //have unique value
+    //   widgetSequence: prevState.widgetSequence
+    // }));
 
   }
   const addParam = (ee) => {
@@ -166,6 +167,19 @@ function Grid(props) {
     // saveToLS("Layout", this.state);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const launchModelMethod = ((ee) => {
+    
+          remParam();
+          addWidget();
+          addParam(ee);
+  });
+
+  React.useEffect(() => {
+    props.editor_grid_link_ref.current = launchModelMethod
+  }, [launchModelMethod, props.editor_grid_link_ref]);
+
+
   const config = {
     x: 0,
     y: 0,
@@ -177,7 +191,7 @@ function Grid(props) {
   const layouts = widgets.map((item) => (
     <div className="widget" key={item.id} data-grid={config}>
       <div className="mscroll" style={{ width: "100%", height: "100%" }}>
-        <Widget gama={props.gama} id={item.id} id_param={id_param}></Widget>
+        <Widget gama={props.gama} id={item.id} id_param={id_param} param={param_str}></Widget>
         {/* //triggerChildFunc={triggerFunc} triggerChildFunc2={triggerFunc2}  grid={this} id={item.id} type={item.type}*/}
       </div>
     </div>

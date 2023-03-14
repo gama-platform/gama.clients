@@ -1,62 +1,63 @@
 import React from 'react'
 
-class MapGeojson extends React.Component {
+const MapGeojson = (props) => {
+// class MapGeojson extends React.Component {
 
-    constructor(props) {
+//     constructor(props) {
 
-        super();
-        this.state = {
-            title: {
-                text: "aaa"
-            },
-            sources: [
-            ]
-        };
-        this.map = props.mmap;
-        this.updateSource = null;
-        this.geojson = {
-            'type': 'FeatureCollection',
-            'features': [
-                {
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'Point',
-                        'coordinates': [0, 0]
-                    }
-                }
-            ]
-        };
+//         super();
+//         this.state = {
+//             title: {
+//                 text: "aaa"
+//             },
+//             sources: [
+//             ]
+//         };
+//         this.map = props.mmap;
+//         this.updateSource = null;
+//         this.geojson = {
+//             'type': 'FeatureCollection',
+//             'features': [
+//                 {
+//                     'type': 'Feature',
+//                     'geometry': {
+//                         'type': 'Point',
+//                         'coordinates': [0, 0]
+//                     }
+//                 }
+//             ]
+//         };
 
-        this.title = props.props.props.title;
-        this.mapdata = props.props.props.mapbox;
-        this.state.title.text = (this.title);
-        // let _this = this;
-        // console.log( props.props.props.mapbox);
-        // this.mapdata.forEach((value, index, array) => {
-        //     _this.state.sources.push({
-        //         species: value.species,
-        //         attr: value.attributes,
-        //         style: value.style,
-        //         type: value.type
-        //     });
-        // }
-        // ); 
+//         this.title = props.props.props.title;
+//         this.mapdata = props.props.props.mapbox;
+//         this.state.title.text = (this.title);
+//         // let _this = this;
+//         // console.log( props.props.props.mapbox);
+//         // this.mapdata.forEach((value, index, array) => {
+//         //     _this.state.sources.push({
+//         //         species: value.species,
+//         //         attr: value.attributes,
+//         //         style: value.style,
+//         //         type: value.type
+//         //     });
+//         // }
+//         // ); 
 
-        this.createSources = this.createSources.bind(this);
-        this.on_connected = this.on_connected.bind(this); 
+//         this.createSources = this.createSources.bind(this);
+//         this.on_connected = this.on_connected.bind(this); 
 
-        window.$gama.evalExpr("species(world).microspecies", this.createSources);
-        // gama.evalExpr("experiment.parameters.pairs", createParameters);
+//         window.$gama.evalExpr("species(world).microspecies", this.createSources);
+//         // gama.evalExpr("experiment.parameters.pairs", createParameters);
 
-        window.$gama.addOutput(this, this);
-        // // console.log(window.$gama.outputs);
-        // setTimeout(() => {
+//         window.$gama.addOutput(this, this);
+//         // // console.log(window.$gama.outputs);
+//         // setTimeout(() => {
 
-        //     var myself = this;
-        //     this.on_connected(myself);
-        // }, 20);
+//         //     var myself = this;
+//         //     this.on_connected(myself);
+//         // }, 20);
 
-    }
+//     }
 
     createSources(ee) {
         let _this = this;
@@ -97,11 +98,11 @@ class MapGeojson extends React.Component {
         // console.log("connected");
         // console.log(this.props.map);
         var mymyself = myself;
-        this.props.map.current.on('load', async () => {
+        this.props.map.on('load', async () => {
             // Add the source1 location as a source.
             this.state.sources.forEach((v) => {
                 // console.log(v.species);
-                this.props.map.current.addSource("S" + v.species, {
+                this.props.map.addSource("S" + v.species, {
                     type: 'geojson',
                     data: mymyself.geojson
                 });
@@ -119,7 +120,7 @@ class MapGeojson extends React.Component {
                 //     'line-color': ['get', v.attr]
                 // };
                 // var defaultstyle = v.type === 'line' ? line_defaultstyle : (v.type === "fill" ? fill_defaultstyle : (circle_defaultstyle));
-                // this.props.map.current.addLayer({
+                // this.props.map.addLayer({
                 //     'id': "S" + v.species,
                 //     type: v.type ? (v.type) : 'circle',
                 //     'source': "S" + v.species,
@@ -144,11 +145,11 @@ class MapGeojson extends React.Component {
                     [eee[0], eee[1]], // southwestern corner of the bounds
                     [eee[3], eee[4]], // northeastern corner of the bounds
                 ];
-                myself.props.map.current.fitBounds(bbox, {
+                props.map.fitBounds(bbox, {
                     padding: 10,
                     duration: 0,
                 });
-                // myself.props.map.current.flyTo({
+                // myself.props.map.flyTo({
                 //     center: [eee[0], eee[1]],
                 //     essential: true,
                 //     duration: 0,
@@ -203,7 +204,7 @@ class MapGeojson extends React.Component {
 
                     myself.geojson = tmp;
 
-                    if (!myself.props.map.current.style.getLayer("S" + species1Name)) {
+                    if (!myself.props.map.style.getLayer("S" + species1Name)) {
                         // console.log("layer added");
                         // addLayer(tmp.features[0].geometry.type, key);
 
@@ -223,7 +224,7 @@ class MapGeojson extends React.Component {
                         gtype = (gtype === 'LineString' ? 'line' : (gtype === 'Point' ? 'circle' : ('fill')));
                         var defaultstyle = gtype === 'line' ? line_defaultstyle : (gtype === "fill" ? fill_defaultstyle : (circle_defaultstyle));
 
-                        myself.props.map.current.addLayer({
+                        myself.props.map.addLayer({
                             'id': "S" + species1Name,
                             type: gtype,
                             'source': "S" + species1Name,
@@ -231,8 +232,8 @@ class MapGeojson extends React.Component {
                             'paint': defaultstyle,
                         });
                     }
-                    if (myself.props.map.current.getSource("S" + species1Name))
-                        myself.props.map.current.getSource("S" + species1Name).setData(myself.geojson);
+                    if (myself.props.map.getSource("S" + species1Name))
+                        myself.props.map.getSource("S" + species1Name).setData(myself.geojson);
                 }
 
             }
@@ -264,7 +265,7 @@ class MapGeojson extends React.Component {
     //                 // myself.geojson = JSON.parse(message).content;
 
     //                 // console.log(myself.geojson);
-    //                 myself.props.map.current.getSource('source2').setData(myself.geojson);
+    //                 myself.props.map.getSource('source2').setData(myself.geojson);
     //                 // console.log(ls);
     //             } catch (e) {
     //                 console.log(e);
@@ -276,12 +277,10 @@ class MapGeojson extends React.Component {
     //     // }, 1000);
     // }
 
+ 
 
-    render() {
 
-
-        return "";
-    }
+        return ""; 
 }
 
 export default MapGeojson;

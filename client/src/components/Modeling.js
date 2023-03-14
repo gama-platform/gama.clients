@@ -119,7 +119,7 @@ function Modeling(props) {
 
         if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
           
-        // props.editor_grid_link_ref.current(ee);
+        props.editor_grid_link_ref.current(ee);
           // props.gama.current.grid.remParam();
           // props.gama.current.grid.addWidget();
           // props.gama.current.grid.addParam(ee);

@@ -63,7 +63,7 @@ function NavigationBar(props) {
 
       var mm = props.gama.current.rootPath + "/" + formik.values.item.code;
 
-      console.log(props.gama.current.rootPath);
+      // console.log(props.gama.current.rootPath);
       props.gama.current.modelPath = mm.split("|")[0];
       // console.log("edit " + this.props.gama.modelPath);
       // console.log(this.props.gama.editor.props.formik);
