@@ -10,29 +10,31 @@ const { dateTimeNowFormated, logger } = require('../utils');
 
 // ####################################################################################
 // ####################################################################################
-const imageIndex = { JAVA: 0 };// { GCC: 0, PY: 1, JS: 2, JAVA: 3 };
+const imageIndex = { GAML: 0 };// { GCC: 0, PY: 1, JS: 2, JAVA: 3 };
 const imageNames = [
     // 'gcc:latest',
     // 'python:3.10-slim',
     // 'node:16.17.0-bullseye-slim',
-    'openjdk:17-jdk-alpine'
+    // 'openjdk:17-jdk-alpine',
+    'gamaplatform/mini:alpha',
 ];
 const containerNames = [
     // 'gcc-oj-container',
     // 'py-oj-container',
     // 'js-oj-container',
-    'java-oj-container'
+    // 'java-oj-container',
+    'gama-container'
 ];
 /** @type {string[]} */
 const containerIds = [];
-const initDockerContainer = (image, index) => {
-    const name = containerNames[index];
+const initDockerContainer = (uid,prt,image, index) => {
+    const name = containerNames[index]+"_"+uid;
     return new Promise(async (resolve, reject) => {
         try {
             // check and kill already running container
             await killContainer(name);
             // now create new container of image
-            const data = await createContainer({ name, image });
+            const data = await createContainer({ name, image, prt });
             containerIds[index] = data;
             resolve(`${name} Id : ${data}`);
         } catch (error) {
@@ -40,9 +42,9 @@ const initDockerContainer = (image, index) => {
         }
     });
 }
-const initAllDockerContainers = async () => {
+const initAllDockerContainers = async (uid,prt) => {
     try {
-        const res = await Promise.all(imageNames.map((image, index) => initDockerContainer(image, index)));
+        const res = await Promise.all(imageNames.map((image, index) => initDockerContainer(uid,prt,image, index)));
         logger.log(res.join('\n'));
         logger.log("\nAll Containers Initialized");
     } catch (error) {

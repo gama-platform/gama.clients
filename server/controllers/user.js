@@ -69,10 +69,21 @@ const logoutController = (req, res) => {
 }
 
 const initDockerController = async (req, res) => {
+    try {
+        if (!req.cookies || !req.cookies.token) return res.json(false);
 
-    await initAllDockerContainers(); 
+        const token = req.cookies.token;
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
 
-    return res.status(200).json({ msg: "inti docker" });
+        const user = await User.getUserById(verified.user); 
+        const rand = Math.floor(Math.random() * 100) + 1 ;
+        await initAllDockerContainers(user.name, rand);
+
+        return res.status(200).json({ msg: "init docker "+rand });
+    } catch (err) {
+        logger.error(err, dateTimeNowFormated());
+        res.json({ status: false });
+    }
 }
 
 const loggedInController = async (req, res) => {
@@ -126,7 +137,7 @@ const changePasswordController = async (req, res) => {
 }
 
 module.exports = {
-    loginController,initDockerController,
+    loginController, initDockerController,
     registerController,
     logoutController,
     loggedInController,
