@@ -4,7 +4,7 @@ const { logger } = require('../utils');
 
 // name => it is the name to be given to the container
 // image => it is the name of image whose container is to be created
-const createContainer = ({ name, image, prt }) => {
+const createContainer = ({ name, image, prt, comd }) => {
     return new Promise((resolve, reject) => {
         exec(`docker run -p `+prt+`:6868 -i -d --rm --name ${name} ${image} -socket 6868 `, (error, stdout, stderr) => {
             (error || stderr) && reject({ msg: 'on docker error', error, stderr });

@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { exec } = require('child_process');
 const { v4: uuid } = require("uuid");
 const {
     copyFilesToDocker, createContainer,
@@ -27,24 +28,62 @@ const containerNames = [
 ];
 /** @type {string[]} */
 const containerIds = [];
-const initDockerContainer = (uid,prt,image, index) => {
-    const name = containerNames[index]+"_"+uid;
+
+const execInContainer = (name, containerId) => {
+    const command = "bash gama-headless.sh -validate";
+    // await new Promise((resolve, reject) => {
+    //     exec(`docker exec ${data} ${command}`, (error, stdout, stderr) => {
+    //         error && reject({ msg: 'on error', error, stderr });
+    //         stderr && reject({ msg: 'on stderr', stderr });
+    //     });
+    // });
+    return new Promise( (resolve, reject) => {
+        try {
+            exec(`docker exec -d ${containerId} bash gama-headless -validate`, (error, stdout, stderr) => {
+                (error || stderr) && reject({ msg: 'on docker error', error, stderr });
+                const containerId = `${stdout}`.trim();
+                console.log(stdout);
+                resolve(containerId);
+            });
+        } catch (error) {
+            console.log(error);
+            reject(`${name} Docker Error : ${JSON.stringify(error)}`);
+        }
+    });
+}
+const delay = ms => new Promise(
+    resolve => setTimeout(resolve, ms)
+  );
+const initDockerContainer = (uid, prt, image, index) => {
+    const name = containerNames[index] + "_" + uid;
     return new Promise(async (resolve, reject) => {
         try {
             // check and kill already running container
             await killContainer(name);
             // now create new container of image
-            const data = await createContainer({ name, image, prt });
+            // const cmd="-validate";
+            // const data = await createContainer({ name, image, prt, cmd });      
+            const cmd1 = "-socket 6868";
+            const data = await createContainer({ name, image, prt, cmd1 });
+
             containerIds[index] = data;
-            resolve(`${name} Id : ${data}`);
+            // const data1 = await execInContainer(name, data);
+
+
+            const data1 = await execInContainer(name, data);
+
+            console.log(`${name} Id : d1 ${data1}`);
+            await delay(15000);
+            resolve(`${name} Id : ${data} d1 ${data1}`);
+
         } catch (error) {
             reject(`${name} Docker Error : ${JSON.stringify(error)}`);
         }
     });
 }
-const initAllDockerContainers = async (uid,prt) => {
+const initAllDockerContainers = async (uid, prt) => {
     try {
-        const res = await Promise.all(imageNames.map((image, index) => initDockerContainer(uid,prt,image, index)));
+        const res = await Promise.all(imageNames.map((image, index) => initDockerContainer(uid, prt, image, index)));
         logger.log(res.join('\n'));
         logger.log("\nAll Containers Initialized");
     } catch (error) {
@@ -230,6 +269,6 @@ module.exports = {
     readFile, createFile,
     deleteFile, execCode,
     execCodeAgainstTestcases,
-    initAllDockerContainers,
+    initAllDockerContainers, execInContainer,
     initDockerContainer
 };

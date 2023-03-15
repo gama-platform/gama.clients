@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { dateTimeNowFormated, logger } = require('../utils');
 const { User } = require('../DataBase/database');
-const { initAllDockerContainers,initDockerContainer } = require('../CodeExecuter/codeExecutor_dockerv');
+const { initAllDockerContainers, initDockerContainer } = require('../CodeExecuter/codeExecutor_dockerv');
 
 const loginController = async (req, res) => {
     try {
@@ -66,8 +66,7 @@ const logoutController = (req, res) => {
         // secure: true,
         // sameSite: "none",
     }).status(200).json({ msg: "Logged Out" });
-}
-var internalPort=80;
+} 
 const initDockerController = async (req, res) => {
     try {
         if (!req.cookies || !req.cookies.token) return res.json(false);
@@ -75,11 +74,12 @@ const initDockerController = async (req, res) => {
         const token = req.cookies.token;
         const verified = jwt.verify(token, process.env.JWT_SECRET);
 
-        const user = await User.getUserById(verified.user); 
-        internalPort=internalPort+1;
-        // await initAllDockerContainers(user.name, internalPort);
-        initDockerContainer(user.name,internalPort,'gamaplatform/mini:alpha', 0);
-        return res.status(200).json({ msg: "init docker",port:internalPort });
+        const user = await User.getUserById(verified.user);
+        // console.log( user.port);
+        // await initAllDockerContainers(user.name,); 
+        const rres=await initDockerContainer(user.name, user.port, 'gamaplatform/mini:alpha', 0);
+        
+        return res.status(200).json({ msg: "init docker", port: user.port });
     } catch (err) {
         logger.error(err, dateTimeNowFormated());
         res.json({ status: false });
@@ -99,7 +99,8 @@ const loggedInController = async (req, res) => {
             status: true,
             name: user.name,
             email: user.email,
-            username: user.username,
+            username: user.username, 
+            port: user.port, 
             solvedQuestions: user.solvedQuestions
         });
     } catch (err) {

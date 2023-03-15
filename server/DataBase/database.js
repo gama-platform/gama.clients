@@ -41,8 +41,10 @@ const createNewUser = async ({ name, username, email, passwordHash }) => {
     const savedUser = await newUser.save();
     return savedUser;
 }
+const hexToDecimal = hex => parseInt(hex, 16);
 const getUserById = async userId => {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId);    
+    user.port= Math.floor(hexToDecimal(user.id) / 1e25);
     return user;
 }
 const findOneUser = async filter => {

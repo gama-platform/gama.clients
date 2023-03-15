@@ -17,9 +17,20 @@ export const getLoggedIn = () => {
                 }
             ).then(data => data.json());
             
-            // console.log(response1);
+            // const response1 = await fetch(
+            //     `${SERVER_LINK}/api/user/initDocker`,
+            //     {
+            //         headers: {
+            //             'Content-Type': 'application/json'
+            //         },
+            //         method: 'GET',
+            //         credentials: 'include'
+            //     }
+            // ).then(data => data.json());
+ 
+            // console.log(response); 
             dispatch(authActions.setLoggedIn({
-                loggedIn: response.status || false,
+                loggedIn: response.status || false, //port: response1.port,
                 ...response
             }));
         } catch (error) {
@@ -84,20 +95,20 @@ export const login = (username, email, password) => {
                 }
             ).then(data => data.json());
 
-            await dispatch(getLoggedIn());
-            if (response.error) {
-                dispatch(messageActions.set({
-                    type: 'error',
-                    message: 'LogIn Failed !',
-                    description: response.error
-                }))
-                return dispatch(authActions.setError({ error: response.error }));
-            }
             await dispatch(initDocker());
             if (response.error) {
                 dispatch(messageActions.set({
                     type: 'error',
                     message: 'Init Docker Failed !',
+                    description: response.error
+                }))
+                return dispatch(authActions.setError({ error: response.error }));
+            } 
+            await dispatch(getLoggedIn());
+            if (response.error) {
+                dispatch(messageActions.set({
+                    type: 'error',
+                    message: 'LogIn Failed !',
                     description: response.error
                 }))
                 return dispatch(authActions.setError({ error: response.error }));

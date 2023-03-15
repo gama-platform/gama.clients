@@ -10,6 +10,7 @@ const authSlice = createSlice({
         email: undefined,
         username: 'guest',
         solvedQuestions: undefined,
+        port: 0,
         isAdmin: false,
         isGuest: true
     },
@@ -23,6 +24,7 @@ const authSlice = createSlice({
                 state.name = action.payload.name;
                 state.email = action.payload.email;
                 state.username = action.payload.username;
+                state.port = action.payload.port;
                 state.solvedQuestions = action.payload.solvedQuestions;
                 state.isAdmin = (action.payload.username === 'aman'); // update the logic 
                 state.isGuest = (action.payload.username === 'guest'); // update the logic 
@@ -33,6 +35,7 @@ const authSlice = createSlice({
                 state.solvedQuestions = undefined;
                 state.isAdmin = false;
                 state.isGuest = true;
+                state.port = 0;
             }
         },
         setError(state, action) {

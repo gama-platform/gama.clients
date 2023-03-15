@@ -4,6 +4,8 @@ import 'react-tiny-fab/dist/styles.css';
 import { Button } from 'reactstrap';
 import { Dropdown } from 'primereact/dropdown';
 import { useLocalStorage } from '../utils';
+
+import { useSelector } from "react-redux"
 import AccountMenu from '../components/NavBar/AccountMenu/AccountMenu';
 
 
@@ -48,6 +50,7 @@ if (process.env.REACT_APP_ENABLE_REMOTE_GAMA) {
 //   },
 // ];
 function OptionsBar(props) {
+  const loginState = useSelector(state => state.auth);
   const [serverURL, setServerURL] = useLocalStorage("serverURL", "ws://51.255.46.42:6001");
   // = useState('ws://51.255.46.42:6001');
   const [modelURL, setModelURL] = useLocalStorage("modelURL", "C:/git/gama/msi.gama.models/models");
@@ -55,11 +58,15 @@ function OptionsBar(props) {
   const [connected, setConnected] = useState(false);
 
   const tryConnect = () => {
+    // console.log(loginState);
     // console.log(props.gama)
     // this.checkConnect(true);
     if (!props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
       // this.waiting(true);
-
+      if(loginState.port!==0){
+        setServerURL("ws://localhost:"+loginState.port);
+        setModelURL("/opt/gama-platform/configuration/org.eclipse.osgi/22/0/.cp/models");
+      }
       props.gama.current.connect(serverURL, modelURL, () => {
         // _this.waiting(false);
         console.log("connected ");
@@ -80,7 +87,7 @@ function OptionsBar(props) {
         tryConnect();
       }, 1);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected]);
 
   return (<>
