@@ -61,7 +61,7 @@ export const initDocker = () => {
                 }
             ).then(data => data.json());
  
-            console.log(response);
+            // console.log(response);
         } catch (error) {
             console.error(error);
             dispatch(authActions.setError({ error: JSON.stringify(error) }));

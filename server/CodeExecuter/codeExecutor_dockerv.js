@@ -51,9 +51,7 @@ const execInContainer = (name, containerId) => {
         }
     });
 }
-const delay = ms => new Promise(
-    resolve => setTimeout(resolve, ms)
-  );
+
 const initDockerContainer = (uid, prt, image, index) => {
     const name = containerNames[index] + "_" + uid;
     return new Promise(async (resolve, reject) => {
@@ -73,7 +71,6 @@ const initDockerContainer = (uid, prt, image, index) => {
             const data1 = await execInContainer(name, data);
 
             console.log(`${name} Id : d1 ${data1}`);
-            await delay(15000);
             resolve(`${name} Id : ${data} d1 ${data1}`);
 
         } catch (error) {
