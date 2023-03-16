@@ -12,6 +12,7 @@ import { useMediaQuery } from '@mui/material'
 
 import { LOGIN, REGISTER, CHANGEPASSWORD } from '../../App';
 import { Visibility, VisibilityOff } from '@mui/icons-material'
+import Login1 from './Login1'
 
 const Customform = props => {
 
@@ -217,6 +218,7 @@ const Customform = props => {
                                         label="Email"
                                     />
                                 </RadioGroup>
+                                <Login1/>
                             </FormControl>
                         }
 

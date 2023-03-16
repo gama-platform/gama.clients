@@ -8,6 +8,9 @@ logger.log(`In ${process.env.NODE_ENV} env !`);
 
 const express = require('express');
 const app = express();
+const {
+    OAuth2Client,
+} = require('google-auth-library');
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
 // const explore = require('./routes/explore');
@@ -25,10 +28,16 @@ const { connectDB } = require('./DataBase/connectDB');
 const { Socket } = require('./socketHandler');
 // const { loggingMiddleware } = require('./middlewares');
 
+const oAuth2Client = new OAuth2Client(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    'postmessage',
+);
 // Establish Connection to Database
 connectDB();
 // Initiate All Docker Containers
 // initAllDockerContainers();
+
 
 // parse json request body
 app.use(express.json());
@@ -62,6 +71,22 @@ Socket.registerSocketServer(server);
 // api route for user login and register
 app.use('/api/user', user);
 
+app.post('/auth/google', async (req, res) => {
+    const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
+    console.log(tokens);
+
+    res.json(tokens);
+});
+
+app.post('/auth/google/refresh-token', async (req, res) => {
+    const user = new UserRefreshClient(
+        clientId,
+        clientSecret,
+        req.body.refreshToken,
+    );
+    const { credentials } = await user.refreshAccessToken(); // optain new tokens
+    res.json(credentials);
+})
 // // experimental routes
 // app.use('/api/experimental', experimental);
 
