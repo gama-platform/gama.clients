@@ -3,6 +3,7 @@
 const User = require('./Model/User');
 // const Code = require('./Model/Code');
 // const Note = require('./Model/Note');
+const shortid  = require('shortid');
 
 
 // Question
@@ -44,7 +45,11 @@ const createNewUser = async ({ name, username, email, passwordHash }) => {
 const hexToDecimal = hex => parseInt(hex, 16);
 const getUserById = async userId => {
     const user = await User.findById(userId);    
-    user.port= Math.floor(hexToDecimal(user.id) / 1e25);
+    const x=hexToDecimal(user.id);
+    user.port= Math.floor((x-1e23) / (1e25-1e23) );//(value-min)/(max-min) 
+    console.log( (user.id));
+    console.log(hexToDecimal(user.id));
+    console.log(Math.floor((x-1e23) / (1e25-1e23) ));
     return user;
 }
 const findOneUser = async filter => {
