@@ -112,6 +112,16 @@ export const glogin = (code) => {
             //     `${SERVER_LINK}/api/user/glogin`, {
             //     code: code,
             // });
+            
+            await dispatch(initDocker());
+            if (response.error) {
+                dispatch(messageActions.set({
+                    type: 'error',
+                    message: 'Init Docker Failed !',
+                    description: response.error
+                }))
+                return dispatch(authActions.setError({ error: response.error }));
+            }
             await dispatch(getLoggedIn());
             if (response.error) {
                 dispatch(messageActions.set({

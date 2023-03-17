@@ -134,7 +134,7 @@ const Customform = props => {
     const registerHandler = () => dispatch(register(name, username, email, password, passwordVer));
     const changePassHandler = () => dispatch(changePassword(username, email, oldPassword, password));
     const googleLogin = useGoogleLogin({
-        onSuccess: (codeResponse) => {
+        onSuccess: async (codeResponse) => {
             // console.log(codeResponse);
             //  await axios.post(
             //   SERVER_LINK+"/auth/google", {
@@ -390,12 +390,15 @@ const Customform = props => {
                             <Button
                                 type='submit'
                                 color='info'
-                                variant="contained" style={{
+                                variant="contained" 
+                                style={{
                                     textTransform: 'capitalize',
                                     letterSpacing: '0.15rem',
                                     fontSize: '1rem'
                                 }}
-                                onClick={handleClickGlogin}> 
+                                disabled={  loginState.isLoading}
+                                onClick={handleClickGlogin}>                                 
+                                {loginState && (loginState.isLoading || loginState.loggedIn) && <div className='spin' />}
                                 Sign in with Google</Button>
                         </div>
 

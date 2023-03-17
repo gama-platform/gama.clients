@@ -37,7 +37,7 @@ const oAuth2Client = new OAuth2Client(
   );
 const gloginController = async (req, res) => {
     try {
-        console.log(req.body);
+        // console.log(req.body);
         // const { token } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
         // console.log(token);
         
@@ -114,7 +114,7 @@ const initDockerController = async (req, res) => {
         const user = await User.getUserById(verified.user);
         // console.log( user.port);
         // await initAllDockerContainers(user.name,); 
-        const rres=await initDockerContainer(user.name, user.port, 'gamaplatform/mini:alpha', 0);
+        const rres=await initDockerContainer(user.id, user.port, 'gamaplatform/mini:alpha', 0);
         
         return res.status(200).json({ msg: "init docker", port: user.port });
     } catch (err) {
