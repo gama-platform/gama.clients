@@ -8,15 +8,15 @@ import './global.css'
 import './index.css';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root'));  
 root.render(
     // <React.StrictMode>
-    <GoogleOAuthProvider clientId={process.env.CLIENT_ID}> 
-    <Provider store={store}>
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
-    </Provider>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GID}>
+        <Provider store={store}>
+            <BrowserRouter>
+                <App />
+            </BrowserRouter>
+        </Provider>
     </GoogleOAuthProvider>
     // </React.StrictMode>
 );

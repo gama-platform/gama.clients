@@ -12,7 +12,7 @@ import { useMediaQuery } from '@mui/material'
 
 import { LOGIN, REGISTER, CHANGEPASSWORD } from '../../App';
 import { Visibility, VisibilityOff } from '@mui/icons-material'
-import Login1 from './Login1'
+import GLogin from './GoogleLogin'
 
 const Customform = props => {
 
@@ -200,7 +200,7 @@ const Customform = props => {
                                 padding: '0 0.7rem'
                             }}>
                                 <FormLabel id="login-mode">Choose with what you want to login</FormLabel>
-                                <RadioGroup
+                                {/* <RadioGroup
                                     row
                                     aria-labelledby="login-mode"
                                     name="login-mode"
@@ -217,8 +217,7 @@ const Customform = props => {
                                         control={<Radio />}
                                         label="Email"
                                     />
-                                </RadioGroup>
-                                <Login1/>
+                                </RadioGroup> */}
                             </FormControl>
                         }
 
@@ -361,6 +360,7 @@ const Customform = props => {
                                 {pageType}
                                 {loginState && (loginState.isLoading || loginState.loggedIn) && <div className='spin' />}
                             </Button>
+                            <GLogin/>
                         </div>
 
 
