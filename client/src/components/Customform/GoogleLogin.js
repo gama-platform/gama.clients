@@ -10,12 +10,12 @@ const GLogin = () => {
     flow: 'auth-code',
     onSuccess: async (codeResponse) => {
         // console.log(codeResponse);
-        const tokens = await axios.post(
+         await axios.post(
           SERVER_LINK+"/auth/google", {
                 code: codeResponse.code,
             });
-
-        // console.log(tokens);
+            
+        // console.log(tokens.status);
     },
     onError: errorResponse => console.log(errorResponse),
 });

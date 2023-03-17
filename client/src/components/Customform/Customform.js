@@ -7,7 +7,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { changePassword, login, register } from '../../store/Auth/auth-actions'
 import { authActions } from '../../store/Auth/auth-slice'
-import { FilledInput, FormControl, FormControlLabel, FormLabel, IconButton, InputAdornment, InputLabel, Radio, RadioGroup, Tooltip, Zoom } from '@mui/material'
+import { FilledInput, FormControl, FormLabel, IconButton, InputAdornment, InputLabel, Tooltip, Zoom } from '@mui/material' // FormControlLabel,Radio, RadioGroup, 
 import { useMediaQuery } from '@mui/material'
 
 import { LOGIN, REGISTER, CHANGEPASSWORD } from '../../App';
@@ -89,7 +89,7 @@ const Customform = props => {
     const passVerErrorMsg = 'Verify Password is necessary and should be same as Password';
 
     // username, email
-    const [emailUnameSelection, setEUSelection] = useState('username');
+    const [emailUnameSelection] = useState('username');//, setEUSelection
 
     useEffect(() => {
         resetName();
@@ -143,7 +143,7 @@ const Customform = props => {
 
     return (
         <Fragment>
-            <div className={classes.bgImg} />
+            {/* <div className={classes.bgImg} /> */}
             <div className={classes["Auth-form-container"]}>
                 <form className={classes["Auth-form"]} onSubmit={formSubmitHandler}>
                     <div className={classes["Auth-form-content"]}>
@@ -192,7 +192,7 @@ const Customform = props => {
                             </div>
                         }
 
-                        {pageType === LOGIN &&
+                        {/* {pageType === LOGIN &&
                             <FormControl sx={{
                                 borderTop: '2px solid rgb(0,0,0,0.08)',
                                 borderBottom: '2px solid rgb(0,0,0,0.08)',
@@ -200,7 +200,7 @@ const Customform = props => {
                                 padding: '0 0.7rem'
                             }}>
                                 <FormLabel id="login-mode">Choose with what you want to login</FormLabel>
-                                {/* <RadioGroup
+                                <RadioGroup
                                     row
                                     aria-labelledby="login-mode"
                                     name="login-mode"
@@ -217,9 +217,9 @@ const Customform = props => {
                                         control={<Radio />}
                                         label="Email"
                                     />
-                                </RadioGroup> */}
+                                </RadioGroup>
                             </FormControl>
-                        }
+                        } */}
 
 
                         {(pageType === REGISTER || pageType === CHANGEPASSWORD || emailUnameSelection === 'username') &&
@@ -360,7 +360,7 @@ const Customform = props => {
                                 {pageType}
                                 {loginState && (loginState.isLoading || loginState.loggedIn) && <div className='spin' />}
                             </Button>
-                            <GLogin/>
+                            <GLogin />
                         </div>
 
 
