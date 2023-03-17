@@ -24,7 +24,7 @@ const Account = React.lazy(() => import('./pages/Account/Account'));
 const Customform = React.lazy(() => import('./components/Customform/Customform'));
 
 
-export const LOGIN = 'login', REGISTER = 'register', CHANGEPASSWORD = 'changePassword';
+export const LOGIN = 'login', REGISTER = 'register', CHANGEPASSWORD = 'changePassword', GLOGIN='glogin';
 
 export const errorFormatter = err => {
     let errorString = `${JSON.stringify(err)} \n`;

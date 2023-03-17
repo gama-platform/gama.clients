@@ -4,8 +4,45 @@ const { dateTimeNowFormated, logger } = require('../utils');
 const { User } = require('../DataBase/database');
 const { initAllDockerContainers, initDockerContainer } = require('../CodeExecuter/codeExecutor_dockerv');
 
+const {
+    OAuth2Client,
+} = require('google-auth-library');
 const loginController = async (req, res) => {
     try {
+        // sign the token
+        const token = jwt.sign(
+            {
+                user: req.existingUser._id,
+                username: req.existingUser.username
+            },
+            process.env.JWT_SECRET
+        );
+
+        // send the token in a HTTP-only cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            // secure: true,
+            // sameSite: "none",
+        }).status(200).json({ msg: "Logged In" });
+    } catch (err) {
+        logger.error(err, dateTimeNowFormated());
+        res.status(500).json({ error: "Internal Error" });
+    }
+}
+
+const oAuth2Client = new OAuth2Client(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    'postmessage',
+  );
+const gloginController = async (req, res) => {
+    try {
+        console.log(req.body);
+        // const { token } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
+        // console.log(token);
+        
+        // res.json(token);
+
         // sign the token
         const token = jwt.sign(
             {
@@ -138,7 +175,7 @@ const changePasswordController = async (req, res) => {
 }
 
 module.exports = {
-    loginController, initDockerController,
+    loginController,gloginController, initDockerController,
     registerController,
     logoutController,
     loggedInController,

@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { User } = require('./DataBase/database');
 const { dateTimeNowFormated, logger } = require('./utils');
 
+const axios = require('axios');
 const loginValidatorHelper = async (req, res, next, credential, credentialName, password) => {
 
     let existingUser = undefined;
@@ -23,6 +24,31 @@ const loginValidatorHelper = async (req, res, next, credential, credentialName, 
     next();
 }
 
+const gloginValidatorHelper = async (req, res, next, code) => {
+
+    let existingUser = undefined;
+    
+    const userInfo = await axios.get(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        { headers: { Authorization: `Bearer ${code}` } },
+    );
+    // console.log(userInfo.data);
+    // const { name, username, email, passwordHash } = { name: 'gname' + code, username: code, email: 'gmail' + code, passwordHash: 'pwd' + code };
+    const { name, email } =userInfo.data ;
+
+    existingUser = await User.findOneUser({ "email": email });
+    if (!existingUser) {
+        existingUser = await User.createNewUser({ name, 'username':email, email, 'passwordHash':email });
+        console.log("create user");
+        console.log(email);
+    }
+
+    // return res.status(401).json({ error: `Wrong username or password.` });
+
+    req.existingUser = existingUser;
+    next();
+}
+
 const loginValidator = async (req, res, next) => {
 
     let { email, username, password } = req.body;
@@ -34,6 +60,19 @@ const loginValidator = async (req, res, next) => {
             return res.status(400).json({ error: `Please enter all required fields. Missing : (email or username)${!password ? ', password' : ''}` });
 
         await loginValidatorHelper(req, res, next, (email ? email : username), (email ? 'email' : 'username'), password)
+    } catch (err) {
+        logger.error(err, dateTimeNowFormated());
+        res.status(500).json({ error: "Internal Error" });
+    }
+}
+
+
+const gloginValidator = async (req, res, next) => {
+    let { code } = req.body;
+
+
+    try {
+        await gloginValidatorHelper(req, res, next, code)
     } catch (err) {
         logger.error(err, dateTimeNowFormated());
         res.status(500).json({ error: "Internal Error" });
@@ -147,6 +186,7 @@ const loggingMiddleware = (req, res, next) => {
 }
 
 module.exports = {
+    gloginValidator,
     loginValidator, registerValidator,
     authValidator, authProvider,
     loggingMiddleware

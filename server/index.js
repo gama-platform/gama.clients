@@ -8,9 +8,6 @@ logger.log(`In ${process.env.NODE_ENV} env !`);
 
 const express = require('express');
 const app = express();
-const {
-    OAuth2Client,
-} = require('google-auth-library');
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
 // const explore = require('./routes/explore');
@@ -66,29 +63,24 @@ Socket.registerSocketServer(server);
 // api route for user login and register
 app.use('/api/user', user);
 
-const oAuth2Client = new OAuth2Client(
-    process.env.CLIENT_ID,
-    process.env.CLIENT_SECRET,
-    'postmessage',
-  );
   
   
-  app.post('/auth/google', async (req, res) => {
-    const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
-    console.log(tokens);
+  // app.post('/auth/google', async (req, res) => {
+  //   const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
+  //   console.log(tokens);
     
-    res.json(tokens);
-  });
+  //   res.json(tokens);
+  // });
   
-  app.post('/auth/google/refresh-token', async (req, res) => {
-    const user = new UserRefreshClient(
-      clientId,
-      clientSecret,
-      req.body.refreshToken,
-    );
-    const { credentials } = await user.refreshAccessToken(); // optain new tokens
-    res.json(credentials);
-  })
+  // app.post('/auth/google/refresh-token', async (req, res) => {
+  //   const user = new UserRefreshClient(
+  //     clientId,
+  //     clientSecret,
+  //     req.body.refreshToken,
+  //   );
+  //   const { credentials } = await user.refreshAccessToken(); // optain new tokens
+  //   res.json(credentials);
+  // })
   
 
 

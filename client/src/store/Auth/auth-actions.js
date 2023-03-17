@@ -1,7 +1,7 @@
 import { SERVER_LINK } from '../../dev-server-link';
 import { authActions } from './auth-slice'
 import { messageActions } from '../Message/message-slice'
-
+ 
 export const getLoggedIn = () => {
     return async dispatch => {
         try {
@@ -16,7 +16,7 @@ export const getLoggedIn = () => {
                     credentials: 'include'
                 }
             ).then(data => data.json());
-            
+
             // const response1 = await fetch(
             //     `${SERVER_LINK}/api/user/initDocker`,
             //     {
@@ -27,7 +27,7 @@ export const getLoggedIn = () => {
             //         credentials: 'include'
             //     }
             // ).then(data => data.json());
- 
+
             // console.log(response); 
             dispatch(authActions.setLoggedIn({
                 loggedIn: response.status || false, //port: response1.port,
@@ -48,8 +48,8 @@ export const getLoggedIn = () => {
 }
 
 export const initDocker = () => {
-    return async dispatch => { 
-        try { 
+    return async dispatch => {
+        try {
             const response = await fetch(
                 `${SERVER_LINK}/api/user/initDocker`,
                 {
@@ -60,7 +60,7 @@ export const initDocker = () => {
                     credentials: 'include'
                 }
             ).then(data => data.json());
- 
+
             console.log(response);
         } catch (error) {
             console.error(error);
@@ -70,10 +70,76 @@ export const initDocker = () => {
                 message: 'initDocker Failed !',
                 description: JSON.stringify(error)
             }))
-        }  
+        }
     }
 }
- 
+
+
+export const glogin = (code) => {
+    return async dispatch => {
+        dispatch(messageActions.set({
+            type: 'info',
+            message: 'Logging In...'
+        }))
+
+        try {
+            dispatch(authActions.setLoading({ isLoading: true }));
+            // const response = await fetch(
+            //     `${SERVER_LINK}/api/user/glogin`,
+            //     {
+            //         headers: {
+            //             'Content-Type': 'application/json'
+            //         },
+            //         method: 'POST',
+            //         credentials: 'include',
+            //         body: {"code":code}
+            //     }
+            // ).then(data => data.json());
+
+            const response = await fetch(
+                `${SERVER_LINK}/api/user/glogin`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    credentials: 'include',
+                    body: JSON.stringify({ code })
+                }
+            ).then(data => data.json());
+
+            // const response = await axios.post(
+            //     `${SERVER_LINK}/api/user/glogin`, {
+            //     code: code,
+            // });
+            await dispatch(getLoggedIn());
+            if (response.error) {
+                dispatch(messageActions.set({
+                    type: 'error',
+                    message: 'LogIn Failed !',
+                    description: response.error
+                }))
+                return dispatch(authActions.setError({ error: response.error }));
+            }
+            dispatch(messageActions.set({
+                type: 'success',
+                message: 'LogIn Successful !'
+            }))
+
+        } catch (error) {
+            console.error(error);
+            dispatch(authActions.setError({ error: JSON.stringify(error) }));
+            dispatch(messageActions.set({
+                type: 'error',
+                message: 'LogIn Failed !',
+                description: JSON.stringify(error)
+            }))
+        } finally {
+            dispatch(authActions.setLoading({ isLoading: false }));
+        }
+    }
+}
+
 export const login = (username, email, password) => {
     return async dispatch => {
         dispatch(messageActions.set({
@@ -103,7 +169,7 @@ export const login = (username, email, password) => {
                     description: response.error
                 }))
                 return dispatch(authActions.setError({ error: response.error }));
-            } 
+            }
             await dispatch(getLoggedIn());
             if (response.error) {
                 dispatch(messageActions.set({

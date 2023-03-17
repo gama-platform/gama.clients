@@ -5,18 +5,27 @@ import classes from './Customform.module.css'
 import useInput from '../../hooks/use-input'
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import { changePassword, login, register } from '../../store/Auth/auth-actions'
+// import { Button } from 'reactstrap';
+ 
+import { changePassword, login, glogin, register } from '../../store/Auth/auth-actions'
 import { authActions } from '../../store/Auth/auth-slice'
-import { FilledInput, FormControl, FormLabel, IconButton, InputAdornment, InputLabel, Tooltip, Zoom } from '@mui/material' // FormControlLabel,Radio, RadioGroup, 
+import { FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Tooltip, Zoom } from '@mui/material' //FormLabel,  FormControlLabel,Radio, RadioGroup, 
 import { useMediaQuery } from '@mui/material'
+import { useGoogleLogin } from '@react-oauth/google';
 
 import { LOGIN, REGISTER, CHANGEPASSWORD } from '../../App';
 import { Visibility, VisibilityOff } from '@mui/icons-material'
-import GLogin from './GoogleLogin'
+// import GLogin from './GoogleLogin'
 
 const Customform = props => {
 
     const { pageType } = props; // login, register
+    // const { Glogin, setGlogin } = useState(false);    
+    const [gLogin, setGLogin] = useState(false);
+
+    const handleClickGlogin = () => {
+        setGLogin(true);
+    };
 
     const isMobile = useMediaQuery('(max-width:1000px)');
     const tooltipPlacement = 'right';
@@ -124,10 +133,28 @@ const Customform = props => {
     }
     const registerHandler = () => dispatch(register(name, username, email, password, passwordVer));
     const changePassHandler = () => dispatch(changePassword(username, email, oldPassword, password));
+    const googleLogin = useGoogleLogin({
+        onSuccess: (codeResponse) => {
+            // console.log(codeResponse);
+            //  await axios.post(
+            //   SERVER_LINK+"/auth/google", {
+            //         code: codeResponse.code,
+            //     });
 
+            // dispatch(glogin(codeResponse.code))
+            dispatch(glogin(codeResponse.access_token))
+
+            // console.log(codeResponse);
+        },
+        onError: errorResponse => console.log(errorResponse),
+    });
     const formSubmitHandler = event => {
-        event.preventDefault();
-
+        event.preventDefault(); 
+        if (gLogin === true) {
+            googleLogin();
+            isFormValid = true; 
+            return;
+        }
         if (!isFormValid) return;
         switch (pageType) {
             case REGISTER: isFormValid = registerHandler(); break;
@@ -360,7 +387,17 @@ const Customform = props => {
                                 {pageType}
                                 {loginState && (loginState.isLoading || loginState.loggedIn) && <div className='spin' />}
                             </Button>
-                            <GLogin />
+                            {/* <GLogin /> */}
+                            <Button
+                                type='submit'
+                                color='info'
+                                variant="contained" style={{
+                                    textTransform: 'capitalize',
+                                    letterSpacing: '0.15rem',
+                                    fontSize: '1rem'
+                                }}
+                                onClick={handleClickGlogin}> 
+                                Sign in with Google</Button>
                         </div>
 
 
