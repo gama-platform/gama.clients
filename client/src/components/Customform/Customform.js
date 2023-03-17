@@ -178,7 +178,7 @@ const Customform = props => {
                             {(pageType === LOGIN && 'Sign In') || (pageType === REGISTER && 'Sign Up') || (pageType === CHANGEPASSWORD && "Change Password")}
                         </h3>
 
-                        {(pageType === LOGIN || pageType === REGISTER) &&
+                        {/* {(pageType === LOGIN || pageType === REGISTER) &&
                             <div className="text-center">
                                 {(pageType === LOGIN && "Don't have an account? ") || (pageType === REGISTER && 'Already have an account ')}
 
@@ -186,7 +186,7 @@ const Customform = props => {
                                     {(pageType === LOGIN && 'Sign Up') || (pageType === REGISTER && 'Sign In')}
                                 </Link>
                             </div>
-                        }
+                        } */}
 
                         {pageType === REGISTER &&
                             <div className='form-group mt-4'>
@@ -249,7 +249,7 @@ const Customform = props => {
                         } */}
 
 
-                        {(pageType === REGISTER || pageType === CHANGEPASSWORD || emailUnameSelection === 'username') &&
+                        {/* {(pageType === REGISTER || pageType === CHANGEPASSWORD || emailUnameSelection === 'username') &&
                             <div className='form-group mt-4'>
                                 <Tooltip
                                     arrow
@@ -370,10 +370,10 @@ const Customform = props => {
                                     backgroundColor: '#fddddd',
                                 } : {}}
                             />
-                        }
+                        } */}
 
                         <div className="d-grid gap-2 mt-4 mb-3">
-                            <Button
+                            {/* <Button
                                 type='submit'
                                 color='info'
                                 variant="contained"
@@ -386,8 +386,7 @@ const Customform = props => {
                             >
                                 {pageType}
                                 {loginState && (loginState.isLoading || loginState.loggedIn) && <div className='spin' />}
-                            </Button>
-                            {/* <GLogin /> */}
+                            </Button>  */}
                             <Button
                                 type='submit'
                                 color='info'
@@ -407,9 +406,9 @@ const Customform = props => {
                             </div>
                         )}
 
-                        <div className='text-muted'>
+                        {/* <div className='text-muted'>
                             Email/Username must be valid/Unique and Password length must be greater than or equal to 6 to submit.
-                        </div>
+                        </div> */}
                     </div>
                 </form >
             </div >
@@ -417,63 +416,63 @@ const Customform = props => {
     )
 }
 
-const CustomPasswordInput = ({ emailUnameSelection, pageType, isMobile, tooltipPlacement, errorMsg, hasError, id, value, changeHandler, label, placeholder, sx, transitionComponent, blurHandler }) => {
+// const CustomPasswordInput = ({ emailUnameSelection, pageType, isMobile, tooltipPlacement, errorMsg, hasError, id, value, changeHandler, label, placeholder, sx, transitionComponent, blurHandler }) => {
 
-    const [showPassword, setShowPassword] = useState(false);
+//     const [showPassword, setShowPassword] = useState(false);
 
-    const handleClickShowPassword = () => {
-        setShowPassword(prev => !prev);
-    };
+//     const handleClickShowPassword = () => {
+//         setShowPassword(prev => !prev);
+//     };
 
-    const handleMouseDownPassword = (event) => {
-        event.preventDefault();
-    };
+//     const handleMouseDownPassword = (event) => {
+//         event.preventDefault();
+//     };
 
-    useEffect(() => {
-        setShowPassword(false);
-    }, [pageType, emailUnameSelection]);
+//     useEffect(() => {
+//         setShowPassword(false);
+//     }, [pageType, emailUnameSelection]);
 
-    return (
-        <div className='form-group mt-3'>
-            <Tooltip
-                arrow
-                placement={tooltipPlacement}
-                TransitionComponent={transitionComponent}
-                title={errorMsg}
-                open={!isMobile && hasError}
-            >
-                <FormControl sx={{ width: '25ch' }} variant="filled">
-                    <InputLabel htmlFor={id}>{label}</InputLabel>
-                    <FilledInput
-                        id={id}
-                        type={showPassword ? 'text' : 'password'}
-                        value={value}
-                        onChange={changeHandler}
-                        onBlur={blurHandler}
-                        placeholder={placeholder}
-                        sx={sx ? sx : {}}
-                        endAdornment={
-                            <InputAdornment position="end">
-                                <IconButton
-                                    aria-label="toggle password visibility"
-                                    onClick={handleClickShowPassword}
-                                    onMouseDown={handleMouseDownPassword}
-                                    edge="end"
-                                >
-                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                            </InputAdornment>
-                        }
-                    />
-                </FormControl>
-            </Tooltip>
-            {isMobile && hasError &&
-                <div className={classes.validError}>
-                    {errorMsg}
-                </div>
-            }
-        </div>
-    );
-}
+//     return (
+//         <div className='form-group mt-3'>
+//             <Tooltip
+//                 arrow
+//                 placement={tooltipPlacement}
+//                 TransitionComponent={transitionComponent}
+//                 title={errorMsg}
+//                 open={!isMobile && hasError}
+//             >
+//                 <FormControl sx={{ width: '25ch' }} variant="filled">
+//                     <InputLabel htmlFor={id}>{label}</InputLabel>
+//                     <FilledInput
+//                         id={id}
+//                         type={showPassword ? 'text' : 'password'}
+//                         value={value}
+//                         onChange={changeHandler}
+//                         onBlur={blurHandler}
+//                         placeholder={placeholder}
+//                         sx={sx ? sx : {}}
+//                         endAdornment={
+//                             <InputAdornment position="end">
+//                                 <IconButton
+//                                     aria-label="toggle password visibility"
+//                                     onClick={handleClickShowPassword}
+//                                     onMouseDown={handleMouseDownPassword}
+//                                     edge="end"
+//                                 >
+//                                     {showPassword ? <VisibilityOff /> : <Visibility />}
+//                                 </IconButton>
+//                             </InputAdornment>
+//                         }
+//                     />
+//                 </FormControl>
+//             </Tooltip>
+//             {isMobile && hasError &&
+//                 <div className={classes.validError}>
+//                     {errorMsg}
+//                 </div>
+//             }
+//         </div>
+//     );
+// }
 
 export default Customform;
