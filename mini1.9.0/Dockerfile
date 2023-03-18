@@ -19,16 +19,16 @@ RUN mkdir -p /opt/gama-platform
 RUN cd /opt/gama-platform
 
 # Install GAMA v1.9.0 w/o JDK
- RUN curl -o gama.zip -fSL $(curl -s https://api.github.com/repos/gama-platform/gama/releases/tags/1.9.0 | grep "1.9.0/GAMA.*Linux.*.zip" | cut -d ':' -f 2,3 | tr -d \") && \
- 	unzip gama.zip -d /opt/gama-platform
+# RUN curl -o gama.zip -fSL $(curl -s https://api.github.com/repos/gama-platform/gama/releases/tags/1.9.0 | grep "1.9.0/GAMA.*Linux.*.zip" | cut -d ':' -f 2,3 | tr -d \") && \
+# 	unzip gama.zip -d /opt/gama-platform
 # COPY /mnt/c/git/gama/ummisco.gama.product/target/products/Gama1.7-linux.gtk.x86_64.tar.gz gama.tar.gz
 
 # COPY gama.tar.gz /opt/gama-platform 
 # RUN tar -zxf /opt/gama-platform/gama.tar.gz -C /opt/gama-platform
 
 
-# COPY gama.zip /opt/gama-platform 
-# RUN unzip /opt/gama-platform/gama.zip -d /opt/gama-platform
+COPY gama.zip /opt/gama-platform 
+RUN unzip /opt/gama-platform/gama.zip -d /opt/gama-platform
 # Set absolute path
 RUN sed -i 's/$( dirname "${BASH_SOURCE\[0\]}" )/\/opt\/gama-platform\/headless/g' /opt/gama-platform/headless/gama-headless.sh
 
