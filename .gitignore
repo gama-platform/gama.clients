@@ -20,6 +20,7 @@ package-lock.json
 npm-debug.log*
 yarn-debug.log*
 *.zip
+*.pem
 .vscode
 
 /client/node_modules

@@ -16,6 +16,13 @@ const user = require('./routes/user');
 // const experimental = require('./routes/experimental');
 const path = require('path');
 const http = require('http');
+const https = require("https");
+const fs = require("fs");
+
+const options = {
+  key: fs.readFileSync(".cert/key.pem"),
+  cert: fs.readFileSync(".cert/cert.pem")
+};
 const mongoSanitize = require("express-mongo-sanitize");
 const helmet = require("helmet");
 const hpp = require('hpp');
@@ -47,7 +54,8 @@ app.use(rateLimit({
 }));
 
 // creating a http server
-const server = http.createServer(app);
+// const server = http.createServer(app);
+const server=https.createServer(options, app);
 // setup socket connection
 // Socket.registerSocketServer(server);
 
