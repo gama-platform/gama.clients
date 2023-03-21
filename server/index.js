@@ -22,7 +22,7 @@ const hpp = require('hpp');
 const rateLimit = require("express-rate-limit");
 const { connectDB } = require('./DataBase/connectDB');
 // const { initAllDockerContainers } = require('./CodeExecuter/codeExecutor_dockerv');
-const { Socket } = require('./socketHandler');
+// const { Socket } = require('./socketHandler');
 // const { loggingMiddleware } = require('./middlewares');
  
 // Establish Connection to Database
@@ -49,7 +49,7 @@ app.use(rateLimit({
 // creating a http server
 const server = http.createServer(app);
 // setup socket connection
-Socket.registerSocketServer(server);
+// Socket.registerSocketServer(server);
 
 // logging all server side requests
 // app.use('/api', loggingMiddleware);

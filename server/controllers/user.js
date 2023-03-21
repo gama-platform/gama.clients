@@ -21,8 +21,8 @@ const loginController = async (req, res) => {
         // send the token in a HTTP-only cookie
         res.cookie("token", token, {
             httpOnly: true,
-            // secure: true,
-            // sameSite: "none",
+            secure: true,
+            sameSite: "none",
         }).status(200).json({ msg: "Logged In" });
     } catch (err) {
         logger.error(err, dateTimeNowFormated());
@@ -34,13 +34,13 @@ const oAuth2Client = new OAuth2Client(
     process.env.CLIENT_ID,
     process.env.CLIENT_SECRET,
     'postmessage',
-  );
+);
 const gloginController = async (req, res) => {
     try {
         // console.log(req.body);
         // const { token } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens
         // console.log(token);
-        
+
         // res.json(token);
 
         // sign the token
@@ -55,8 +55,8 @@ const gloginController = async (req, res) => {
         // send the token in a HTTP-only cookie
         res.cookie("token", token, {
             httpOnly: true,
-            // secure: true,
-            // sameSite: "none",
+            secure: true,
+            sameSite: "none",
         }).status(200).json({ msg: "Logged In" });
     } catch (err) {
         logger.error(err, dateTimeNowFormated());
@@ -100,10 +100,10 @@ const logoutController = (req, res) => {
     return res.cookie("token", "", {
         httpOnly: true,
         expires: new Date(0),
-        // secure: true,
-        // sameSite: "none",
+        secure: true,
+        sameSite: "none",
     }).status(200).json({ msg: "Logged Out" });
-} 
+}
 const initDockerController = async (req, res) => {
     try {
         if (!req.cookies || !req.cookies.token) return res.json(false);
@@ -114,8 +114,8 @@ const initDockerController = async (req, res) => {
         const user = await User.getUserById(verified.user);
         // console.log( user.port);
         // await initAllDockerContainers(user.name,); 
-        const rres=await initDockerContainer(user.id, user.port, 'gamaplatform/mini:alpha', 0);
-        
+        const rres = await initDockerContainer(user.id, user.port, 'gamaplatform/mini:alpha', 0);
+
         return res.status(200).json({ msg: "init docker", port: user.port });
     } catch (err) {
         logger.error(err, dateTimeNowFormated());
@@ -136,8 +136,8 @@ const loggedInController = async (req, res) => {
             status: true,
             name: user.name,
             email: user.email,
-            username: user.username, 
-            port: user.port, 
+            username: user.username,
+            port: user.port,
             solvedQuestions: user.solvedQuestions
         });
     } catch (err) {
@@ -175,7 +175,7 @@ const changePasswordController = async (req, res) => {
 }
 
 module.exports = {
-    loginController,gloginController, initDockerController,
+    loginController, gloginController, initDockerController,
     registerController,
     logoutController,
     loggedInController,
