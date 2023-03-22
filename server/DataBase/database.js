@@ -3,7 +3,7 @@
 const User = require('./Model/User');
 // const Code = require('./Model/Code');
 // const Note = require('./Model/Note');
-const shortid  = require('shortid');
+const shortid = require('shortid');
 
 
 // Question
@@ -42,14 +42,19 @@ const createNewUser = async ({ name, username, email, passwordHash }) => {
     const savedUser = await newUser.save();
     return savedUser;
 }
-const hexToDecimal = hex => parseInt(hex, 16);
+let idxInc = 1000;
+let mapObj = new Map();
 const getUserById = async userId => {
-    const user = await User.findById(userId);    
-    const x=hexToDecimal(user.id);
-    user.port= Math.floor((x-1e23) / (1e25-1e23) );//(value-min)/(max-min) 
-    console.log( (user.id));
-    console.log(hexToDecimal(user.id));
-    console.log(Math.floor((x-1e23) / (1e25-1e23) ));
+    const user = await User.findById(userId);
+    const key = user.id;
+
+    if (!mapObj.has(key)) {
+        idxInc++;
+        mapObj.set(key, idxInc);
+
+    }
+    user.port = mapObj.get(key);
+    console.log((user.port));
     return user;
 }
 const findOneUser = async filter => {
