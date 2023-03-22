@@ -12,7 +12,7 @@ import AccountMenu from '../components/NavBar/AccountMenu/AccountMenu';
 const options_server = [{ value: "ws://51.255.46.42:6001", label: 'ovh' }];
 const options_model = [{ value: "/Users/hqn88/git/gama/msi.gama.models/models", label: 'mym1' },
 { value: "C:/git/gama/msi.gama.models/models", label: 'win' },
-{ value: "/opt/gama-platform/configuration/org.eclipse.osgi/22/0/.cp/models", label: 'docker' },
+{ value: "/opt/gama-platform/headless/configuration/org.eclipse.osgi/20/0/.cp/models", label: 'docker' },
 { value: "/var/www/github/gama/msi.gama.models/models", label: 'ovh' }];
 
 if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA) {
@@ -64,8 +64,9 @@ function OptionsBar(props) {
     if (!props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
       // this.waiting(true);
       if(loginState.port!==0){
-        setServerURL("wss://51.255.46.42.nip.io:"+loginState.port);
-        setModelURL("/opt/gama-platform/configuration/org.eclipse.osgi/22/0/.cp/models");
+        setServerURL("wss://localhost:"+loginState.port);
+        // setServerURL("wss://51.255.46.42.nip.io:"+loginState.port);
+        setModelURL("/opt/gama-platform/headless/configuration/org.eclipse.osgi/20/0/.cp/models");
         //https://www.baeldung.com/convert-pem-to-jks
         // setServerURL("wss://localhost:6868");
         // setModelURL("/Users/hqn88/git/gama/msi.gama.models/models");
