@@ -64,8 +64,8 @@ function OptionsBar(props) {
     if (!props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
       // this.waiting(true);
       if(loginState.port!==0){
-        setServerURL("wss://localhost:"+loginState.port);
-        // setServerURL("wss://51.255.46.42.nip.io:"+loginState.port);
+        // setServerURL("wss://localhost:"+loginState.port);
+        setServerURL("wss://51.255.46.42.nip.io:"+loginState.port);
         setModelURL("/opt/gama-platform/headless/configuration/org.eclipse.osgi/20/0/.cp/models");
         //https://www.baeldung.com/convert-pem-to-jks
         // setServerURL("wss://localhost:6868");
