@@ -1,10 +1,7 @@
 const { exec, spawn } = require('child_process');
 const path = require('path');
-const { logger } = require('../utils');
+const { logger, delay } = require('../utils');
 
-const delay = ms => new Promise(
-    resolve => setTimeout(resolve, ms)
-);
 // name => it is the name to be given to the container
 // image => it is the name of image whose container is to be created
 const createContainer = async ({ name, image, prt, comd }) => {
@@ -13,8 +10,8 @@ const createContainer = async ({ name, image, prt, comd }) => {
             (error || stderr) && reject({ msg: 'on docker error', error, stderr });
             setTimeout(() => {
                 killContainer(name);
-            }, 10 * 60000);
-            await delay(18000);
+            }, 10 * 60 * 1000);
+            await delay(20000);
             const containerId = `${stdout}`.trim();
             resolve(containerId);
         });

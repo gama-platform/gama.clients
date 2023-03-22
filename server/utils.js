@@ -11,6 +11,9 @@ const ConsoleLogger = new Console({
     stderr: fs.createWriteStream(stderrDir, { flags: 'a' }),
 });
 
+const delay = ms => new Promise(
+    resolve => setTimeout(resolve, ms)
+);
 const logging = (type, ...args) => {
     const msg = args.join(' ');
     // emitSocketLoggerEvent
@@ -35,5 +38,6 @@ const dateTimeNowFormated = () => {
 
 module.exports = {
     logger,
+    delay,
     dateTimeNowFormated
 };

@@ -16,19 +16,7 @@ export const getLoggedIn = () => {
                     credentials: 'include'
                 }
             ).then(data => data.json());
-
-            // const response1 = await fetch(
-            //     `${SERVER_LINK}/api/user/initDocker`,
-            //     {
-            //         headers: {
-            //             'Content-Type': 'application/json'
-            //         },
-            //         method: 'GET',
-            //         credentials: 'include'
-            //     }
-            // ).then(data => data.json());
-
-            // console.log(response); 
+ 
             dispatch(authActions.setLoggedIn({
                 loggedIn: response.status || false, //port: response1.port,
                 ...response
@@ -83,19 +71,7 @@ export const glogin = (code) => {
         }))
 
         try {
-            dispatch(authActions.setLoading({ isLoading: true }));
-            // const response = await fetch(
-            //     `${SERVER_LINK}/api/user/glogin`,
-            //     {
-            //         headers: {
-            //             'Content-Type': 'application/json'
-            //         },
-            //         method: 'POST',
-            //         credentials: 'include',
-            //         body: {"code":code}
-            //     }
-            // ).then(data => data.json());
-
+            dispatch(authActions.setLoading({ isLoading: true })); 
             const response = await fetch(
                 `${SERVER_LINK}/api/user/glogin`,
                 {
@@ -107,12 +83,12 @@ export const glogin = (code) => {
                     body: JSON.stringify({ code })
                 }
             ).then(data => data.json());
-
-            // const response = await axios.post(
-            //     `${SERVER_LINK}/api/user/glogin`, {
-            //     code: code,
-            // });
-            
+ 
+            dispatch(messageActions.set({
+                type: 'info',
+                autoclose:200000,
+                message: 'Initializing environment...'
+            }))
             await dispatch(initDocker());
             if (response.error) {
                 dispatch(messageActions.set({
@@ -171,6 +147,10 @@ export const login = (username, email, password) => {
                 }
             ).then(data => data.json());
 
+            dispatch(messageActions.set({
+                type: 'info',
+                message: 'Initializing environment...'
+            }))
             await dispatch(initDocker());
             if (response.error) {
                 dispatch(messageActions.set({

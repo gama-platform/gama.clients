@@ -7,7 +7,7 @@ const {
     killContainer, deleteFileDocker,
     compile, execute
 } = require('./docker');
-const { dateTimeNowFormated, logger } = require('../utils');
+const { dateTimeNowFormated, logger, delay } = require('../utils');
 
 // ####################################################################################
 // ####################################################################################
@@ -30,7 +30,7 @@ const containerNames = [
 const containerIds = [];
 
 const execInContainer = (name, containerId) => {
-    const command = "bash gama-headless.sh -validate";
+    // const command = "bash gama-headless.sh -validate";
     // await new Promise((resolve, reject) => {
     //     exec(`docker exec ${data} ${command}`, (error, stdout, stderr) => {
     //         error && reject({ msg: 'on error', error, stderr });
@@ -39,10 +39,11 @@ const execInContainer = (name, containerId) => {
     // });
     return new Promise( (resolve, reject) => {
         try {
-            exec(`docker exec -d ${containerId} bash gama-headless -validate`, (error, stdout, stderr) => {
+            exec(`docker exec -d ${containerId} bash gama-headless -validate`, async (error, stdout, stderr) => {
                 (error || stderr) && reject({ msg: 'on docker error', error, stderr });
-                const containerId = `${stdout}`.trim();
-                console.log(stdout);
+                // const containerId = `${stdout}`.trim();
+                console.log("validated "+stdout);
+                await delay(20000);
                 resolve(containerId);
             });
         } catch (error) {

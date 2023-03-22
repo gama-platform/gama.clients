@@ -6,12 +6,16 @@ const messageSlice = createSlice({
         type: undefined, // success, error, warning, info
         message: undefined,
         description: undefined,
+        autoclose:3500,
         change: true
     },
     reducers: {
         set(state, action) {
             state.type = action.payload.type || 'info';
-            state.message = action.payload.message;
+            state.message = action.payload.message; 
+            action.payload.autoclose ?
+                state.autoclose = action.payload.autoclose :
+                state.autoclose = 3500;
             action.payload.description ?
                 state.description = action.payload.description :
                 state.description = undefined;
