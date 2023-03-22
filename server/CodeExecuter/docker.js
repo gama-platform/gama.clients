@@ -9,7 +9,7 @@ const delay = ms => new Promise(
 // image => it is the name of image whose container is to be created
 const createContainer = async ({ name, image, prt, comd }) => {
     return new Promise((resolve, reject) => {
-        exec(`docker run -p ` + prt + `:6868 -i -d --rm --name ${name} ${image} -socket 6868 `, async (error, stdout, stderr) => {
+        exec(`docker run -p ` + prt + `:6868 -i -d --rm --name ${name} ${image} -ssocket 6868 -jks /opt/gama-platform/cert.jks -spwd abcdef -kpwd abcdef`, async (error, stdout, stderr) => {
             (error || stderr) && reject({ msg: 'on docker error', error, stderr });
             setTimeout(() => {
                 killContainer(name);

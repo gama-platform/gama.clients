@@ -53,3 +53,5 @@ CMD ["-validate"]
 # export DOCKER_BUILDKIT=0 &&  docker build . --file Dockerfile --tag gamaplatform/mini:alpha && docker-compose up
 
 #docker run --name=gamamini1 gamaplatform/mini:alpha -validate
+
+#wget -o gama.zip https://github.com/gama-platform/gama/releases/download/1.9.0/GAMA_1.9.0_Linux_03.14.23_7f9c33dd.zip
