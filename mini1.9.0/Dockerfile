@@ -27,6 +27,7 @@ RUN cd /opt/gama-platform
 # RUN tar -zxf /opt/gama-platform/gama.tar.gz -C /opt/gama-platform
 
 
+COPY cert.jks /opt/gama-platform 
 COPY gama.zip /opt/gama-platform 
 RUN unzip /opt/gama-platform/gama.zip -d /opt/gama-platform
 # Set absolute path
