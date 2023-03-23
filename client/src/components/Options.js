@@ -9,7 +9,7 @@ import { useSelector } from "react-redux"
 import AccountMenu from '../components/NavBar/AccountMenu/AccountMenu';
 
 
-const options_server = [{ value: "ws://51.255.46.42:6001", label: 'ovh' }];
+const options_server = [{ value: "wss://51.255.46.42.nip.io:6001", label: 'ovh' }];
 const options_model = [{ value: "/Users/hqn88/git/gama/msi.gama.models/models", label: 'mym1' },
 { value: "C:/git/gama/msi.gama.models/models", label: 'win' },
 { value: "/opt/gama-platform/headless/configuration/org.eclipse.osgi/20/0/.cp/models", label: 'docker' },
