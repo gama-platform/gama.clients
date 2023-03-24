@@ -16,7 +16,7 @@ const options_model = [{ value: "/Users/hqn88/git/gama/msi.gama.models/models", 
 { value: "/var/www/github/gama/msi.gama.models/models", label: 'ovh' }];
 
 if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA) {
-  const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET ? 'wss' : 'ws') + '://localhost:' + process.env.REACT_APP_LOCALHOST_GAMA_PORT;
+  const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET>0 ? 'wss' : 'ws') + '://localhost:' + process.env.REACT_APP_LOCALHOST_GAMA_PORT;
   options_server.push({ value: url, label: 'Local GAMA' });
 
   options_model.push({ value: process.env.REACT_APP_LOCALHOST_COMOKIT_GIT_WORKSPACE + '/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml@Closures', label: '[LOCAL] MESO - Closures' });
@@ -24,7 +24,7 @@ if (process.env.REACT_APP_ENABLE_LOCALHOST_GAMA) {
 }
 
 if (process.env.REACT_APP_ENABLE_REMOTE_GAMA) {
-  const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET ? 'wss' : 'ws') + '://' + process.env.REACT_APP_REMOTE_GAMA_IP + ':' + process.env.REACT_APP_REMOTE_GAMA_PORT;
+  const url = (process.env.REACT_APP_USE_SECURE_WEBSOCKET>0 ? 'wss' : 'ws') + '://' + process.env.REACT_APP_REMOTE_GAMA_IP + ':' + process.env.REACT_APP_REMOTE_GAMA_PORT;
   options_server.push({ value: url, label: 'Remote GAMA' });
 
   options_model.push({ value: process.env.REACT_APP_REMOTE_COMOKIT_GIT_WORKSPACE + '/Meso/Models/Experiments/Activity Restrictions/School and Workplace Closure.gaml@Closures', label: '[REMOTE] MESO - Closures' });
@@ -51,7 +51,7 @@ if (process.env.REACT_APP_ENABLE_REMOTE_GAMA) {
 // ];
 function OptionsBar(props) {
   const loginState = useSelector(state => state.auth);
-  const [serverURL, setServerURL] = useLocalStorage("serverURL", "ws://51.255.46.42:6001");
+  const [serverURL, setServerURL] = useLocalStorage("serverURL", "wss://51.255.46.42:6001");
   // = useState('ws://51.255.46.42:6001');
   const [modelURL, setModelURL] = useLocalStorage("modelURL", "C:/git/gama/msi.gama.models/models");
   // useState('/Users/hqn88/git/gama/msi.gama.models/models');
@@ -63,10 +63,11 @@ function OptionsBar(props) {
     // this.checkConnect(true);
     if (!props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!==1 
       // this.waiting(true);
-      if(loginState.port!==0){
+      if(process.env.REACT_APP_USE_SANDBOX>0 && loginState.port!==0){
         setServerURL("wss://"+process.env.REACT_APP_GAMA_IP+":"+loginState.port);
         // setServerURL("wss://51.255.46.42.nip.io:"+loginState.port);
         setModelURL("/opt/gama-platform/headless/configuration/org.eclipse.osgi/20/0/.cp/models");
+        //https://stackoverflow.com/questions/7580508/getting-chrome-to-accept-self-signed-localhost-certificate
         //https://www.baeldung.com/convert-pem-to-jks
         // setServerURL("wss://localhost:6868");
         // setModelURL("/Users/hqn88/git/gama/msi.gama.models/models");
