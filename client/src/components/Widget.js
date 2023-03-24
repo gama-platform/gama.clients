@@ -2,14 +2,14 @@ import React, { useState } from 'react'
 import { Input, Card, Button, CardTitle } from "reactstrap";
 import BaseMap from "./BaseMap";
 
-const default_Widget_state = {
-  data: [],
-  loading: false,
-  title: "",
-  chartType: "single",
-  param: [],
+// const default_Widget_state = {
+//   data: [],
+//   loading: false,
+//   title: "",
+//   chartType: "single",
+//   param: [],
 
-};
+// };
 function Widget(props) {
   // class Widget extends React.Component {
   //   // static id;
@@ -36,7 +36,7 @@ function Widget(props) {
   //     this.tryClose = this.tryClose.bind(this);
   //   }
 
-  const [_id, set_id] = useState(props.id);
+  const [_id] = useState(props.id);
   // const [param, setParam] = useState([]);
 
   // const componentDidUpdate = (prevProps) => {
@@ -75,23 +75,23 @@ function Widget(props) {
   //     this.props.triggerChildFunc2();
   //   }
   // }
-  const fetchFile = () => {
-    // this.setState((prevState) => ({
-    //   data: prevState.data,
-    //   loading: true
-    // }));
-    // const url = this.state.url;
-    // const chartType = this.state.chartType;
+  // const fetchFile = () => {
+  //   // this.setState((prevState) => ({
+  //   //   data: prevState.data,
+  //   //   loading: true
+  //   // }));
+  //   // const url = this.state.url;
+  //   // const chartType = this.state.chartType;
 
-    // console.log(url);s
-    if (this.grid.state && (this._id !== this.grid.state.id_param)) {
-      this.setState((prevState) => ({
-        data: [0, 1],
-        loading: false
-      }));
-    }
+  //   // console.log(url);s
+  //   if (this.grid.state && (this._id !== this.grid.state.id_param)) {
+  //     this.setState((prevState) => ({
+  //       data: [0, 1],
+  //       loading: false
+  //     }));
+  //   }
 
-  }
+  // }
 
   const tryPlay = () => {
     // console.log(props.gama.current);

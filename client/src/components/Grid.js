@@ -37,10 +37,9 @@ function Grid(props) {
   // const [param_str_new, setparam_str_new] = useState([]);
 
 
-  const onShowClick = (c) => {
-    this.setState({ triggerFunc: () => c })
-
-  };
+  // const onShowClick = (c) => {
+  //   this.setState({ triggerFunc: () => c })
+  // };
 
   // waiting(b) {
   //   this.setState((prevState) => ({
@@ -118,13 +117,13 @@ function Grid(props) {
     // }
   }
 
-  const updateParam = (ee) => {
+  // const updateParam = (ee) => {
     // setparam_str_new(ee);
     // this.setState((prevState) => ({
     //   param_str_new: ee
     // }));
     // saveToLS("Layout", this.state);
-  }
+  // }
 
   // const toggleEdit = () => {
   //   this.setState((prevState) => ({
@@ -133,52 +132,52 @@ function Grid(props) {
   // }
 
 
-  const addWidget = () => {
-    // this.setState((prevState) => ({
-    //   widgets: [...prevState.widgets, { id: prevState.widgetSequence + 1, type: 'geojson' }],
-    //   widgetSequence: prevState.widgetSequence + 1
-    // }));
-    // console.log("add " + widgetSequence);
-    // setwidgetSequence(widgetSequence + 1);
-    // console.log("add " + widgetSequence);
-    // setWidgets([...widgets, { id: widgetSequence, type: 'geojson' }]);
-    setState({
-      widgets: [...state.widgets, { id: state.widgetSequence + 1 }],
-      widgetSequence: state.widgetSequence + 1, 
-    });
-  }
+  // const addWidget = () => {
+  //   // this.setState((prevState) => ({
+  //   //   widgets: [...prevState.widgets, { id: prevState.widgetSequence + 1, type: 'geojson' }],
+  //   //   widgetSequence: prevState.widgetSequence + 1
+  //   // }));
+  //   // console.log("add " + widgetSequence);
+  //   // setwidgetSequence(widgetSequence + 1);
+  //   // console.log("add " + widgetSequence);
+  //   // setWidgets([...widgets, { id: widgetSequence, type: 'geojson' }]);
+  //   setState({
+  //     widgets: [...state.widgets, { id: state.widgetSequence + 1 }],
+  //     widgetSequence: state.widgetSequence + 1, 
+  //   });
+  // }
 
-  const removeWidget = (id, conf) => {
-    if (conf) {
-      if (window.confirm('Are you sure to remove?')) {
-        // this.setState((prevState) => ({
-        //   widgets: prevState.widgets.filter((item) => item.id !== id),
-        //   id_param: id === prevState.id_param ? -1 : prevState.id_param,
-        //   //do not decrement sequence, since each new widget must
-        //   //have unique value
-        //   widgetSequence: prevState.widgetSequence
-        // }));
-      }
-    } else {
-      setState( {
-          widgets: state.widgets.filter((item) => item.id !== id),
-          id_param: id === state.id_param ? -1 : state.id_param,
-          //do not decrement sequence, since each new widget must
-          //have unique value
-          widgetSequence: state.widgetSequence
-        });
-      // setWidgets(widgets.filter((item) => item.id !== id));
-      // setid_param(id === id_param ? -1 : id_param);
+  // const removeWidget = (id, conf) => {
+  //   if (conf) {
+  //     if (window.confirm('Are you sure to remove?')) {
+  //       // this.setState((prevState) => ({
+  //       //   widgets: prevState.widgets.filter((item) => item.id !== id),
+  //       //   id_param: id === prevState.id_param ? -1 : prevState.id_param,
+  //       //   //do not decrement sequence, since each new widget must
+  //       //   //have unique value
+  //       //   widgetSequence: prevState.widgetSequence
+  //       // }));
+  //     }
+  //   } else {
+  //     setState( {
+  //         widgets: state.widgets.filter((item) => item.id !== id),
+  //         id_param: id === state.id_param ? -1 : state.id_param,
+  //         //do not decrement sequence, since each new widget must
+  //         //have unique value
+  //         widgetSequence: state.widgetSequence
+  //       });
+  //     // setWidgets(widgets.filter((item) => item.id !== id));
+  //     // setid_param(id === id_param ? -1 : id_param);
 
-      // this.setState((prevState) => ({
-      //   widgets: prevState.widgets.filter((item) => item.id !== id),
-      //   id_param: id === prevState.id_param ? -1 : prevState.id_param,
-      //   //do not decrement sequence, since each new widget must
-      //   //have unique value
-      //   widgetSequence: prevState.widgetSequence
-      // }));
-    }
-  }
+  //     // this.setState((prevState) => ({
+  //     //   widgets: prevState.widgets.filter((item) => item.id !== id),
+  //     //   id_param: id === prevState.id_param ? -1 : prevState.id_param,
+  //     //   //do not decrement sequence, since each new widget must
+  //     //   //have unique value
+  //     //   widgetSequence: prevState.widgetSequence
+  //     // }));
+  //   }
+  // }
 
   const onLayoutChange = (layout, layouts) => {
     window.dispatchEvent(new Event("resize"));

@@ -15,7 +15,7 @@ const tmp_geojson = {
 const BaseMap = (props) => {
   const mapContainer = useRef(null);
   const [mymap, setMap] = useState(null);
-  const [sources, setSources] = useState([]);
+  const [sources] = useState([]);
 
   useEffect(() => {
     mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -101,22 +101,22 @@ const BaseMap = (props) => {
     // this.on_connected(this);
   }
 
-  const on_connected = (myself) => {
-    // const attribute1Name = this.state.sources[0].attr;
-    // const attribute2Name = 'zone_id';
-    // console.log("connected");
-    // console.log(this.props.map);
-    var mymyself = myself;
+  // const on_connected = (myself) => {
+  //   // const attribute1Name = this.state.sources[0].attr;
+  //   // const attribute2Name = 'zone_id';
+  //   // console.log("connected");
+  //   // console.log(this.props.map);
+  //   var mymyself = myself;
 
 
-    // props.gama.current.evalExpr("species(world).microspecies", function (ee) {
-    //     console.log(ee);
-    // });
+  //   // props.gama.current.evalExpr("species(world).microspecies", function (ee) {
+  //   //     console.log(ee);
+  //   // });
 
 
 
 
-  }
+  // }
 
   // const on_disconnected = () => {
   //   console.log("disconnected");
