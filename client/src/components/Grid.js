@@ -55,6 +55,14 @@ function Grid(props) {
   const remParam = () => {
     // setWidgets([]);
     // setid_param(-1);  
+    // setState({
+    //   widgets: [],
+    //   id_param: -1,
+    //   //do not decrement sequence, since each new widget must
+    //   //have unique value
+    //   widgetSequence: state.widgetSequence
+    // });
+
     setState({
       widgets: [],
       id_param: -1,
@@ -62,6 +70,7 @@ function Grid(props) {
       //have unique value
       widgetSequence: state.widgetSequence
     });
+    state.widgets=[];
     // this.setState((prevState) => ({
     //   widgets: [],
     //   id_param: -1,
@@ -97,9 +106,9 @@ function Grid(props) {
     // setparam_str(parameters);
     // setparam_str_new(parameters);
     setState({
-      widgets: [...state.widgets, { id: state.widgetSequence + 1 }],
-      widgetSequence: state.widgetSequence + 1,
-      id_param: state.widgetSequence + 1,
+      widgets: [{ id: state.widgetSequence + 1 }, { id: state.widgetSequence + 2 }],
+      widgetSequence: state.widgetSequence + 2,
+      id_param: state.widgetSequence + 2,
       //   widgetSequence: prevState.widgetSequence + 1
       param_str: parameters,
       param_str_new: parameters,
@@ -118,11 +127,11 @@ function Grid(props) {
   }
 
   // const updateParam = (ee) => {
-    // setparam_str_new(ee);
-    // this.setState((prevState) => ({
-    //   param_str_new: ee
-    // }));
-    // saveToLS("Layout", this.state);
+  // setparam_str_new(ee);
+  // this.setState((prevState) => ({
+  //   param_str_new: ee
+  // }));
+  // saveToLS("Layout", this.state);
   // }
 
   // const toggleEdit = () => {
@@ -191,9 +200,11 @@ function Grid(props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const launchModelMethod = ((ee) => {
 
+    console.log(state);
     remParam();
     // addWidget();
     addParam(ee);
+    console.log(state);
   });
 
   React.useEffect(() => {

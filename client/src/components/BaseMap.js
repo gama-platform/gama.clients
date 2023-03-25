@@ -52,15 +52,16 @@ const BaseMap = (props) => {
     };
 
     if (!mymap) initializeMap({ setMap, mapContainer }); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mymap]);
   useEffect(() => {
-    if (mymap)  {
-    
-      const interval = setInterval(() => update(),100);
-      return () => {
-        clearInterval(interval);
-      };
-    }
+    const interval = setInterval(() => update(),100);
+   
+    return () => {
+      console.log("clear "+interval);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mymap]);
   const createSources = (ee, mymap) => {
     ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
@@ -96,6 +97,8 @@ const BaseMap = (props) => {
       });
     });
 
+    // if (mymap)  {
+    //   update();}
     // console.log(sources);
     // props.gama.current.addOutput(this, this);
     // this.on_connected(this);
@@ -133,9 +136,11 @@ const BaseMap = (props) => {
 
   // }
   const update = (c) => { 
-    sources.forEach((v) => {
-      singleUpdate( v.species, v.attr, c);
-    });
+    if(mymap && props.gama.current.status === "play"){
+      sources.forEach((v) => {
+        singleUpdate( v.species, v.attr, c);
+      });
+    }
   }
 
   const singleUpdate = (species1Name, attribute1Name, c) => {

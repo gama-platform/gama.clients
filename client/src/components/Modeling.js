@@ -62,7 +62,7 @@ function Modeling(props) {
     // if (!this.gama.current.wSocket) {
     //   this.tryConnect();
     // }
-    // console.log(props.gama.current);
+    // console.log(props.gama.current.wSocket);
     if (props.gama.current && props.gama.current.wSocket && props.gama.current.wSocket.readyState === 1) {
       // this.setState((prevState) => ({
       //     loaded: false
@@ -115,6 +115,7 @@ function Modeling(props) {
 
       props.gama.current.evalExpr("experiment.parameters.pairs", function (ee) {
 
+        // console.log("tryGenParam "+ee);
         if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
           
         props.editor_grid_link_ref.current(ee);

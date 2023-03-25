@@ -10,7 +10,8 @@ import BaseMap from "./BaseMap";
 //   param: [],
 
 // };
-function Widget(props) {
+
+const Widget = (props) => {
   // class Widget extends React.Component {
   //   // static id;
   //   constructor(param) {
