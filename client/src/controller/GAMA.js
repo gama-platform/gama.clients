@@ -147,7 +147,7 @@ class GAMA extends React.Component {
     }
 
     evalExpr(q, c, es) {
-
+        // console.log(q);
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "expression",
@@ -316,6 +316,7 @@ class GAMA extends React.Component {
         this.status = "step";
         this.execute(this.status, () => {
             if (c) c();
+            this.status = "";
             this.updateOutputs();
         });
     }

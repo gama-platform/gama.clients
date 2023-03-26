@@ -36,7 +36,7 @@ const Widget = (props) => {
   //     this.tryReload = this.tryReload.bind(this);
   //     this.tryClose = this.tryClose.bind(this);
   //   }
-
+  
   const [_id] = useState(props.id);
   // const [param, setParam] = useState([]);
 
@@ -110,7 +110,7 @@ const Widget = (props) => {
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
       props.gama.current.queue.length = 0;
       props.gama.current.step(() => {
-        console.log("step");
+        console.log("step");    
       });
     }
     // window.$gama.doConnect();
@@ -126,7 +126,7 @@ const Widget = (props) => {
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
       props.gama.current.queue.length = 0;
       var pp = [];
-      this.props.grid.state.param_str_new.forEach((value, key, map) => {
+      props.param_str_new.forEach((value, key, map) => {
         var v = value['value'];
         var t = "string";
         if (!isNaN(v)) {
@@ -152,7 +152,7 @@ const Widget = (props) => {
   }
 
   const handleChangeCBBOX = (i, e) => {
-    let formValues = this.state.param;
+    let formValues = props.param;
     formValues[i]["value"] = e.target.value;
     // console.log(formValues[i]);
     // this.setState({ param: formValues }, () => {
@@ -228,7 +228,10 @@ const Widget = (props) => {
   } else {
     return (<><div className="widgetHeader">
       {widgetHeader}
-    </div><BaseMap _id={_id} gama={props.gama} /></>
+    </div> 
+      
+    <BaseMap _id={_id} gama={props.gama} /> 
+    </>
     );
   }
   // if (this.props.updateMethod) {

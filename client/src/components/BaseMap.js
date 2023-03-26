@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react"; 
 import mapboxgl from "mapbox-gl";
 const tmp_geojson = {
   'type': 'FeatureCollection',
@@ -12,7 +12,7 @@ const tmp_geojson = {
     }
   ]
 };
-const BaseMap = (props) => {
+const BaseMap = (props)  => {
   const mapContainer = useRef(null);
   const [mymap, setMap] = useState(null);
   const [sources] = useState([]);
@@ -30,22 +30,7 @@ const BaseMap = (props) => {
       map.on('load', async () => {
 
         props.gama.current.evalExpr("species(world).microspecies", (ee) => createSources(ee, map));
-        props.gama.current.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
-          // console.log(ee);
-          if (JSON.parse(ee).type === "CommandExecutedSuccessfully") {
-            // ee = JSON.parse(ee).content.replace(/[{}]/g, "");
-            ee = JSON.parse(ee).content.replace(/[{}]/g, "").replace(/['"]+/g, '');
-            var eee = ee.split(",");
-            const bbox = [
-              [eee[0], eee[1]], // southwestern corner of the bounds
-              [eee[3], eee[4]], // northeastern corner of the bounds
-            ];
-            map.fitBounds(bbox, {
-              padding: 10,
-              duration: 0,
-            });
-          }
-        });
+        
 
 
       });
@@ -55,15 +40,15 @@ const BaseMap = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mymap]);
   useEffect(() => {
-    const interval = setInterval(() => update(),100);
+    const interval = setInterval(() => update(),1);
    
     return () => {
-      console.log("clear "+interval);
+      // console.log("clear "+interval);
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mymap]);
-  const createSources = (ee, mymap) => {
+  const createSources = (ee, mmap) => {
     ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
     var eee = ee.split(",");
     eee.forEach((e) => {
@@ -91,12 +76,32 @@ const BaseMap = (props) => {
       // });
     });
     sources.forEach((v) => {
-      mymap.addSource("S" + v.species, {
+      mmap.addSource("S" + v.species, {
         type: 'geojson',
         data: tmp_geojson
-      });
+      }); 
+    });  
+    
+    props.gama.current.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
+      // console.log(ee);
+      if (JSON.parse(ee).type === "CommandExecutedSuccessfully") {
+        // ee = JSON.parse(ee).content.replace(/[{}]/g, "");
+        ee = JSON.parse(ee).content.replace(/[{}]/g, "").replace(/['"]+/g, '');
+        var eee = ee.split(",");
+        const bbox = [
+          [eee[0], eee[1]], // southwestern corner of the bounds
+          [eee[3], eee[4]], // northeastern corner of the bounds
+        ];
+        mmap.fitBounds(bbox, {
+          padding: 10,
+          duration: 0,
+        });
+        sources.forEach((v) => {
+          singleUpdate(mmap, v.species, v.attr);
+        });
+    
+      }
     });
-
     // if (mymap)  {
     //   update();}
     // console.log(sources);
@@ -135,16 +140,18 @@ const BaseMap = (props) => {
   // const reset = (c) => {
 
   // }
-  const update = (c) => { 
-    if(mymap && props.gama.current.status === "play"){
+   
+  const update = (force,c) => { 
+    if(mymap && (props.gama.current.status === "play" ||props.gama.current.status === "step" || force)){
       sources.forEach((v) => {
-        singleUpdate( v.species, v.attr, c);
+        singleUpdate(mymap, v.species, v.attr, c);
       });
     }
   }
 
-  const singleUpdate = (species1Name, attribute1Name, c) => {
+  const singleUpdate = (mymap, species1Name, attribute1Name, c) => {
     props.gama.current.evalExpr("to_geojson(" + species1Name + ",\"EPSG:4326\",[\"" + attribute1Name + "\"])", function (message) {
+       
       if (typeof message.data == "object") {
 
       } else {
@@ -159,7 +166,6 @@ const BaseMap = (props) => {
  
 
           if (!mymap.style.getLayer("S" + species1Name)) {
-            // console.log("layer added");
             // addLayer(tmp.features[0].geometry.type, key);
 
             var circle_defaultstyle = {

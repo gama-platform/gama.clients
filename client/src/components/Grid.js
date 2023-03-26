@@ -200,11 +200,11 @@ function Grid(props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const launchModelMethod = ((ee) => {
 
-    console.log(state);
+    // console.log(state);
     remParam();
     // addWidget();
     addParam(ee);
-    console.log(state);
+    // console.log(state);
   });
 
   React.useEffect(() => {
@@ -223,7 +223,7 @@ function Grid(props) {
   const layouts = state.widgets.map((item) => (
     <div className="widget" key={item.id} data-grid={config}>
       <div className="mscroll" style={{ width: "100%", height: "100%" }}>
-        <Widget gama={props.gama} id={item.id} id_param={state.id_param} param={state.param_str}></Widget>
+        <Widget gama={props.gama} id={item.id} id_param={state.id_param} param={state.param_str} param_str_new={state.param_str_new}></Widget>
         {/* //triggerChildFunc={triggerFunc} triggerChildFunc2={triggerFunc2}  grid={this} id={item.id} type={item.type}*/}
       </div>
     </div>
