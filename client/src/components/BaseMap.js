@@ -25,7 +25,8 @@ const BaseMap = (props)  => {
         style: "mapbox://styles/mapbox/streets-v11", // stylesheet location
         center: [105.8249019, 21.0076181], // TLU -84.5, 38.05starting position 
         zoom: 15 // starting zoom
-      });
+      }); 
+      map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right');
       setMap(map);
       map.on('load', async () => {
 
@@ -92,6 +93,7 @@ const BaseMap = (props)  => {
           [eee[0], eee[1]], // southwestern corner of the bounds
           [eee[3], eee[4]], // northeastern corner of the bounds
         ];
+        // mmap.setMaxBounds(bbox);
         mmap.fitBounds(bbox, {
           padding: 10,
           duration: 0,
