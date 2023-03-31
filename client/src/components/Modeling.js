@@ -158,9 +158,9 @@ function Modeling(props) {
     <div className="card flex justify-content-center">
       <form onSubmit={formik.handleSubmit} className="flex flex-column gap-2">
         <Toast ref={toast} />
-        <table><tbody>
+        <table style={{textAlign:"left"}}><tbody>
           <tr><td>
-            <Button label="Launch" type="submit" icon="pi pi-check" /></td></tr>
+            <Button size="small" label="Launch" type="submit" icon="pi pi-check" /></td></tr>
           <tr><td><InputTextarea
             inputid="description"
             name="description"

@@ -49,6 +49,10 @@ const BaseMap = (props)  => {
     clearInterval(timer);
     const interval = setInterval(() => update(),codeFontSize);
     setTimer(interval)  ;
+    return () => {
+      // console.log("clear "+interval);
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ codeFontSize]);
 
