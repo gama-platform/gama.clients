@@ -206,8 +206,9 @@ function Grid(props) {
     addParam(ee);
     // console.log(state);
   });
+  const [codeFontSize, setcodeFontSize] = useState(1);
 
-  React.useEffect(() => {
+  React.useEffect(() => { 
     props.editor_grid_link_ref.current = launchModelMethod
   }, [launchModelMethod, props.editor_grid_link_ref]);
 
@@ -223,7 +224,12 @@ function Grid(props) {
   const layouts = state.widgets.map((item) => (
     <div className="widget" key={item.id} data-grid={config}>
       <div className="mscroll" style={{ width: "100%", height: "100%" }}>
-        <Widget gama={props.gama} id={item.id} id_param={state.id_param} param={state.param_str} param_str_new={state.param_str_new}></Widget>
+        <Widget  id={item.id}
+        gama={props.gama} id_param={state.id_param} 
+        codeFontSize={codeFontSize} 
+        setcodeFontSize={setcodeFontSize}
+        param={state.param_str} 
+        param_str_new={state.param_str_new}></Widget>
         {/* //triggerChildFunc={triggerFunc} triggerChildFunc2={triggerFunc2}  grid={this} id={item.id} type={item.type}*/}
       </div>
     </div>

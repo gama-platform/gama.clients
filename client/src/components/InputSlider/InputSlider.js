@@ -13,7 +13,7 @@ const Input = styled(MuiInput)`
 
 const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
 
-    const maxVal = 5000, minVal = 0;
+    const maxVal = 2000, minVal = 0;
 
     const handleSliderChange = (event, newValue) => {
         setValue(newValue);
@@ -37,6 +37,7 @@ const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
                 {/* <Grid item>
                     <TextFields />
                 </Grid> */}
+                <Grid item>0</Grid>
                 <Grid item xs>
                     <Slider
                         value={value}
@@ -46,6 +47,7 @@ const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
                         max={maxVal}
                     />
                 </Grid>
+                <Grid item>2s</Grid>
                 {/* <Grid item>
                     <Input
                         value={value}

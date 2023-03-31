@@ -12,88 +12,14 @@ import InputSlider from '../components/InputSlider/InputSlider'
 
 // };
 
-const Widget = (props) => {
-  // class Widget extends React.Component {
-  //   // static id;
-  //   constructor(param) {
-  //     super();
-  //     // if (typeof Widget.id === 'undefined') {
-  //     //   Widget.id = 0;
-  //     // } else {
-  //     //   Widget.id += 1;
-  //     // }
-  //     // this.id = "m" + Widget.id;
-  //     this._id = param.id;
-  //     this.id = "m" + param.id;
-  //     this.state = default_Widget_state;
-  //     this.grid = param.grid;
-  //     this.type = param.type;
-  //     this.state.chartType = param.type;
+const Widget = (props) => { 
 
-  //     this.fetchFile = this.fetchFile.bind(this);
-  //     this.tryPlay = this.tryPlay.bind(this);
-  //     this.tryPause = this.tryPause.bind(this);
-  //     this.tryStep = this.tryStep.bind(this);
-  //     this.tryReload = this.tryReload.bind(this);
-  //     this.tryClose = this.tryClose.bind(this);
-  //   }
+  const { 
+    codeFontSize, 
+    setcodeFontSize
+} = props;
 
-  const [_id] = useState(props.id);
-  // const [param, setParam] = useState([]);
-
-  // const componentDidUpdate = (prevProps) => {
-  //   if (this.props.triggerChildFunc !== prevProps.triggerChildFunc) {
-  //     this.onParentTrigger();
-  //   }
-  //   if (this.props.triggerChildFunc2 !== prevProps.triggerChildFunc2) {
-  //     this.onParentTrigger2();
-  //   }
-  //   // if (this._id === this.grid.state.id_param) {
-  //   this.setState({
-  //     param: this.grid.state.param_str,
-  //     chartType: this.type
-  //   }, () => {
-
-  //     // this.setState(this.getWFromLS("Widget" + this.id))
-  //     // this.getWFromLS("Widget" + this.id);
-  //   });
-  // }
-
-  // const onParentTrigger = () => {
-  //   this.toEdit(0);
-
-  //   // Let's call the passed variable from parent if it's a function
-  //   if (this.props.triggerChildFunc && {}.toString.call(this.props.triggerChildFunc) === '[object Function]') {
-  //     this.props.triggerChildFunc();
-  //   }
-  // }
-  // const onParentTrigger2 = () => {
-  //   this.setState(
-
-  //   )
-
-  //   // Let's call the passed variable from parent if it's a function
-  //   if (this.props.triggerChildFunc2 && {}.toString.call(this.props.triggerChildFunc2) === '[object Function]') {
-  //     this.props.triggerChildFunc2();
-  //   }
-  // }
-  // const fetchFile = () => {
-  //   // this.setState((prevState) => ({
-  //   //   data: prevState.data,
-  //   //   loading: true
-  //   // }));
-  //   // const url = this.state.url;
-  //   // const chartType = this.state.chartType;
-
-  //   // console.log(url);s
-  //   if (this.grid.state && (this._id !== this.grid.state.id_param)) {
-  //     this.setState((prevState) => ({
-  //       data: [0, 1],
-  //       loading: false
-  //     }));
-  //   }
-
-  // }
+  const [_id] = useState(props.id);   
 
   const tryPlay = () => {
     // console.log(props.gama.current);
@@ -162,7 +88,6 @@ const Widget = (props) => {
     //   // this.getWFromLS("Widget" + this.id);
     // });
   }
-  const [codeFontSize, setcodeFontSize] = useState(1);
   const widgetHeader = (
     <table>
       <tbody>
@@ -187,13 +112,8 @@ const Widget = (props) => {
 
 
 
-    )) : "";
+    )) : ""; 
 
-    var divStyle = {
-      display: "block",
-      padding: "0px 0px",
-      height: "101px"
-    };
     return (
       <> <div className="widgetHeader">
         {widgetHeader}
@@ -215,7 +135,8 @@ const Widget = (props) => {
                     {<td><Button color="primary" size="sm" onClick={tryPlay}>▷</Button> </td>}
 
                     {<td><Button color="primary" size="sm" onClick={tryPause}>❚❚</Button> </td>}
-                    <td  width="50%" style={{paddingLeft:'10px'}}><InputSlider codeFontSize={codeFontSize} setcodeFontSize={setcodeFontSize} /></td>
+                    <td  width="50%" style={{paddingLeft:'10px'}}>
+                      <InputSlider codeFontSize={codeFontSize} setcodeFontSize={setcodeFontSize} /></td>
 
                     {<td><Button color="primary" size="sm" onClick={tryStep}>⏯</Button> </td>}
 
@@ -239,7 +160,7 @@ const Widget = (props) => {
       {widgetHeader}
     </div>
 
-      <BaseMap _id={_id} gama={props.gama} />
+      <BaseMap _id={_id} gama={props.gama} codeFontSize={codeFontSize} />
     </>
     );
   }

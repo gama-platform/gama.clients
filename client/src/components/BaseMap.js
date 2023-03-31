@@ -15,8 +15,12 @@ const tmp_geojson = {
 const BaseMap = (props)  => {
   const mapContainer = useRef(null);
   const [mymap, setMap] = useState(null);
+  const [timer, setTimer] = useState(null);
   const [sources] = useState([]);
 
+  const { 
+    codeFontSize 
+} = props;
   useEffect(() => {
     mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
     const initializeMap = ({ setMap, mapContainer }) => {
@@ -40,8 +44,17 @@ const BaseMap = (props)  => {
     if (!mymap) initializeMap({ setMap, mapContainer }); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mymap]);
+  
+  React.useEffect(() => {  
+    clearInterval(timer);
+    const interval = setInterval(() => update(),codeFontSize);
+    setTimer(interval)  ;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ codeFontSize]);
+
   useEffect(() => {
-    const interval = setInterval(() => update(),1);
+    const interval = setInterval(() => update(),codeFontSize);
+    setTimer(interval)  ;
    
     return () => {
       // console.log("clear "+interval);
