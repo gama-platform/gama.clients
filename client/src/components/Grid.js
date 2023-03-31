@@ -84,7 +84,7 @@ function Grid(props) {
 
     // console.log(JSON.parse(ee).content);
     ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
-    var eee = ee.split(",");
+    var eee = ee.split(", ");
     // var t = "";
     var parameters = [];
     eee.forEach((e1) => {

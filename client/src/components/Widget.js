@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Input, Card, Button, CardTitle } from "reactstrap";
 import BaseMap from "./BaseMap";
 
+import InputSlider from '../components/InputSlider/InputSlider'
 // const default_Widget_state = {
 //   data: [],
 //   loading: false,
@@ -36,7 +37,7 @@ const Widget = (props) => {
   //     this.tryReload = this.tryReload.bind(this);
   //     this.tryClose = this.tryClose.bind(this);
   //   }
-  
+
   const [_id] = useState(props.id);
   // const [param, setParam] = useState([]);
 
@@ -110,7 +111,7 @@ const Widget = (props) => {
     if (props.gama.current && props.gama.current.wSocket) {// && this.gama.current.wSocket.readyState!== 
       props.gama.current.queue.length = 0;
       props.gama.current.step(() => {
-        console.log("step");    
+        console.log("step");
       });
     }
     // window.$gama.doConnect();
@@ -161,7 +162,7 @@ const Widget = (props) => {
     //   // this.getWFromLS("Widget" + this.id);
     // });
   }
-
+  const [codeFontSize, setcodeFontSize] = useState(1);
   const widgetHeader = (
     <table>
       <tbody>
@@ -188,11 +189,15 @@ const Widget = (props) => {
 
     )) : "";
 
+    var divStyle = {
+      display: "block",
+      padding: "0px 0px",
+      height: "101px"
+    };
     return (
-      <><div className="widgetHeader">
+      <> <div className="widgetHeader">
         {widgetHeader}
       </div>
-
         <div
           style={{
             height: "300px",
@@ -206,20 +211,24 @@ const Widget = (props) => {
             <table width={'100%'}>
               <tbody>
                 <tr><td colSpan={2}><div>
-                  <table><tbody><tr width="100%">
+                  <table ><tbody><tr>
                     {<td><Button color="primary" size="sm" onClick={tryPlay}>▷</Button> </td>}
 
                     {<td><Button color="primary" size="sm" onClick={tryPause}>❚❚</Button> </td>}
+                    <td  width="50%" style={{paddingLeft:'10px'}}><InputSlider codeFontSize={codeFontSize} setcodeFontSize={setcodeFontSize} /></td>
 
                     {<td><Button color="primary" size="sm" onClick={tryStep}>⏯</Button> </td>}
 
                     {<td><Button color="primary" size="sm" onClick={tryReload}>↻</Button> </td>}
 
                     {<td><Button color="primary" size="sm" onClick={tryClose}>✕</Button> </td>}
-                  </tr></tbody></table></div></td>
+                    </tr></tbody></table></div>
+
+
+
+                </td>
                 </tr>
                 {param_layouts}
-
               </tbody>
             </table>
           </Card>
@@ -228,9 +237,9 @@ const Widget = (props) => {
   } else {
     return (<><div className="widgetHeader">
       {widgetHeader}
-    </div> 
-      
-    <BaseMap _id={_id} gama={props.gama} /> 
+    </div>
+
+      <BaseMap _id={_id} gama={props.gama} />
     </>
     );
   }

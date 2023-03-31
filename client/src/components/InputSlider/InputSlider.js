@@ -5,15 +5,15 @@ import Grid from '@mui/material/Grid';
 import Slider from '@mui/material/Slider';
 import MuiInput from '@mui/material/Input';
 
-import TextFields from '@mui/icons-material/TextFields';
+// import TextFields from '@mui/icons-material/SpeedSharp';
 
 const Input = styled(MuiInput)`
-  width: 42px;
+  width: 64px;
 `;
 
 const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
 
-    const maxVal = 50, minVal = 5;
+    const maxVal = 5000, minVal = 0;
 
     const handleSliderChange = (event, newValue) => {
         setValue(newValue);
@@ -32,11 +32,11 @@ const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
     };
 
     return (
-        <Box sx={{ width: 250, marginRight: '1rem' }}>
+        <Box sx={{  marginRight: '1rem' }}>
             <Grid container spacing={2} alignItems="center">
-                <Grid item>
+                {/* <Grid item>
                     <TextFields />
-                </Grid>
+                </Grid> */}
                 <Grid item xs>
                     <Slider
                         value={value}
@@ -46,21 +46,21 @@ const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
                         max={maxVal}
                     />
                 </Grid>
-                <Grid item>
+                {/* <Grid item>
                     <Input
                         value={value}
                         size="small"
                         onChange={handleInputChange}
                         onBlur={handleBlur}
                         inputProps={{
-                            step: 10,
+                            step: 100,
                             min: minVal,
                             max: maxVal,
                             type: 'number',
                             'aria-labelledby': 'input-slider',
                         }}
                     />
-                </Grid>
+                </Grid> */}
             </Grid>
         </Box>
     );

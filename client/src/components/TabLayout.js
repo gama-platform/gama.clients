@@ -36,7 +36,10 @@ function TabLayout(props) {
     if (component === "Simulation") {
       return <Container fluid={true}>
 
-        <Grid gama={props.gama} editor_grid_link_ref={editor_grid_link_ref} ></Grid>
+        <Grid style={{
+  display: 'inline-block',
+  padding: '20px 10px'
+}} gama={props.gama} editor_grid_link_ref={editor_grid_link_ref} ></Grid>
 
       </Container>;
     }
