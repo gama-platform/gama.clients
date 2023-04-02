@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"; 
+import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 const tmp_geojson = {
   'type': 'FeatureCollection',
@@ -12,54 +12,112 @@ const tmp_geojson = {
     }
   ]
 };
-const BaseMap = (props)  => {
+const BaseMap = (props) => {
   const mapContainer = useRef(null);
   const [mymap, setMap] = useState(null);
   const [timer, setTimer] = useState(null);
   const [sources] = useState([]);
 
-  const { 
-    codeFontSize 
-} = props;
+  const {
+    codeFontSize
+  } = props;
   useEffect(() => {
     mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
     const initializeMap = ({ setMap, mapContainer }) => {
       const map = new mapboxgl.Map({
         container: mapContainer.current,
+        attributionControl: false,
         style: "mapbox://styles/mapbox/streets-v11", // stylesheet location
         center: [105.8249019, 21.0076181], // TLU -84.5, 38.05starting position 
         zoom: 15 // starting zoom
-      }); 
+      });
       map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right');
       setMap(map);
       map.on('load', async () => {
 
+
+        const layers = document.getElementById('menu'); 
+        layers.innerHTML='';
         props.gama.current.evalExpr("species(world).microspecies", (ee) => createSources(ee, map));
-        
+
 
 
       });
+      // After the last frame rendered before the map enters an "idle" state.
+      map.on('idle', () => {
+        let toggleableLayerIds = [ ];
+        sources.forEach((v) => {
+          if (!map.getLayer("S" + v.species)) {
+            return;
+          }
+          toggleableLayerIds.push("S" +v.species);
+        }); 
+
+        // Enumerate ids of the layers.
+        // Set up the corresponding toggle button for each layer.
+        for (const id of toggleableLayerIds) {
+          // Skip layers that already have a button set up.
+          if (document.getElementById(id)) {
+            continue;
+          }
+
+          // Create a link.
+          const link = document.createElement('a');
+          link.id = id;
+          link.href = '#';
+          link.textContent = id;
+          link.className = 'active';
+
+          // Show or hide layer when the toggle is clicked.
+          link.onclick = function (e) {
+            const clickedLayer = this.textContent;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const visibility = map.getLayoutProperty(
+              clickedLayer,
+              'visibility'
+            );
+
+            // Toggle layer visibility by changing the layout object's visibility property.
+            if (visibility === 'visible') {
+              map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+              this.className = '';
+            } else {
+              this.className = 'active';
+              map.setLayoutProperty(
+                clickedLayer,
+                'visibility',
+                'visible'
+              );
+            }
+          };
+
+          const layers = document.getElementById('menu'); 
+          layers.appendChild(link);
+        }
+      });
     };
 
-    if (!mymap) initializeMap({ setMap, mapContainer }); 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!mymap) initializeMap({ setMap, mapContainer });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mymap]);
-  
-  React.useEffect(() => {  
+
+  React.useEffect(() => {
     clearInterval(timer);
-    const interval = setInterval(() => update(),codeFontSize);
-    setTimer(interval)  ;
+    const interval = setInterval(() => update(), codeFontSize);
+    setTimer(interval);
     return () => {
       // console.log("clear "+interval);
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ codeFontSize]);
+  }, [codeFontSize]);
 
   useEffect(() => {
-    const interval = setInterval(() => update(),codeFontSize);
-    setTimer(interval)  ;
-   
+    const interval = setInterval(() => update(), codeFontSize);
+    setTimer(interval);
+
     return () => {
       // console.log("clear "+interval);
       clearInterval(interval);
@@ -97,9 +155,9 @@ const BaseMap = (props)  => {
       mmap.addSource("S" + v.species, {
         type: 'geojson',
         data: tmp_geojson
-      }); 
-    });  
-    
+      });
+    });
+
     props.gama.current.evalExpr("\"\"+CRS_transform(world.shape.points[1],\"EPSG:4326\")+\",\"+CRS_transform(world.shape.points[3],\"EPSG:4326\")", function (ee) {
       // console.log(ee);
       if (JSON.parse(ee).type === "CommandExecutedSuccessfully") {
@@ -118,7 +176,7 @@ const BaseMap = (props)  => {
         sources.forEach((v) => {
           singleUpdate(mmap, v.species, v.attr);
         });
-    
+
       }
     });
     // if (mymap)  {
@@ -159,9 +217,9 @@ const BaseMap = (props)  => {
   // const reset = (c) => {
 
   // }
-   
-  const update = (force,c) => { 
-    if(mymap && (props.gama.current.status === "play" ||props.gama.current.status === "step" || force)){
+
+  const update = (force, c) => {
+    if (mymap && (props.gama.current.status === "play" || props.gama.current.status === "step" || force)) {
       sources.forEach((v) => {
         singleUpdate(mymap, v.species, v.attr, c);
       });
@@ -170,7 +228,7 @@ const BaseMap = (props)  => {
 
   const singleUpdate = (mymap, species1Name, attribute1Name, c) => {
     props.gama.current.evalExpr("to_geojson(" + species1Name + ",\"EPSG:4326\",[\"" + attribute1Name + "\"])", function (message) {
-       
+
       if (typeof message.data == "object") {
 
       } else {
@@ -181,23 +239,28 @@ const BaseMap = (props)  => {
           console.log(message);
         }
         if (gjs && gjs.content && gjs.type === "CommandExecutedSuccessfully") {
-          var tmp = gjs.content; 
- 
+          var tmp = gjs.content;
+
+          // console.log(species1Name);
+          // console.log(message);
 
           if (!mymap.style.getLayer("S" + species1Name)) {
             // addLayer(tmp.features[0].geometry.type, key);
 
             var circle_defaultstyle = {
               'circle-radius': 5,
-              'circle-color': ['get', attribute1Name],
+              'circle-opacity':0.5,
+              'circle-color': ["case", ["==", ["get", attribute1Name], null], 'black', ['get', attribute1Name]]
 
             };
             var fill_defaultstyle = {
               'fill-outline-color': "black",
-              'fill-color': ['get', attribute1Name]
+              'fill-opacity':0.5,
+              'fill-color': ["case", ["==", ["get", attribute1Name], null], 'black', ['get', attribute1Name]]
             };
             var line_defaultstyle = {
-              'line-color': ['get', attribute1Name]
+              'line-opacity':0.5,
+              'line-color': ["case", ["==", ["get", attribute1Name], null], 'black', ['get', attribute1Name]]
             };
             var gtype = tmp.features[0].geometry.type;
             gtype = (gtype === 'LineString' ? 'line' : (gtype === 'Point' ? 'circle' : ('fill')));
@@ -209,6 +272,7 @@ const BaseMap = (props)  => {
               'source': "S" + species1Name,
               'layout': {},
               'paint': defaultstyle,
+              // 'filter':  ['has','color']
             });
           }
           if (mymap.getSource("S" + species1Name))
@@ -225,10 +289,11 @@ const BaseMap = (props)  => {
   }
 
   return (
-    <>
+    <> 
       <div ref={el => (mapContainer.current = el)} className="map">
 
       </div>
+    <nav id="menu"></nav>
       {/* <div>
 
         <MapGeojson map={mymap}></MapGeojson>

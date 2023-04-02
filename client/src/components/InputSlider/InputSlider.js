@@ -1,15 +1,15 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
+// import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Slider from '@mui/material/Slider';
-import MuiInput from '@mui/material/Input';
+// import MuiInput from '@mui/material/Input';
 
 // import TextFields from '@mui/icons-material/SpeedSharp';
 
-const Input = styled(MuiInput)`
-  width: 64px;
-`;
+// const Input = styled(MuiInput)`
+//   width: 64px;
+// `;
 
 const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
 
@@ -19,17 +19,17 @@ const InputSlider = ({ codeFontSize: value, setcodeFontSize: setValue }) => {
         setValue(newValue);
     };
 
-    const handleInputChange = (event) => {
-        setValue(event.target.value === '' ? '' : Number(event.target.value));
-    };
+    // const handleInputChange = (event) => {
+    //     setValue(event.target.value === '' ? '' : Number(event.target.value));
+    // };
 
-    const handleBlur = () => {
-        if (value < minVal) {
-            setValue(minVal);
-        } else if (value > maxVal) {
-            setValue(maxVal);
-        }
-    };
+    // const handleBlur = () => {
+    //     if (value < minVal) {
+    //         setValue(minVal);
+    //     } else if (value > maxVal) {
+    //         setValue(maxVal);
+    //     }
+    // };
 
     return (
         <Box sx={{  marginRight: '1rem' }}>
