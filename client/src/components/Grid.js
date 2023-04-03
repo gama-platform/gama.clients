@@ -126,13 +126,18 @@ function Grid(props) {
     // }
   }
 
-  // const updateParam = (ee) => {
+  const updateParam = (ee) => {
   // setparam_str_new(ee);
-  // this.setState((prevState) => ({
-  //   param_str_new: ee
-  // }));
+  setState( {
+    widgets: state.widgets,
+    widgetSequence: state.widgetSequence,
+    id_param: state.widgetSequence,
+    //   widgetSequence: prevState.widgetSequence + 1
+    param_str: ee,
+    param_str_new: state.param_str_new,
+  });
   // saveToLS("Layout", this.state);
-  // }
+  }
 
   // const toggleEdit = () => {
   //   this.setState((prevState) => ({
@@ -229,6 +234,7 @@ function Grid(props) {
         codeFontSize={codeFontSize} 
         setcodeFontSize={setcodeFontSize}
         param={state.param_str} 
+        updateParam={updateParam}
         param_str_new={state.param_str_new}></Widget>
         {/* //triggerChildFunc={triggerFunc} triggerChildFunc2={triggerFunc2}  grid={this} id={item.id} type={item.type}*/}
       </div>

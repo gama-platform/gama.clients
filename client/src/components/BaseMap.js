@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+// import { Input } from "reactstrap";
 import mapboxgl from "mapbox-gl";
 const tmp_geojson = {
   'type': 'FeatureCollection',
@@ -16,8 +17,7 @@ const BaseMap = (props) => {
   const mapContainer = useRef(null);
   const [mymap, setMap] = useState(null);
   const [timer, setTimer] = useState(null);
-  const [sources] = useState([]);
-
+  const [sources] = useState([]); 
   const {
     codeFontSize
   } = props;
@@ -34,69 +34,26 @@ const BaseMap = (props) => {
       map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right');
       setMap(map);
       map.on('load', async () => {
+        map.addSource('empty', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+        
+         map.addLayer({
+          id: 'z-index-bottom',
+          type: 'symbol',
+          source: 'empty'
+        });
+        
+        
 
-
-        const layers = document.getElementById('menu'); 
-        layers.innerHTML='';
+        const layers = document.getElementById('menu');
+        layers.innerHTML = '';
         props.gama.current.evalExpr("species(world).microspecies", (ee) => createSources(ee, map));
 
 
 
-      });
-      // After the last frame rendered before the map enters an "idle" state.
-      map.on('idle', () => {
-        let toggleableLayerIds = [ ];
-        sources.forEach((v) => {
-          if (!map.getLayer("S" + v.species)) {
-            return;
-          }
-          toggleableLayerIds.push("S" +v.species);
-        }); 
-
-        // Enumerate ids of the layers.
-        // Set up the corresponding toggle button for each layer.
-        for (const id of toggleableLayerIds) {
-          // Skip layers that already have a button set up.
-          if (document.getElementById(id)) {
-            continue;
-          }
-
-          // Create a link.
-          const link = document.createElement('a');
-          link.id = id;
-          link.href = '#';
-          link.textContent = id;
-          link.className = 'active';
-
-          // Show or hide layer when the toggle is clicked.
-          link.onclick = function (e) {
-            const clickedLayer = this.textContent;
-            e.preventDefault();
-            e.stopPropagation();
-
-            const visibility = map.getLayoutProperty(
-              clickedLayer,
-              'visibility'
-            );
-
-            // Toggle layer visibility by changing the layout object's visibility property.
-            if (visibility === 'visible') {
-              map.setLayoutProperty(clickedLayer, 'visibility', 'none');
-              this.className = '';
-            } else {
-              this.className = 'active';
-              map.setLayoutProperty(
-                clickedLayer,
-                'visibility',
-                'visible'
-              );
-            }
-          };
-
-          const layers = document.getElementById('menu'); 
-          layers.appendChild(link);
-        }
-      });
+      }); 
     };
 
     if (!mymap) initializeMap({ setMap, mapContainer });
@@ -132,7 +89,10 @@ const BaseMap = (props) => {
         species: e.trim(),
         attr: "color",
         style: "",
-        type: "fill"
+        type: "fill",
+        opacity: 1,
+        color: '#000',
+        visible: 1
       });
       // geojsonMap.set(e, {
       //     'type': 'FeatureCollection',
@@ -243,23 +203,29 @@ const BaseMap = (props) => {
 
           // console.log(species1Name);
           // console.log(message);
-
+          if (!mymap.style.getLayer("z-index-top")) {
+            mymap.addLayer({
+              id: 'z-index-top',
+              type: 'symbol',
+              source: 'empty'
+            }, 'z-index-bottom');  
+          }
           if (!mymap.style.getLayer("S" + species1Name)) {
             // addLayer(tmp.features[0].geometry.type, key);
 
             var circle_defaultstyle = {
               'circle-radius': 5,
-              'circle-opacity':0.5,
+              // 'circle-opacity': 0.5,
               'circle-color': ["case", ["==", ["get", attribute1Name], null], 'black', ['get', attribute1Name]]
 
             };
             var fill_defaultstyle = {
               'fill-outline-color': "black",
-              'fill-opacity':0.5,
+              // 'fill-opacity': 0.5,
               'fill-color': ["case", ["==", ["get", attribute1Name], null], 'black', ['get', attribute1Name]]
             };
             var line_defaultstyle = {
-              'line-opacity':0.5,
+              // 'line-opacity': 0.5,
               'line-color': ["case", ["==", ["get", attribute1Name], null], 'black', ['get', attribute1Name]]
             };
             var gtype = tmp.features[0].geometry.type;
@@ -273,8 +239,9 @@ const BaseMap = (props) => {
               'layout': {},
               'paint': defaultstyle,
               // 'filter':  ['has','color']
-            });
+            }, 'z-index-bottom');
           }
+          // console.log(mymap.style.getLayer("S" + species1Name));
           if (mymap.getSource("S" + species1Name))
             mymap.getSource("S" + species1Name).setData(tmp);
         }
@@ -288,12 +255,51 @@ const BaseMap = (props) => {
     }, true);
   }
 
+  const handleChangeVisible = (v) => {
+    if (v.visible > 0) v.visible = 0; else v.visible = 1;
+    // console.log(v.visible);
+    if (mymap.getLayer("S" + v.species)) mymap.setLayoutProperty("S" + v.species, 'visibility', (v.visible === 1 ? 'visible' : 'none'));
+  }
+  // const handleChangeColor = (e,v) => { 
+  //   console.log(e.target.value);
+  //   v.color=e.target.value;
+  //   if(mymap.getLayer("S" + v.species))
+  //   mymap.setPaintProperty("S" + v.species, 'fill-color', e.target.value);
+  // }
+  const layoutcontrol = sources.map((item) => { 
+    return <div key={item.species} >
+
+
+
+
+
+      {/* <input
+            type="color"
+            value={item.color} onChange={e => handleChangeColor(e,item)}
+          /> */}
+      <table width="100%"><tbody>
+        <tr>
+          <td><input
+            type="checkbox"
+
+            defaultChecked={true} onChange={e => handleChangeVisible(item)}
+          /></td>
+          <td> <input type="button" value="to Top" onClick={()=>{mymap.moveLayer("S"+item.species,'z-index-bottom')}}/></td>
+          <td style={{ textAlign: 'left', width:'300px' }}> <label>{item.species}</label></td>
+        </tr>
+      </tbody></table>
+
+    </div>
+  });
   return (
-    <> 
+    <>
       <div ref={el => (mapContainer.current = el)} className="map">
 
       </div>
-    <nav id="menu"></nav>
+      <nav width='400px' id="menu">
+        {layoutcontrol}
+
+      </nav>
       {/* <div>
 
         <MapGeojson map={mymap}></MapGeojson>

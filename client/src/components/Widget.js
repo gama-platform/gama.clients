@@ -82,6 +82,7 @@ const Widget = (props) => {
     let formValues = props.param;
     formValues[i]["value"] = e.target.value;
     // console.log(formValues[i]);
+    props.updateParam(   formValues );
     // this.setState({ param: formValues }, () => {
     //   this.grid.updateParam(this.state.param);
     //   this.saveWToLS("Widget" + this.id, this.state);

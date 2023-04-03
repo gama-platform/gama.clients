@@ -49,6 +49,7 @@ const App = () => {
         dispatch(messageActions.set({
             type: 'info',
             message: 'Welcome to GAMA!',
+            autoclose:1000,
             // description: 'This website is to solve coding questions and check against testcases'
         }))
     }, [dispatch]);

@@ -93,7 +93,7 @@ const Message = () => {
                 open={open}
                 ref={msgRef}
                 onClose={handleClose}
-                autoHideDuration={(messageInfo && messageInfo.autoclose) ? 15000 : 3000}
+                autoHideDuration={(messageInfo && messageInfo.autoclose) ? 1500 : 500}
                 sx={{ translate: '0 2.5rem' }}
                 TransitionComponent={SlideTransition}
                 TransitionProps={{ onExited: handleExited }}
