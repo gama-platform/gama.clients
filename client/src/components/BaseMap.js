@@ -27,7 +27,8 @@ const BaseMap = (props) => {
       const map = new mapboxgl.Map({
         container: mapContainer.current,
         attributionControl: false,
-        style: "mapbox://styles/mapbox/streets-v11", // stylesheet location
+        // style: "mapbox://styles/mapbox/streets-v11", // stylesheet location
+        style: {version: 8,sources: {},layers: []},
         center: [105.8249019, 21.0076181], // TLU -84.5, 38.05starting position 
         zoom: 15 // starting zoom
       });
