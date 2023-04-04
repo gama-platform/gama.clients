@@ -11,7 +11,7 @@ const createContainer = async ({ name, image, prt, comd }) => {
             setTimeout(() => {
                 killContainer(name);
             }, 10 * 60 * 1000);
-            await delay(20000);
+            await delay(30000);
             const containerId = `${stdout}`.trim();
             resolve(containerId);
         });
