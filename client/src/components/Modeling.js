@@ -117,10 +117,10 @@ function Modeling(props) {
 
         // console.log("tryGenParam "+ee);
         if (JSON.parse(ee).content && JSON.parse(ee).type === "CommandExecutedSuccessfully") {
-          
-        props.editor_grid_link_ref.current(ee);
-        toast.current.show({ severity: 'success', summary: 'Loaded', detail: mm });
-        console.log("loaded ");
+
+          props.editor_grid_link_ref.current(ee);
+          toast.current.show({ severity: 'success', summary: 'Loaded', detail: mm });
+          console.log("loaded ");
           // props.gama.current.grid.remParam();
           // props.gama.current.grid.addWidget();
           // props.gama.current.grid.addParam(ee);
@@ -155,28 +155,33 @@ function Modeling(props) {
   }, [editModelMethod, props.editor_nav_link_ref]);
 
   return (
-    <div className="card flex justify-content-center">
+    <div className="card flex justify-content-center" >
       <form onSubmit={formik.handleSubmit} className="flex flex-column gap-2">
         <Toast ref={toast} />
-        <table style={{textAlign:"left"}}><tbody>
+        <table style={{ textAlign: "left", width: '100%' }}><tbody>
           <tr><td>
-            <Button size="small" label="Launch" type="submit" icon="pi pi-check" /></td></tr>
-          <tr><td><InputTextarea
-            inputid="description"
-            name="description"
-            rows={30}
-            cols={60}
-            className={classNames({ 'p-invalid': isFormFieldInvalid('description') })}
-            value={formik.values.description}
-            onChange={(e) => {
-              formik.setFieldValue('description', e.target.value);
-            }}
-          /></td></tr>
-        </tbody></table>
+            <Button size="small" label="Launch" type="submit" icon="pi pi-check" />
+          </td></tr>
+          <tr><td>
 
+            <div style={{ height: '880px', overflow: 'auto' }}> <InputTextarea
+              style={{ width: '100%' }}
+              inputid="description"
+              rows={35}
+              name="description" autoResize
+              className={classNames({ 'p-invalid': isFormFieldInvalid('description') })}
+              value={formik.values.description}
+              onChange={(e) => {
+                formik.setFieldValue('description', e.target.value);
+              }}
+            />
+
+            </div>
+          </td></tr>
+        </tbody></table>
         {/* {getFormErrorMessage('description')} */}
       </form>
-    </div>
+    </div >
   );
 }
 
