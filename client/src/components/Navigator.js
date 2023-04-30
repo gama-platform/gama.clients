@@ -8,6 +8,7 @@ import { ListBox } from 'primereact/listbox';
 import { ConfirmPopup } from 'primereact/confirmpopup'; // To use <ConfirmPopup> tag
 // import { confirmPopup } from 'primereact/confirmpopup'; // To use confirmPopup method
 
+import Files from 'react-files'
 
 import { Toast } from 'primereact/toast';
 import { models } from '../assets/data.js';
@@ -55,13 +56,13 @@ function NavigationBar(props) {
     }
   });
 
-  const tryEdit = () => {
+  const tryEdit = (item) => {
     // console.log(props);
     setLoading(false);
     // if (props.gama.editor) {
-    if (props.editor_nav_link_ref && formik.values.item) {
+    if (props.editor_nav_link_ref && item) {
 
-      var mm = props.gama.current.rootPath + "/" + formik.values.item.code;
+      var mm = props.gama.current.rootPath + "/" + item.code;
 
       // console.log(props.gama.current.rootPath);
       props.gama.current.modelPath = mm.split("|")[0];
@@ -70,7 +71,7 @@ function NavigationBar(props) {
       props.gama.current.fetch(props.gama.current.modelPath, (e) => {
         var ee = JSON.parse(e).content;
 
-        props.editor_nav_link_ref.current([mm, ee]);
+        props.editor_nav_link_ref.current([mm, ee,item.code]);
         // console.log(ee);
         // props.gama.editor.item = mm;
         // props.gama.editor.props.formik.resetForm();
@@ -99,13 +100,16 @@ function NavigationBar(props) {
   //   });
   // };
   // console.log(props.gama.current);
-
-
-  return (
+  const treeData= [{ title: 'src/', children: [{ title: 'index.js' }] }];
+    
+   return (
     <form onSubmit={formik.handleSubmit} className="flex flex-column align-items-left">
       {/* <Button type="submit" label="Launch"  /> */}
       <Toast ref={toast} />
       <ConfirmPopup />
+      <div style={{textAlign:'left'}}>
+        
+      </div>
       <ListBox
         id="item"
         name="item"
@@ -117,30 +121,31 @@ function NavigationBar(props) {
         placeholder="Select a Experiment"
         onChange={(e) => {
           formik.setFieldValue('item', e.value);
+          tryEdit( e.value);
           // console.log(e.value);
           // console.log(this.item);
           // show(e.value.code);
           // confirm1(e);
         }}
-        onClick={(e) => {
-          switch (e.detail) {
-            case 2:
+        // onClick={(e) => {
+        //   switch (e.detail) {
+        //     case 2:
 
-              // console.log(this.props.gama); 
-              // formik.setFieldValue('item', e.value);
-              // console.log(e.target);
-              // console.log(formik.values.item);
-              // show(e.value.code);
-              // this.setState(({
-              //   loading: true
-              // }));
-              // this.tryLaunch();
-              tryEdit();
-              // confirm1(e);
-              break;
-            default:
-          }
-        }}
+        //       // console.log(this.props.gama); 
+        //       // formik.setFieldValue('item', e.value);
+        //       // console.log(e.target);
+        //       // console.log(formik.values.item);
+        //       // show(e.value.code);
+        //       // this.setState(({
+        //       //   loading: true
+        //       // }));
+        //       // this.tryLaunch();
+        //       tryEdit();
+        //       // confirm1(e);
+        //       break;
+        //     default:
+        //   }
+        // }}
         style={{ width: '100%', textAlign: "left" }}
       />
     </form>

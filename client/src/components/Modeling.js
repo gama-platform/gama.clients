@@ -148,6 +148,7 @@ function Modeling(props) {
     formik.resetForm();
     formik.setFieldValue('path', ee[0]);
     formik.setFieldValue('description', ee[1]);
+    formik.setFieldValue('title', ee[2]);
   }, [formik]);
 
   React.useEffect(() => {
@@ -162,6 +163,7 @@ function Modeling(props) {
           <tr><td>
             <Button size="small" label="Launch" type="submit" icon="pi pi-check" />
           </td></tr>
+          <tr><td>{formik.values.title}</td></tr>
           <tr><td>
 
             <div style={{ height: '880px', overflow: 'auto' }}> <InputTextarea
