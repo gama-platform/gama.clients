@@ -1,0 +1,41 @@
+# dependencies
+/javascript/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/javascript/build
+*/.cert
+.env
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+*.zip
+*.pem
+.vscode
+
+/javascript/client/node_modules
+/javascript/client/.DS_Store
+/javascript/client/.env.local
+/javascript/client/.env.development.local
+/javascript/client/.env.test.local
+/javascript/client/.env.production.local 
+ 
+/javascript/server/.env
+/javascript/server/node_modules
+/javascript/server/client/node_modules
+/javascript/server/server.log 
+/javascript/server/server.error
+/javascript/client/package-lock.json
+/javascript/server/package-lock.json
+/javascript/client/src/dev-server-link.js
