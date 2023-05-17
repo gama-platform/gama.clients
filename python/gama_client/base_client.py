@@ -33,7 +33,7 @@ class GamaBaseClient:
         self.event_loop = asyncio.get_running_loop()
         self.connection_future = None
 
-    async def connect(self, set_socket_id: bool = True):
+    async def connect(self, set_socket_id: bool = True, ping_interval: float = 20, ping_timeout: float = 20):
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
@@ -42,28 +42,31 @@ class GamaBaseClient:
         :param set_socket_id: If true, the listening loop will filter out the messages of type ConnectionSuccessful and
             the GamaClient will set its socket_id itself. If set to false, the users will have to set the client's
             socket_id field themselves in the message_handler function
+        :param ping_interval: The interval between each ping send to keepalive the connection, use None to deactivate this behaviour
+        :param ping_timeout: The time the client is waiting for an answer to the ping sent before declaring that the connection is lost (part of the keepalive loop)
         :returns: Returns either once the listening loop starts if set_socket_id is False or when a socket_id is
             sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
         self.connection_future = self.event_loop.create_future()
-        self.socket = await websockets.connect(f"ws://{self.url}:{self.port}")
+        self.socket = await websockets.connect(f"ws://{self.url}:{self.port}", ping_interval=ping_interval, ping_timeout=ping_timeout)
         self.event_loop.create_task(self.start_listening_loop(set_socket_id))
         if set_socket_id:
             self.socket_id = await self.connection_future
 
-    async def start_listening_loop(self, handle_connection_message: bool):
+    async def start_listening_loop(self, handle_connection_message: bool, timeout: float = 20.0):
         """
         Internal method. It starts an infinite listening loop that will transmit gama-server's messages to the
         message_handler function
 
         :param handle_connection_message: If set to true, the function checks for messages of type ConnectionSuccessful
             and will set its content field as the result of connection_future that is used in connect to wait for the socket_id
+        :param timeout: timeout for reading the next message
         :return: Never returns
         """
         while True:
             try:
-                mess = await self.socket.recv()
+                mess = await asyncio.wait_for(self.socket.recv(), timeout=timeout)
                 try:
                     js = json.loads(mess)
                     if handle_connection_message \
