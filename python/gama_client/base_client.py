@@ -64,7 +64,7 @@ class GamaBaseClient:
         :param timeout: timeout for reading the next message
         :return: Never returns
         """
-        while True:
+        while self.socket.open:
             try:
                 mess = await asyncio.wait_for(self.socket.recv(), timeout=timeout)
                 try:
@@ -80,8 +80,9 @@ class GamaBaseClient:
                 except Exception as js_ex:
                     print("Unable to unpack gama-server messages as a json. Error:", js_ex, "Message received:", mess)
             except Exception as sock_ex:
-                print("Error while waiting for a message from gama-server. Exiting", sock_ex)
-                sys.exit(-1)
+                if self.socket.open:
+                    print("Error while waiting for a message from gama-server. Exiting", sock_ex)
+                    sys.exit(-1)
 
     async def load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                    dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
@@ -151,6 +152,41 @@ class GamaBaseClient:
             "type": CommandTypes.Exit.value
         }
         await self.socket.send(json.dumps(cmd))
+
+    async def download(self, file_path: str):
+        """
+        Downloads a file from gama server file system
+        :type file_path: the path of the file to download on gama-server's file system
+        :return: if everything goes well, gama-server will send back an object containing the entirety
+        of the file as a string
+        """
+        cmd = {
+            "type": CommandTypes.Download.value,
+            "file": file_path,
+        }
+        await self.socket.send(json.dumps(cmd))
+
+    async def upload(self, file_path: str, content: str):
+        """
+        Uploads a file to gama-server's file-system
+        :param file_path: the path on gama-server file-system where the content is going to be saved
+        :param content: the content of the file to be uploaded
+        """
+        cmd = {
+            "type": CommandTypes.Upload.value,
+            "file": file_path,
+            "content": content
+        }
+        await self.socket.send(json.dumps(cmd))
+
+    async def close_connection(self, close_code=1000, reason=""):
+        """
+        Closes the connection
+        :param close_code: the close code, 1000 by default
+        :param reason: a human-readable reason for closing.
+        :return:
+        """
+        await self.socket.close(close_code, reason)
 
     async def play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
         """

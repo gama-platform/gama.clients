@@ -12,3 +12,5 @@ class CommandTypes(Enum):
     Reload      = "reload"
     Stop        = "stop"
     Expression  = "expression"
+    Download    = "download"
+    Upload      = "upload"
