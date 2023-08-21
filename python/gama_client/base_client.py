@@ -54,7 +54,7 @@ class GamaBaseClient:
         if set_socket_id:
             self.socket_id = await self.connection_future
 
-    async def start_listening_loop(self, handle_connection_message: bool, timeout: float = 20.0):
+    async def start_listening_loop(self, handle_connection_message: bool):
         """
         Internal method. It starts an infinite listening loop that will transmit gama-server's messages to the
         message_handler function
@@ -66,7 +66,7 @@ class GamaBaseClient:
         """
         while self.socket.open:
             try:
-                mess = await asyncio.wait_for(self.socket.recv(), timeout=timeout)
+                mess = await self.socket.recv()
                 try:
                     js = json.loads(mess)
                     if handle_connection_message \
