@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Gama JavaScript Client</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<style>
+		body {
+			color: #404040;
+			font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
+			margin: 0;
+			padding: 0;
+		}
+	</style>
+
+</head>
+
+<body>
+	<script>
+
+let socket = new WebSocket("ws://localhost:6868");
+
+socket.onopen = function(e) {
+  console.log("[open] Connection established");
+  console.log(`[message] Data received from server: ${event.data}`); console.log(event.data);
+  var cmd = {
+            "type": "load",
+            "model":"/Users/hqn88/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml",
+            "experiment": "road_traffic",
+            "socket_id": "",
+            "exp_id": "",
+            "console": false,
+            "status": false,
+            "dialog": false,
+            "auto-export": false,
+            "sync": true,
+            "callback": function(ee){console.log(ee);}
+        };
+  socket.send(JSON.stringify(cmd));
+};
+
+socket.onmessage = function(event) {
+	console.log("received "+event.data);
+};
+
+socket.onclose = function(event) {
+  if (event.wasClean) {
+    console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+  } else {
+    // e.g. server process killed or network down
+    // event.code is usually 1006 in this case
+    console.log('[close] Connection died');
+  }
+};
+
+socket.onerror = function(error) {
+	console.log(`[error]`);
+};
+	</script> 
+</body>
+
+</html>

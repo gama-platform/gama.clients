@@ -33,6 +33,20 @@ class GAMA {
         this.wSocket.onerror = function (event) {
             console.log("Error: " + event.message);
         }
+
+
+        this.wSocket.onmessage = function (e) {
+            // console.log(event); 
+            var result = JSON.parse(e.data).content;
+            if (result) _this.socket_id = result;
+        };
+        var _this=this;
+        this.wSocket.onopen = function (event) {
+            if (opened_callback) opened_callback();
+            _this.initExecutor();
+        };
+
+
         this.wSocket.addEventListener('open', () => {
             this.wSocket.onmessage = (event) => {
                 this.executor = setInterval(() => {
@@ -60,11 +74,44 @@ class GAMA {
                     }
 
                 }, this.executor_speed);
-                if (opened_callback) opened_callback(event);
             };
         });
     }
+    initExecutor() {
 
+        this.executor = setInterval(() => {
+            if (this.queue.length > 0 && this.req === "") {
+                this.req = this.queue.shift();
+                this.req.exp_id = this.exp_id;
+                this.req.socket_id = this.socket_id;
+                // console.log(this.req);
+                this.wSocket.send(JSON.stringify(this.req)); // console.log("request " + JSON.stringify(this.req));
+
+                if (this.logger) {
+                    this.logger("request " + JSON.stringify(this.req));
+                }
+
+                var myself = this;
+
+                this.wSocket.onmessage = function (event) {
+                    // console.log(event);
+
+                    // if (this.logger) {
+                    //     this.logger("response " + (event.data));
+                    // }
+                    if (myself.req !== "") {
+                        // console.log(myself.req);
+                        if (event.data instanceof Blob) { } else {
+                            if (myself.req.callback) {
+                                myself.req.callback(event.data);
+                            }
+                            myself.endRequest();
+                        }
+                    }
+                };
+            }
+        }, this.executor_speed);
+    }
     requestCommand(cmd) {
         if (this.req === "" || this.queue.length == 0) {
             this.queue.push(cmd);
@@ -76,18 +123,51 @@ class GAMA {
     }
 
     evalExpr(q, c, es) {
+        // var cmd = {
+        //     "type": "expression",
+        //     "socket_id": this.socket_id,
+        //     "exp_id": this.exp_id,
+        //     "escaped": es ? es : false,
+        //     "expr": q,
+        //     "callback": c
+        // };  
         var cmd = {
+            // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "expression",
+            "model": this.modelPath,
+            "experiment": this.experimentName,
             "socket_id": this.socket_id,
             "exp_id": this.exp_id,
+            "console": false,
+            "status": false,
+            "dialog": false,
+            "runtime": false,
             "escaped": es ? es : false,
+            "sync": true,
             "expr": q,
             "callback": c
         };
         this.requestCommand(cmd);
     }
     execute(q, c) {
+        // var cmd = {
+        //     "type": q,
+        //     "model": this.modelPath,
+        //     "experiment": this.experimentName,
+        //     "socket_id": this.socket_id,
+        //     "exp_id": this.exp_id,
+        //     "console": false,
+        //     "status": false,
+        //     "dialog": false,
+        //     "auto-export": false,
+        //     "parameters": this.param,
+        //     "until": this.endCondition,
+        //     "sync": true,
+        //     "callback": c
+        // };
+
         var cmd = {
+            // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": q,
             "model": this.modelPath,
             "experiment": this.experimentName,
@@ -96,29 +176,29 @@ class GAMA {
             "console": false,
             "status": false,
             "dialog": false,
+            "runtime": false,
             "auto-export": false,
-            "parameters": this.param,
-            "until": this.endCondition,
+            "parameters": this.param, 
             "sync": true,
             "callback": c
         };
         this.requestCommand(cmd);
     }
-    getPopulation(q, att, crs, c) {
-        var cmd = {
-            'type': 'expression',
-            "model": this.modelPath,
-            "experiment": this.experimentName,
-            'socket_id': this.socket_id,
-            'exp_id': this.exp_id,
-            'species': q,
-            'attributes': att,
-            "crs": crs,
-            "sync": true,
-            "callback": c
-        };
-        this.requestCommand(cmd);
-    }
+    // getPopulation(q, att, crs, c) {
+    //     var cmd = {
+    //         'type': 'expression',
+    //         "model": this.modelPath,
+    //         "experiment": this.experimentName,
+    //         'socket_id': this.socket_id,
+    //         'exp_id': this.exp_id,
+    //         'species': q,
+    //         'attributes': att,
+    //         "crs": crs,
+    //         "sync": true,
+    //         "callback": c
+    //     };
+    //     this.requestCommand(cmd);
+    // }
 
     setParameters(p) {
         this.param = p;
@@ -127,7 +207,7 @@ class GAMA {
         this.endCondition = ec;
     }
 
-    launch(c) {
+    async launch(c) {
 
         this.queue.length = 0;
         var myself = this;
@@ -144,16 +224,24 @@ class GAMA {
             // }
         });
     }
-    play(c) {
+    play(c) {        
+        clearInterval(this.output_executor);
         // this.queue.length = 0;
         this.state = "play";
         this.execute(this.state, c);
     }
 
     pause(c) {
-        // this.queue.length = 0;
-        this.state = "pause";
-        this.execute(this.state, c);
+    //     // this.queue.length = 0;
+    //     this.state = "pause";
+    //     this.execute(this.state, c);
+
+        this.queue.length = 0;
+        clearInterval(this.output_executor);
+        this.status = "pause";
+        this.execute(this.status, () => {
+            if (c) c();
+        });
     }
 
     step(c) {
