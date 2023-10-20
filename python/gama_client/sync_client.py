@@ -1,96 +1,81 @@
 import json
-import sys
-
-import websockets
-import asyncio
-from typing import List, Dict, Callable, Any, Awaitable
+from asyncio import Future
+from typing import Dict, Callable, Awaitable, Any, List
+import nest_asyncio
 from gama_client.command_types import CommandTypes
-from gama_client.message_types import MessageTypes
+from gama_client.base_client import GamaBaseClient
+import uuid
 
 
-class GamaBaseClient:
+# Mandatory to handle nested asyncio calls
+nest_asyncio.apply()
+
+
+class GamaSyncClient(GamaBaseClient):
     # CLASS VARIABLES
-    event_loop: asyncio.AbstractEventLoop
-    socket: websockets.WebSocketClientProtocol
-    socket_id: str
-    url: str
-    port: int
-    message_handler: Callable[[Dict], Awaitable]
+    futures: Dict[str, Future] = {}
+    unregistered_command_handler: Callable[[Dict], Awaitable]
+    other_message_handler: Callable[[Dict], Awaitable]
 
-    def __init__(self, url: str, port: int, message_handler: Callable[[Dict], Any]):
+    @staticmethod
+    async def default_unregistered_command_handler(self, message: Dict):
+        raise Exception("cannot retrieve the command for which this message is an answer, message must contain an "
+                        "'api_id' field: " + str(message))
+
+    @staticmethod
+    async def default_other_message_handler(message: Dict):
+        print("message received from server: ", str(message))
+
+    async def sync_message_handler(self, message: Dict):
+        if "command" in message:
+            if "api_id" in message["command"]:
+                self.futures[message["command"]["api_id"]].set_result(message)
+            else:
+                await self.unregistered_command_handler(message)
+        else:
+            await self.other_message_handler(message)
+
+    def __init__(self, url: str, port: int,
+                 async_command_handler: Callable[[Dict], Awaitable] = default_unregistered_command_handler,
+                 other_message_handler: Callable[[Dict], Awaitable] = default_other_message_handler):
         """
         Initialize the client. At this point no connection is made yet.
 
+        :param other_message_handler: A function that will handle messages that are not results of commands (calls
+            to write, status-bar update, general gama-server exception etc.). If left by default, will print the message
+            in the console.
+        :param async_command_handler: a function that will handle commands run asynchronously. If left by default,
+            it will raise an exception.
         :param url: A string representing the url (or ip address) where the gama-server is running
         :param port: An integer representing the port on which the server runs
-        :param message_handler: A function that will be called every time a message is received from gama-server
         """
-        self.url = url
-        self.port = port
-        self.message_handler = message_handler
-        self.socket_id = ""
-        self.socket = None
-        self.event_loop = asyncio.get_running_loop()
-        self.connection_future = None
+        super().__init__(url, port, self.sync_message_handler)
+        self.other_message_handler = other_message_handler
+        self.unregistered_command_handler = async_command_handler
 
-    async def connect(self, set_socket_id: bool = True, ping_interval: [Any, float] = 20, ping_timeout: float = 20):
+    async def execute_cmd_inside(self, cmd: Dict[str, Any], id: str) -> Dict:
         """
-        Tries to connect the client to gama-server using the url and port given at the initialization.
-        Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
-        is True
-        :param set_socket_id: If True, the listening loop will filter out the messages of type ConnectionSuccessful
-            and the GamaClient will set its socket_id itself. If set to false, the users will have to set the client's
-            socket_id field themselves in the message_handler function
-        :param ping_interval: The interval between each
-            ping send to keepalive the connection, use None to deactivate this behaviour
-        :param ping_timeout: The time
-            the client is waiting for an answer to the ping sent before declaring that the connection is lost (part of
-            the keepalive loop)
-        :returns: Returns either once the listening loop starts if set_socket_id is False or when
-            a socket_id is sent by gama-server
-        :raise Exception: Can throw exceptions in case of connection problems.
+        For internal use only.
+
+        :param cmd: the command to execute
+        :param id: the id of the command to wait
+        :return: the answer to the command sent by gama-server
         """
-        self.connection_future = self.event_loop.create_future()
-        self.socket = await websockets.connect(f"ws://{self.url}:{self.port}", ping_interval=ping_interval,
-                                               ping_timeout=ping_timeout)
-        self.event_loop.create_task(self.start_listening_loop(set_socket_id))
-        if set_socket_id:
-            self.socket_id = await self.connection_future
+        await self.socket.send(json.dumps(cmd))
+        return await self.futures[id]
 
-    async def start_listening_loop(self, handle_connection_message: bool):
-        """
-        Internal method. It starts an infinite listening loop that will transmit gama-server's messages to the
-        message_handler function
+    def execute_cmd_sync(self, cmd: Dict[str, Any]):
+        id: str = str(uuid.uuid1())
 
-        :param handle_connection_message: If set to true, the function checks for messages of type ConnectionSuccessful
-            and will set its content field as the result of connection_future that is used in connect to wait for the
-            socket_id
-        :return: Never returns
-        """
-        while self.socket.open:
-            try:
-                mess = await self.socket.recv()
-                try:
-                    js = json.loads(mess)
-                    if handle_connection_message \
-                            and "type" in js \
-                            and "content" in js \
-                            and js["type"] == MessageTypes.ConnectionSuccessful.value:
+        # we add an entry in the command to be able to find it back in the answer messages
+        cmd["api_id"] = id
+        self.futures[id] = self.event_loop.create_future()
+        return self.event_loop.run_until_complete(self.execute_cmd_inside(cmd, id))
 
-                        self.connection_future.set_result(js["content"])
-                    else:
-                        await self.message_handler(js)
-                except Exception as js_ex:
-                    print("Unable to unpack gama-server messages as a json. Error:", js_ex, "Message received:", mess)
-            except Exception as sock_ex:
-                if self.socket.open:
-                    print("Error while waiting for a message from gama-server. Exiting", sock_ex)
-                    sys.exit(-1)
-
-    async def load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
-                   dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
-                   socket_id: str = "",
-                   additional_data: Dict = None):
+    def sync_load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
+                  dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
+                  socket_id: str = "",
+                  additional_data: Dict = None):
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -145,9 +130,9 @@ class GamaBaseClient:
         if additional_data:
             cmd.update(additional_data)
 
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def exit(self):
+    def sync_exit(self):
         """
         Sends a command to kill gama-server
 
@@ -156,9 +141,9 @@ class GamaBaseClient:
         cmd = {
             "type": CommandTypes.Exit.value
         }
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def download(self, file_path: str):
+    def sync_download(self, file_path: str):
         """
         Downloads a file from gama server file system
         :type file_path: the path of the file to download on gama-server's file system
@@ -169,9 +154,9 @@ class GamaBaseClient:
             "type": CommandTypes.Download.value,
             "file": file_path,
         }
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def upload(self, file_path: str, content: str):
+    def sync_upload(self, file_path: str, content: str):
         """
         Uploads a file to gama-server's file-system
         :param file_path: the path on gama-server file-system where the content is going to be saved
@@ -182,18 +167,18 @@ class GamaBaseClient:
             "file": file_path,
             "content": content
         }
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def close_connection(self, close_code=1000, reason=""):
+    def sync_close_connection(self, close_code=1000, reason=""):
         """
         Closes the connection
         :param close_code: the close code, 1000 by default
         :param reason: a human-readable reason for closing.
         :return:
         """
-        await self.socket.close(close_code, reason)
+        self.event_loop.run_until_complete(self.socket.close(close_code, reason))
 
-    async def play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
+    def sync_play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to run the experiment **exp_id**
 
@@ -219,9 +204,9 @@ class GamaBaseClient:
         if additional_data:
             cmd.update(additional_data)
 
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+    def sync_pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to pause the experiment **exp_id**
 
@@ -242,10 +227,10 @@ class GamaBaseClient:
         if additional_data:
             cmd.update(additional_data)
 
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def step(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
-                   additional_data: Dict = None):
+    def sync_step(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
+                  additional_data: Dict = None):
         """
         Sends a command to run **nb_step** of the experiment **exp_id**
 
@@ -273,10 +258,10 @@ class GamaBaseClient:
         if additional_data:
             cmd.update(additional_data)
 
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def step_back(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
-                        additional_data: Dict = None):
+    def sync_step_back(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
+                       additional_data: Dict = None):
         """
         Sends a command to run **nb_step** steps backwards of the experiment **exp_id**
 
@@ -304,9 +289,9 @@ class GamaBaseClient:
         if additional_data:
             cmd.update(additional_data)
 
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+    def sync_stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to stop (kill) the experiment **exp_id**
 
@@ -327,10 +312,10 @@ class GamaBaseClient:
         if additional_data:
             cmd.update(additional_data)
 
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-                     additional_data: Dict = None):
+    def sync_reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
+                    additional_data: Dict = None):
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -360,9 +345,9 @@ class GamaBaseClient:
             cmd["until"] = until
         if additional_data:
             cmd.update(additional_data)
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)
 
-    async def expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None):
+    def sync_expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) -> Dict:
         """
         Sends a command to evaluate a gaml expression in the experiment **exp_id**
 
@@ -386,4 +371,4 @@ class GamaBaseClient:
         if additional_data:
             cmd.update(additional_data)
 
-        await self.socket.send(json.dumps(cmd))
+        return self.execute_cmd_sync(cmd)

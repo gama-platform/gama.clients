@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import Future
+from pathlib import Path
 from typing import Dict
 
 from gama_client.base_client import GamaBaseClient
@@ -11,6 +12,7 @@ play_future: Future
 pause_future: Future
 expression_future: Future
 step_future: Future
+step_back_future: Future
 stop_future: Future
 
 
@@ -27,9 +29,10 @@ async def message_handler(message: Dict):
             expression_future.set_result(message)
         elif message["command"]["type"] == CommandTypes.Step.value:
             step_future.set_result(message)
+        elif message["command"]["type"] == CommandTypes.StepBack.value:
+            step_back_future.set_result(message)
         elif message["command"]["type"] == CommandTypes.Stop.value:
             stop_future.set_result(message)
-
 
 async def main():
 
@@ -38,23 +41,24 @@ async def main():
     global pause_future
     global expression_future
     global step_future
+    global step_back_future
     global stop_future
 
     # Experiment and Gama-server constants
-    MY_SERVER_URL = "localhost"
-    MY_SERVER_PORT = 6868
-    GAML_FILE_PATH_ON_SERVER = r"D:\Gama\headless\samples\predatorPrey\predatorPrey.gaml"
-    EXPERIMENT_NAME = "prey_predatorExp"
-    MY_EXP_INIT_PARAMETERS = [{"type": "int", "name": "nb_preys_init", "value": 100}]
+    server_url = "localhost"
+    server_port = 6868
+    gaml_file_path = str(Path(__file__).parents[0] / "predatorPrey.gaml")
+    exp_name = "prey_predator"
+    exp_parameters = [{"type": "int", "name": "nb_preys_init", "value": 100}]
 
-    client = GamaBaseClient(MY_SERVER_URL, MY_SERVER_PORT, message_handler)
+    client = GamaBaseClient(server_url, server_port, message_handler)
 
     print("connecting to Gama server")
     await client.connect()
 
     print("initialize a gaml model")
     experiment_future = asyncio.get_running_loop().create_future()
-    await client.load(GAML_FILE_PATH_ON_SERVER, EXPERIMENT_NAME, True, True, True, MY_EXP_INIT_PARAMETERS)
+    await client.load(gaml_file_path, exp_name, True, True, True, True, exp_parameters)
     gama_response = await experiment_future
 
     try:
@@ -70,9 +74,6 @@ async def main():
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("error while trying to run the experiment", gama_response)
         return
-
-    print("model running, waiting a bit")
-    await asyncio.sleep(2)
 
     print("pausing the model")
     pause_future = asyncio.get_running_loop().create_future()
@@ -92,9 +93,30 @@ async def main():
     gama_response = await expression_future
     print("asking simulation the value of: nb_preys/nb_preys_init=",  gama_response["content"])
 
-    print("asking gama to run 10 more steps of the experiment")
+    print("asking gama to run 100 more steps of the experiment")
     step_future = asyncio.get_running_loop().create_future()
-    await client.step(experiment_id, 10, True)
+    await client.step(experiment_id, 100, True)
+    gama_response = await step_future
+    if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
+        print("Unable to execute 10 new steps in the experiment", gama_response)
+        return
+
+    expression_future = asyncio.get_running_loop().create_future()
+    await client.expression(experiment_id, r"cycle")
+    gama_response = await expression_future
+    print("asking simulation the value of: cycle=", gama_response["content"])
+
+    print("asking gama to run 5 steps backwards")
+    step_back_future = asyncio.get_running_loop().create_future()
+    await client.step_back(experiment_id, 5, True)
+    gama_response = await step_back_future
+    if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
+        print("Unable to execute 5 steps back", gama_response)
+        return
+
+    print("asking gama to run 1 more steps of the experiment")
+    step_future = asyncio.get_running_loop().create_future()
+    await client.step(experiment_id, 1, True)
     gama_response = await step_future
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("Unable to execute 10 new steps in the experiment", gama_response)
@@ -109,10 +131,6 @@ async def main():
     stop_future = asyncio.get_running_loop().create_future()
     await client.stop(experiment_id)
     gama_response = await stop_future
-    if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
-        print("Unable to stop the experiment", gama_response)
-        return
-
 
 if __name__ == "__main__":
     asyncio.run(main())

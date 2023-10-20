@@ -1,6 +1,8 @@
 # Gama client
- Gama-client is a python wrapper for interacting with the headless mode (called gama-server) of the modeling and simulation platform [gama](https://gama-platform.org/). The latest release is compatible with gama 1.9.2.
-This wrapper will take care of the connection with gama-server and of sending properly formatted requests to gama-server. It is made to fit the asynchronous nature of gama-server and thus makes it possible to handle multiple simulations at the same time, but the counterpart is that the users will still have to manage what to do with the received messages (command confirmation, simulation output, errors etc.) by themselves. We provide a working example that shows the architecture you can deploy if you still want to have a sequential execution.
+
+Gama-client is a Python module designed to facilitate interactions with the headless mode of the modeling and simulation platform known as [gama](https://gama-platform.org/). It is compatible with gama version 1.9.3. This wrapper handles the connection to gama-server and sends properly formatted requests. It is designed to accommodate the asynchronous nature of gama-server, enabling users to manage multiple simulations simultaneously. However, users are responsible for handling received messages, such as command confirmations, simulation outputs, and errors. We provide a functional example that demonstrates how to structure your code for sequential execution.
+
+Starting from version 1.2.0 of the wrapper, a new class has been introduced to allow synchronous (blocking) calls to gama-server. It's important to note that using this feature may lead to issues in cases where errors originate from gama-server, as the code might indefinitely wait for a response that will never arrive.
 
 # Installation
 In your python environment, install the gama-client package with the command:
@@ -24,16 +26,20 @@ If you don't see any error message then `gama-client` has been installed correct
 
 ## Requirements
 
-To use `gama-client` you first need to have an instance of [gama-server](https://gama-platform.org/wiki/next/HeadlessServer) open and the python package installed. Then you can interact with gama-server in python using the `GamaBaseClient` class.
+To use `gama-client` you first need to have an instance of [gama-server](https://gama-platform.org/wiki/next/HeadlessServer) open and the python package installed. 
+Then you can interact with gama-server in python using the `GamaBaseClient` or `GamaSyncClient` class.
 
 ## Available functions
 The wrapper supports all the commands described in the gama-server [documentation](https://gama-platform.org/wiki/next/HeadlessServer#available-commands).
 
 ## Quick overview
 
-As explained before, everything goes through the `GamaBaseClient` class.
+### GamaBaseClient
 
-Before doing anything you will have to create an instance of that class with the `url` and `port` where your gama-server is running as well as the function that should be called when a message is received.
+As previously mentioned, the `GamaBaseClient` class serves as the typical method for engaging with gama-server, and it operates in an asynchronous manner. Consequently, all messages from gama-server are delivered to a function, 
+which you must customize to respond according to your program's current state and the content of the received messages.
+
+Before doing anything you will have to create an instance of that class with the `url` and `port` of the running gama-server as well as the function that should be called when a message is received.
 for example to connect to a local gama-server running on port 6868 and printing received message:
 ```python
 import asyncio
@@ -53,7 +59,7 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-When running main, your python program should connect to gama-server and when the [ConnectionSuccessful](https://gama-platform.org/wiki/next/HeadlessServer#messages-types) message is sent back to python, the console should show
+When running main, your python program should connect to gama-server and when the [ConnectionSuccessful](https://gama-platform.org/wiki/next/HeadlessServer#messages-types) message is sent back to python, the console should show this:
 ```yaml
 received message: {'type': 'ConnectionSuccessful', 'content': '480777042'}
 ```
@@ -76,17 +82,63 @@ await client.close_connection()
 ```
 you can later reconnect with the same `client` object the same way you did the first time, with the `connect` function.
 
+### GamaSyncClient
+
+Alternatively you can use the class `GamaSyncClient` to establish the connection. This is recommended for simple scripts as it makes the call of commands
+easier, but you may encounter some limitation in case of exceptions raised by gama-server for example.
+This class inherits from `GamaBaseClient` and so you can also use it to run async commands if you wish to.
+
+The connection works like this:
+```python
+import asyncio
+
+from gama_client.sync_client import GamaSyncClient
+from typing import Dict
+
+async def async_command_answer_handler(message: Dict):
+    print("Here is the answer to an async command: ", message)
+
+
+async def gama_server_message_handler(message: Dict):
+    print("I just received a message from Gama-server and it's not an answer to a command!")
+    print("Here it is:", message)
+
+async def main():
+    client = GamaSyncClient("localhost", 6868, async_command_answer_handler, gama_server_message_handler)
+    await client.connect(False)
+
+    while True:
+        await asyncio.sleep(1)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+This time, you have to provide two message handlers, the first one will be used only for answers of asynchronous commands (the same as in `GamaBaseClient`), the second one will be used for all kind of messages that are not answers to commands (synchronous or not), like for example status bar updates, messages writen in the console, some exceptions etc..
+
+The `connect` function works exactly as the `GamaBaseClient` and all the remarks made previously hold for `GamaSyncClient`
+
 ### Running commands
-Once connected you will want to run commands, the principle is pretty simple: all commands can be run your `client` variable through functions. For example if you want to run the [load command](https://gama-platform.org/wiki/next/HeadlessServer#the-load-command) you just have to call the `load` function with the proper parameters.
+Once connected you will want to run commands, the principle is pretty simple: all commands can be from run your `client` variable through functions. For example if you want to run the [load command](https://gama-platform.org/wiki/next/HeadlessServer#the-load-command) you just have to call the `load` function with the proper parameters.
 ```python
 await client.load("path/to/gaml/file", "my_experiment_name")
 ```
+
+
+If you are using a `GamaBaseClient`, the program will proceed once the command is dispatched to gama-server. However, it won't pause to await the response, whether it's a success, failure, or the result of an expression you requested for evaluation. You will need to manage the response within the `message_handler` function you established when creating your client.
+
+With a client of type `GamaSyncClient`, you have access to those functions too plus synchronous ones. With synchronous functions the program will stop at each command call and wait for gama-server to answer, then the answer will be passed as the return of the command function. 
+Those functions are preceded by the word `sync`. For example the synchronous load functions is called this way:
+```python
+command_answer = await client.sync_load("path/to/gaml/file", "my_experiment_name")
+```
+and the variable `command_answer` will contain the result sent by gama-server containing the experiment id.
 
 ### Message handling
 
 #### Filtering messages
 The messages sent back by gama-server all follow the json format and are converted into a python dictionary by the wrapper. Those messages all have a field called `type` that can help you discriminate between them. The complete list of types and what they correspond to is given in the [documentation](https://gama-platform.org/wiki/next/HeadlessServer#messages-types). And on the python's side you can use the enum `MessageTypes` to test the type of a received message. 
-Here is an example of a `message_handler` function that prints a personnalised message when a command has been executed successfully:
+Here is an example of a `message_handler` function that prints a personalised message when a command has been executed successfully:
 ```python
 async def message_handler(message):
     if "type" in message.keys() and message['type'] == MessageTypes.CommandExecutedSuccessfully.value:
@@ -107,7 +159,7 @@ Answers to commands include a `command` field, containing the entirety of the co
 
 In every command function, there is an optional parameter called `additional_data`, you can use it to store metadata about your command, for example an id, and use it to find to which precise command does an answer responds to because those additional data will also be stored in the `command` field of the answer.
 
-For example here we run 3 identical load commands, and we want to have a special treatment for the second one only, so we give it a special id in the `additional-data` in order to find the corresponding answer in the `message-handler` function:
+For example here we run 3 identical load commands, and we want to have a special treatment for the second one only, so we give it a special id in the `additional_data` in order to find the corresponding answer in the `message-handler` function:
 ```python
 import asyncio
 from typing import Dict
@@ -149,8 +201,8 @@ if __name__ == "__main__":
 
 
 ## Example code
-A complete working example is given in the `examples` directory, you just have to change the values of the variables `MY_SERVER_URL`, `MY_SERVER_PORT`, `GAML_FILE_PATH_ON_SERVER`, `EXPERIMENT_NAME` and `MY_EXP_INIT_PARAMETERS` to the one corresponding to your own gama-server and experiment to try it.
- 
+Some working examples are provided in the `examples` directory, you just have to change the values of the variables `server_url`, `server_port`, `gaml_file_path`, `exp_name` and `exp_parameters` to the one corresponding to your own gama-server and experiment to try it.
+The example `sequential_example.py` focuses on the use of `GamaBaseClient` while `sync_client_example.py` focuses on `GamaSyncClient`. 
  
 # To generate a new release (for contributors only)
 ## Upload the new files to pypi

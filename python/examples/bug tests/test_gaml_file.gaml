@@ -19,9 +19,9 @@ species dummy {
 experiment name type: gui {
 
 	output {
-	 display "d" type:3d{
-	 	species dummy;
-	 }
+         display "d" type:3d{
+            species dummy;
+         }
 
 	}
 }
