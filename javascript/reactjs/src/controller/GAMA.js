@@ -147,7 +147,7 @@ class GAMA extends React.Component {
     }
 
     evalExpr(q, c, es) {
-
+        // console.log(q);
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "expression",
@@ -158,6 +158,7 @@ class GAMA extends React.Component {
             "console": false,
             "status": false,
             "dialog": false,
+            "runtime": false,
             "escaped": es ? es : false,
             "sync": true,
             "expr": q,
@@ -168,6 +169,7 @@ class GAMA extends React.Component {
     }
     
     push(f,cnt, c, es) {
+        this.modelPath=f;
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "upload",
@@ -188,7 +190,8 @@ class GAMA extends React.Component {
         // console.log("eval " + cmd.expr);
         this.requestCommand(cmd);
     }
-    fetch(f, c, es) {
+    fetch(f, c, es) {        
+        this.modelPath=f;
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "download",
@@ -220,6 +223,7 @@ class GAMA extends React.Component {
             "console": false,
             "status": false,
             "dialog": false,
+            "runtime": false,
             "auto-export": false,
             "parameters": this.param,
             "until": this.endCondition,
@@ -275,7 +279,7 @@ class GAMA extends React.Component {
         this.execute(this.status, c);
         this.output_executor = setInterval(() => {
             this.updateOutputs();
-        }, 10);
+        }, 100);
     }
     resetOutputs() {
         this.pendingoutput = 0;
@@ -289,7 +293,7 @@ class GAMA extends React.Component {
         if (this.pendingoutput <= 0) {
             this.pendingoutput = this.outputs.size;
             this.outputs.forEach((values, keys) => {
-                // console.log(values);
+                console.log(values);
                 values.update(function () { _this.pendingoutput-- });
             });
         }
@@ -314,6 +318,7 @@ class GAMA extends React.Component {
         this.status = "step";
         this.execute(this.status, () => {
             if (c) c();
+            this.status = "";
             this.updateOutputs();
         });
     }

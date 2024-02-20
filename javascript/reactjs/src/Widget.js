@@ -170,7 +170,7 @@ class Widget extends React.Component {
     }
     return (<><div className="widgetHeader">
       {(this.grid.state && (this.grid.state.editing)) && widgetHeader}
-    </div><BaseMap parent={this} props={this.state} /></>
+    </div><BaseMap _id={this._id} gama={this.props.grid.props.gama} parent={this} props={this.state} /></>
     );
   }
 

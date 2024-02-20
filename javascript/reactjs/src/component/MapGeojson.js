@@ -101,7 +101,7 @@ const MapGeojson = (props) => {
         this.props.map.on('load', async () => {
             // Add the source1 location as a source.
             this.state.sources.forEach((v) => {
-                // console.log(v.species);
+                console.log(v.species);
                 this.props.map.addSource("S" + v.species, {
                     type: 'geojson',
                     data: mymyself.geojson
