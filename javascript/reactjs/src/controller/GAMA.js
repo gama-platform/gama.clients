@@ -170,7 +170,7 @@ class GAMA extends React.Component {
     push(f,cnt, c, es) {
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
-            "type": "fetch",
+            "type": "upload",
             "access":"up",
             "content":cnt,
             "model": this.modelPath,
@@ -191,7 +191,7 @@ class GAMA extends React.Component {
     fetch(f, c, es) {
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
-            "type": "fetch",
+            "type": "download",
             "access":"down",
             "model": this.modelPath,
             "experiment": this.experimentName,

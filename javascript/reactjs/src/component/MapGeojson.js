@@ -59,7 +59,7 @@ const MapGeojson = (props) => {
 
 //     }
 
-    createSources(ee) {
+    function createSources(ee) {
         let _this = this;
         ee = JSON.parse(ee).content.replace(/[\])}[{(]/g, '').replace(/['"]+/g, '');
         var eee = ee.split(",");
@@ -92,7 +92,7 @@ const MapGeojson = (props) => {
         this.on_connected(this);
     }
 
-    on_connected(myself) {
+   function on_connected(myself) {
         // const attribute1Name = this.state.sources[0].attr;
         // const attribute2Name = 'zone_id';
         // console.log("connected");
@@ -162,21 +162,21 @@ const MapGeojson = (props) => {
 
     }
 
-    on_disconnected() {
+    function on_disconnected() {
         console.log("disconnected");
     }
 
-    componentWillUnmount() {
+    function  componentWillUnmount() {
         // console.log("componentWillUnmount");
         this.state.sources=[];
         // window.$gama.outputs.delete(this); 
         window.$gama.outputs.clear();
         // console.log(window.$gama.outputs);
     }
-    reset(c) {
+    function reset(c) {
 
     }
-    update(c) {
+    function update(c) {
         // const species1Name = 'Individual';
         // const attribute1Name = 'state';
         var myself = this;
@@ -187,7 +187,7 @@ const MapGeojson = (props) => {
             this.singleUpdate(myself, v.species, v.attr, c);
         });
     }
-    singleUpdate(myself, species1Name, attribute1Name, c) {
+    function singleUpdate(myself, species1Name, attribute1Name, c) {
         window.$gama.evalExpr("to_geojson(" + species1Name + ",\"EPSG:4326\",[\"" + attribute1Name + "\"])", function (message) {
             if (typeof message.data == "object") {
 
