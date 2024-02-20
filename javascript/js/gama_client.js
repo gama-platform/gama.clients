@@ -13,23 +13,20 @@ var show3DBuilding = Boolean(false);
 
 //GAMA PATH
 // var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
-// var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
+var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/Projects/GitHub/'
+var modelPath = ABSOLUTE_PATH_TO_GAMA+ 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
+var experimentName = 'road_traffic';
+var species1Name = 'people';
+var attribute1Name = 'objective';
+var species2Name = 'building';
+var attribute2Name = 'type';
 
-
-// var ABSOLUTE_PATH_TO_GAMA = 'C:\\git\\';
-// var modelPath = ABSOLUTE_PATH_TO_GAMA + 'gama\\msi.gama.models\\models\\Tutorials\\Road Traffic\\models\\Model 05.gaml';
-// var experimentName = 'road_traffic';
-// var species1Name = 'people';
-// var attribute1Name = 'objective';
-// var species2Name = 'building';
-// var attribute2Name = 'type';
-
-const modelPath = 'C:\\git\\UD_ReAgent_ABM\\ReAgent\\models\\Gratte_Ciel_Demo.gaml';
+/*const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Demo.gaml';
 const experimentName = 'Demo';
 const species1Name = 'people';
 const attribute1Name = 'type';
 const species2Name = 'building';
-const attribute2Name = 'type';
+const attribute2Name = 'type';*/
 
 // var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Lockdown\\LockDown.gaml';
 // var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Activity Restrictions\\School and Workplace Closure.gaml';
@@ -232,7 +229,7 @@ map.on('load', async () => {
 		'tileSize': 512,
 		'maxzoom': 14
 	});
-	// map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+	map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.0 });
 	// map.setLight({ anchor: 'map' });
 	start_renderer();
 });
