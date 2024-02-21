@@ -6,7 +6,7 @@ class LoginButton extends React.Component {
     super(props);
     // console.log(this.props);
     this.state = {
-      isLoggedIn: false
+      isLoggedIn: true
     };
   }
 
