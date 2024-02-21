@@ -38,7 +38,7 @@ const default_Nav_state = {
   connected: false,
   loading: false,
   waiting: false,
-  model_path: 'C:/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml@road_traffic'
+  model_path: '/Users/hqn88/git/gama/msi.gama.models/models'
 };
 
 // const components = [
