@@ -1,4 +1,4 @@
-mapboxgl.accessToken = 'pk.eyJ1IjoiaHFuZ2hpODgiLCJhIjoiY2t0N2w0cGZ6MHRjNTJ2bnJtYm5vcDB0YyJ9.oTjisOggN28UFY8q1hiAug';
+mapboxgl.accessToken = 'pk.eyJ1IjoiYWdyaWduYXJkIiwiYSI6ImNqdWZ6ZjJ5MDBoenczeXBkYWU3bTk5ajYifQ.SXiCzAGs4wbMlw3RHRvxhw';
 
 
 var updateSource;
@@ -13,9 +13,9 @@ var show3DBuilding = Boolean(false);
 
 //GAMA PATH
 // var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
-var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/Projects/GitHub/'
-var modelPath = ABSOLUTE_PATH_TO_GAMA+ 'gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml';
-var experimentName = 'road_traffic';
+var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/'
+var modelPath = '/Users/arno/Projects/GitHub/SaReine/SaReine/models/Plan_des_pistes.gaml';
+var experimentName = 'demo';
 var species1Name = 'people';
 var attribute1Name = 'objective';
 var species2Name = 'building';
@@ -47,7 +47,6 @@ function on_disconnected() {
 function start_sim() {
 	experiment.launch();
 	experiment.evalExpr("CRS_transform(world.location,\"EPSG:4326\")", function (ee) {
-
 		console.log(ee);
 		ee = JSON.parse(ee).content.replace(/[{}]/g, "");
 		var eee = ee.split(",");
@@ -70,8 +69,6 @@ function start_renderer() {
 		if (typeof event.data == "object") {
 
 		} else {
-
-
 			var gjs = JSON.parse(message);
 			if (gjs.content && gjs.type === "CommandExecutedSuccessfully") {
 				var tmp = gjs.content;

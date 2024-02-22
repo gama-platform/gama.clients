@@ -13,7 +13,7 @@ class GAMA {
     req = "";
     result = "";
     executor;
-    executor_speed = 1;
+    executor_speed = 10;
     endCondition = "";
     param = [];
     logger;
