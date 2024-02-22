@@ -40,7 +40,6 @@ const attribute2Name = 'type';*/
 // var attribute1Name = 'state';
 
 const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
-experiment.connect(on_connected, on_disconnected);
 function on_connected() {
 	start_sim();
 }
@@ -67,11 +66,11 @@ function start_sim() {
 		request = "";//IMPORTANT FLAG TO ACCOMPLISH CURRENT TRANSACTION
 	});
 
-	experiment.play();
+	experiment.play(()=>{start_renderer()});
 }
 function start_renderer() {
 	experiment.evalExpr("to_geojson(" + species2Name + ",\"EPSG:4326\",[\"" + attribute2Name + "\"])", function (message) {
-		if (typeof event.data == "object") {
+		if (typeof message == "object") {
 
 		} else {
 			var gjs = JSON.parse(message);
@@ -233,5 +232,6 @@ map.on('load', async () => {
 	});
 	map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.0 });
 	// map.setLight({ anchor: 'map' });
-	start_renderer();
+
+	experiment.connect(on_connected, on_disconnected);
 });

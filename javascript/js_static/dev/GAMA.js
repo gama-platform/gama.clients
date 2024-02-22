@@ -13,7 +13,7 @@ class GAMA {
     req = "";
     result = "";
     executor;
-    executor_speed = 1;
+    executor_speed = 5;
     endCondition = "";
     param = [];
     logger;
@@ -33,7 +33,10 @@ class GAMA {
         this.wSocket.onerror = function (event) {
             console.log("Error: " + event.message);
         }
-
+        this.req=  { 
+            "type": "connecting", 
+            "callback": opened_callback
+        };
 
         // this.wSocket.onmessage = function (e) {
         //     // console.log(event); 
@@ -41,35 +44,30 @@ class GAMA {
         //     if (result) _this.socket_id = result;
         // };
 
-        this.executor = setInterval(() => {
-            if (this.queue.length > 0 && this.req === "") {
-                // console.log(this.queue);
-                this.req = this.queue.shift();
-                this.req.exp_id = this.exp_id;
-                this.req.socket_id = this.socket_id;
-                // console.log(this.req);
-                this.wSocket.send(JSON.stringify(this.req));
-                // console.log("request " + JSON.stringify(this.req));
-                if (this.logger) { this.logger("request " + JSON.stringify(this.req)); }
-                var myself = this;
-                this.wSocket.onmessage = function (event) {
-                    // console.log(event.data);
-                    if (typeof event.data != "object") {
-                        if (myself.req.callback) {
-                            myself.req.callback(event.data,
-                                myself.endRequest());
-                        } else {
-                            myself.endRequest();
-                        }
-                    }
-                };
-            }
 
-        }, this.executor_speed);
-        var _this=this;
+
+        var myself = this;
+        this.wSocket.onmessage = function (event) {
+            // console.log(event);
+
+            // if (this.logger) {
+            //     this.logger("response " + (event.data));
+            // }
+            if (myself.req !== "") {
+                // console.log("onmessage "+myself.req);
+                // console.log(event.data);
+                if (event.data instanceof Blob) { } else {
+                    if (myself.req.callback) {
+                        myself.req.callback(event.data);
+                    }
+                    myself.endRequest();
+                }
+            }
+        };
+
         this.wSocket.onopen = function (event) {
-            if (opened_callback) opened_callback();
-            _this.initExecutor();
+            // if (opened_callback) opened_callback();
+            myself.initExecutor();
         };
 
 
@@ -79,44 +77,27 @@ class GAMA {
         // });
     }
     initExecutor() {
-
+        var myself = this;
         this.executor = setInterval(() => {
+            // console.log("queue "+this.queue);
             if (this.queue.length > 0 && this.req === "") {
                 this.req = this.queue.shift();
                 this.req.exp_id = this.exp_id;
                 this.req.socket_id = this.socket_id;
-                // console.log(this.req);
+                console.log(this.req);
                 this.wSocket.send(JSON.stringify(this.req)); // console.log("request " + JSON.stringify(this.req));
 
-                if (this.logger) {
-                    this.logger("request " + JSON.stringify(this.req));
-                }
+                // if (this.logger) {
+                //     this.logger("request " + JSON.stringify(this.req));
+                // }
 
-                var myself = this;
-
-                this.wSocket.onmessage = function (event) {
-                    // console.log(event);
-
-                    // if (this.logger) {
-                    //     this.logger("response " + (event.data));
-                    // }
-                    if (myself.req !== "") {
-                        // console.log(myself.req);
-                        if (event.data instanceof Blob) { } else {
-                            if (myself.req.callback) {
-                                myself.req.callback(event.data);
-                            }
-                            myself.endRequest();
-                        }
-                    }
-                };
             }
         }, this.executor_speed);
     }
     requestCommand(cmd) {
-        if (this.req === "" || this.queue.length == 0) {
+        // if (this.req === "" || this.queue.length === 0) {
             this.queue.push(cmd);
-        }
+        // }
     }
     endRequest() {
         // console.log("end response of "+ this.req.type);
@@ -179,7 +160,7 @@ class GAMA {
             "dialog": false,
             "runtime": false,
             "auto-export": false,
-            "parameters": this.param, 
+            "parameters": this.param,
             "sync": true,
             "callback": c
         };
@@ -208,7 +189,7 @@ class GAMA {
         this.endCondition = ec;
     }
 
-    async launch(c) {
+    launch(c) {
 
         this.queue.length = 0;
         var myself = this;
@@ -216,7 +197,7 @@ class GAMA {
         this.execute(this.status, function (e) {
 
             var result = JSON.parse(e);
-            console.log(result);
+            // console.log(result);
             // if(result.type==="CommandExecutedSuccessfully"){
             if (result.type === "CommandExecutedSuccessfully" && result.content) myself.exp_id = result.content;
             if (c) {
@@ -225,17 +206,18 @@ class GAMA {
             // }
         });
     }
-    play(c) {        
-        clearInterval(this.output_executor);
+    play(c) {
+        // clearInterval(this.output_executor);
         // this.queue.length = 0;
         this.state = "play";
+        // console.log("play");
         this.execute(this.state, c);
     }
 
     pause(c) {
-    //     // this.queue.length = 0;
-    //     this.state = "pause";
-    //     this.execute(this.state, c);
+        //     // this.queue.length = 0;
+        //     this.state = "pause";
+        //     this.execute(this.state, c);
 
         this.queue.length = 0;
         clearInterval(this.output_executor);
