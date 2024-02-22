@@ -12,14 +12,19 @@ var staticLayerCalled = Boolean(false);
 var show3DBuilding = Boolean(false);
 
 //GAMA PATH
-// var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
-var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/'
-var modelPath = '/Users/arno/Projects/GitHub/SaReine/SaReine/models/Plan_des_pistes.gaml';
-var experimentName = 'demo';
+
+// var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/'
+// var modelPath = '/Users/arno/Projects/GitHub/SaReine/SaReine/models/Plan_des_pistes.gaml';
+// var experimentName = 'demo';
+
+var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/'; 
+var modelPath = ABSOLUTE_PATH_TO_GAMA+ 'gama/gama.library/models/Tutorials/Road Traffic/models/Model 05.gaml';
+var experimentName = 'road_traffic';
 var species1Name = 'people';
 var attribute1Name = 'objective';
 var species2Name = 'building';
 var attribute2Name = 'type';
+
 
 /*const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Demo.gaml';
 const experimentName = 'Demo';

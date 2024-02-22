@@ -13,7 +13,7 @@ class GAMA {
     req = "";
     result = "";
     executor;
-    executor_speed = 10;
+    executor_speed = 1;
     endCondition = "";
     param = [];
     logger;
@@ -35,11 +35,37 @@ class GAMA {
         }
 
 
-        this.wSocket.onmessage = function (e) {
-            // console.log(event); 
-            var result = JSON.parse(e.data).content;
-            if (result) _this.socket_id = result;
-        };
+        // this.wSocket.onmessage = function (e) {
+        //     // console.log(event); 
+        //     var result = JSON.parse(e.data).content;
+        //     if (result) _this.socket_id = result;
+        // };
+
+        this.executor = setInterval(() => {
+            if (this.queue.length > 0 && this.req === "") {
+                // console.log(this.queue);
+                this.req = this.queue.shift();
+                this.req.exp_id = this.exp_id;
+                this.req.socket_id = this.socket_id;
+                // console.log(this.req);
+                this.wSocket.send(JSON.stringify(this.req));
+                // console.log("request " + JSON.stringify(this.req));
+                if (this.logger) { this.logger("request " + JSON.stringify(this.req)); }
+                var myself = this;
+                this.wSocket.onmessage = function (event) {
+                    // console.log(event.data);
+                    if (typeof event.data != "object") {
+                        if (myself.req.callback) {
+                            myself.req.callback(event.data,
+                                myself.endRequest());
+                        } else {
+                            myself.endRequest();
+                        }
+                    }
+                };
+            }
+
+        }, this.executor_speed);
         var _this=this;
         this.wSocket.onopen = function (event) {
             if (opened_callback) opened_callback();
@@ -47,35 +73,10 @@ class GAMA {
         };
 
 
-        this.wSocket.addEventListener('open', () => {
-            this.wSocket.onmessage = (event) => {
-                this.executor = setInterval(() => {
-                    if (this.queue.length > 0 && this.req === "") {
-                        // console.log(this.queue);
-                        this.req = this.queue.shift();
-                        this.req.exp_id = this.exp_id;
-                        this.req.socket_id = this.socket_id;
-                        // console.log(this.req);
-                        this.wSocket.send(JSON.stringify(this.req));
-                        // console.log("request " + JSON.stringify(this.req));
-                        if (this.logger) { this.logger("request " + JSON.stringify(this.req)); }
-                        var myself = this;
-                        this.wSocket.onmessage = function (event) {
-                            // console.log(event.data);
-                            if (typeof event.data != "object") {
-                                if (myself.req.callback) {
-                                    myself.req.callback(event.data,
-                                        myself.endRequest());
-                                } else {
-                                    myself.endRequest();
-                                }
-                            }
-                        };
-                    }
-
-                }, this.executor_speed);
-            };
-        });
+        // this.wSocket.addEventListener('open', () => {
+        //     this.wSocket.onmessage = (event) => {
+        //     };
+        // });
     }
     initExecutor() {
 
