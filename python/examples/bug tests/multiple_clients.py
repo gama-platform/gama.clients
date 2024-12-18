@@ -34,7 +34,7 @@ async def main(gaml_file, experiment):
     await client.load(gaml_file, experiment)
     res = await load_future
 
-    await client.reload(res["content"], parameters=[{"valueZ":"hehe"}])
+    await client.reload(res["content"], parameters=[{"valueZ": "hehe"}])
 
     await client.load(gaml_file, experiment)
     await client.load(gaml_file, experiment)

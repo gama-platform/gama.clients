@@ -72,6 +72,25 @@ class GamaSyncClient(GamaBaseClient):
         self.futures[id] = self.event_loop.create_future()
         return self.event_loop.run_until_complete(self.execute_cmd_inside(cmd, id))
 
+    def sync_connect(self, set_socket_id: bool = True, ping_interval: [Any, float] = 20, ping_timeout: float = 20):
+        """
+        Tries to connect the client to gama-server using the url and port given at the initialization.
+        Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
+        is True
+        :param set_socket_id: If True, the listening loop will filter out the messages of type ConnectionSuccessful
+            and the GamaClient will set its socket_id itself. If set to false, the users will have to set the client's
+            socket_id field themselves in the message_handler function
+        :param ping_interval: The interval between each
+            ping send to keepalive the connection, use None to deactivate this behaviour
+        :param ping_timeout: The time
+            the client is waiting for an answer to the ping sent before declaring that the connection is lost (part of
+            the keepalive loop)
+        :returns: Returns either once the listening loop starts if set_socket_id is False or when
+            a socket_id is sent by gama-server
+        :raise Exception: Can throw exceptions in case of connection problems.
+        """
+        self.event_loop.run_until_complete(self.connect(set_socket_id, ping_interval, ping_timeout))
+
     def sync_load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                   dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
                   socket_id: str = "",
