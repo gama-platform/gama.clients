@@ -151,17 +151,6 @@ class GamaSyncClient(GamaBaseClient):
 
         return self.execute_cmd_sync(cmd)
 
-    def sync_exit(self):
-        """
-        Sends a command to kill gama-server
-
-        :return: Nothing
-        """
-        cmd = {
-            "type": CommandTypes.Exit.value
-        }
-        return self.execute_cmd_sync(cmd)
-
     def sync_download(self, file_path: str):
         """
         Downloads a file from gama server file system
