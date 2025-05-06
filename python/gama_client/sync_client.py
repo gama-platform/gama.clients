@@ -391,3 +391,29 @@ class GamaSyncClient(GamaBaseClient):
             cmd.update(additional_data)
 
         return self.execute_cmd_sync(cmd)
+
+    async def describe(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
+                       species_variables: bool = True, species_actions: bool = True, additional_data: Dict = None):
+        """
+        This command is used to ask the server more information on a given model. When received, the server will
+        compile the model and return the different components found, depending on the option picked by the client.
+        :param path_to_model: the model to describe
+        :param experiments: Whether to show the experiment descriptions
+        :param species_names: Whether to show the species names
+        :param species_variables: Whether to show the species variables
+        :param species_actions: Whether to show the species actions
+        :param additional_data: any additional
+        """
+        cmd = {
+            "type": "describe",
+            "model": path_to_model,
+            "experiments": experiments,
+            "speciesNames": species_names,
+            "speciesVariables": species_variables,
+            "speciesActions": species_actions
+        }
+
+        if additional_data:
+            cmd.update(additional_data)
+
+        return self.execute_cmd_sync(cmd)
