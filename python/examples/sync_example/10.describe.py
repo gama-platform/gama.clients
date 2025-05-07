@@ -27,10 +27,10 @@ async def main():
     print("describing a gama model")
     gama_response = await client.describe(gaml_file_path)
     try:
-        experiment_id = gama_response["content"]
+        description = gama_response["content"]
     except Exception as e:
         print("error while describing the model", gama_response, e)
-    print(gama_response["content"])
+    print(description)
 
 if __name__ == "__main__":
     asyncio.run(main())
