@@ -25,10 +25,11 @@ async def main():
     client.sync_connect()
 
     print("describing a gama model")
-    gama_response = client.describe(gaml_file_path)
-    if gama_response["type"] != "gamodel_description":
-        print("error while describing the model", gama_response)
-        return
+    gama_response = await client.describe(gaml_file_path)
+    try:
+        experiment_id = gama_response["content"]
+    except Exception as e:
+        print("error while describing the model", gama_response, e)
     print(gama_response["content"])
 
 if __name__ == "__main__":
