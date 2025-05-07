@@ -1,4 +1,4 @@
 
 model empty
 
-experiment ex;
+experiment ex record: true;
