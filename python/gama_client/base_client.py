@@ -8,7 +8,7 @@ from gama_client.command_types import CommandTypes
 from gama_client.message_types import MessageTypes
 
 
-class GamaBaseClient:
+class GamaAsyncClient:
     # CLASS VARIABLES
     event_loop: asyncio.AbstractEventLoop
     socket: websockets.WebSocketClientProtocol
