@@ -20,7 +20,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         gama_response = self.client.load(empty_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
-    async def test_load_fake_model():
+    async def test_load_fake_model(self):
         pass
 
     async def test_load_fake_exp(self):
