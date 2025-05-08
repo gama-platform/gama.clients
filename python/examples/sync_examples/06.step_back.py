@@ -7,10 +7,10 @@ from gama_client.message_types import MessageTypes
 
 async def main():
     """
-    This example shows how to reload a Gama experiment using the GamaSyncClient.
-    It first connects to the server, loads the model, and then runs a given number of steps.
-    Then it reloads the model.
-    It also prints the current step number before and after the reload.
+    This example shows how to step back a Gama experiment using the GamaSyncClient.
+    It first connects to the server, loads the model and runs the experiment for a given number of steps.
+    Then it steps back a certain number of steps and closes the connection.
+    It also prints the current step number after each forward and backward step.
     """
 
     # Experiment and Gama-server constants
@@ -25,17 +25,20 @@ async def main():
     client = GamaSyncClient(args.url, args.port)
 
     print("connecting to Gama server")
-    client.sync_connect()
-
-    print("initialize a gaml model")
-    gama_response = client.sync_load(gaml_file_path, exp_name, False, False, False, True)
     try:
-        experiment_id = gama_response["content"]
+        client.sync_connect()
     except Exception as e:
-        print("error while initializing", gama_response, e)
+        print("error while connecting to the server", e)
+        return
 
+    print("loading a gaml model")
+    gama_response = client.sync_load(gaml_file_path, exp_name, False, False, False, True)
+    if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
+        print("error while loading", gama_response)
+        return
     print("initialization successful")
-    
+    experiment_id = gama_response["content"]
+
     print("asking gama to run 10 steps of the experiment")
     gama_response = client.sync_step(experiment_id, 10, sync=True)
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
@@ -45,11 +48,12 @@ async def main():
     gama_response = client.sync_expression(experiment_id, r"cycle")
     print("asking simulation the value of: cycle =", gama_response["content"])
 
-    print("asking gama to reload the model")
-    gama_response = client.sync_reload(experiment_id)
+    print("asking gama to step back 5 step")
+    gama_response = client.sync_step_back(experiment_id, 5, sync=True)
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
-        print("error while trying to reload the experiment", gama_response)
+        print("error while trying to run the experiment", gama_response)
         return
+    
     gama_response = client.sync_expression(experiment_id, r"cycle")
     print("asking simulation the value of: cycle =", gama_response["content"])
 

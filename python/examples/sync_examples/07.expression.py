@@ -24,16 +24,19 @@ async def main():
     client = GamaSyncClient(args.url, args.port)
 
     print("connecting to Gama server")
-    client.sync_connect()
-
-    print("initialize a gaml model")
-    gama_response = client.sync_load(gaml_file_path, exp_name, False, False, False, True)
     try:
-        experiment_id = gama_response["content"]
+        client.sync_connect()
     except Exception as e:
-        print("error while initializing", gama_response, e)
+        print("error while connecting to the server", e)
+        return
 
+    print("loading a gaml model")
+    gama_response = client.sync_load(gaml_file_path, exp_name, False, False, False, True)
+    if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
+        print("error while loading", gama_response)
+        return
     print("initialization successful")
+    experiment_id = gama_response["content"]
 
     gama_response = client.sync_expression(experiment_id, r"simple_agent[0].arg")
     print("asking simulation the value of: simple_agent[0].arg =", gama_response["content"])

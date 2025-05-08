@@ -3,10 +3,10 @@ import argparse
 
 from gama_client.sync_client import GamaSyncClient
 
-async def main():
+async def ex01():
     """
-    This example shows how to kill a Gama server using the GamaSyncClient.
-    It first connects to the server and then sends a kill command to the server.
+    This example shows how to connect to a Gama server and close the connection using the GamaSyncClient.
+    It first connects to the server and then closes the connection.
     """
 
     # Experiment and Gama-server constants
@@ -18,10 +18,14 @@ async def main():
     client = GamaSyncClient(args.url, args.port)
 
     print("connecting to Gama server")
-    client.sync_connect()
+    try:
+        client.sync_connect()
+    except Exception as e:
+        print("error while connecting to the server", e)
+        return
     print("connection successful")
 
-    await client.exit()
+    client.sync_close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(ex01())

@@ -22,7 +22,11 @@ async def main():
     client = GamaSyncClient(args.url, args.port)
 
     print("connecting to Gama server")
-    client.sync_connect()
+    try:
+        client.sync_connect()
+    except Exception as e:
+        print("error while connecting to the server", e)
+        return
 
     print("describing a gama model")
     gama_response = await client.describe(gaml_file_path)

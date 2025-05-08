@@ -8,7 +8,7 @@ async def main():
     """
     This example shows how to upload and download a file from the Gama server using the GamaSyncClient.
     It first uploads a file "file.txt" to the server, then downloads it back and prints its content.
-    The file while be uploaded in the root directory of the Gama server (C:\Program Files\Gama\headless if local).
+    The file while be uploaded in the root directory of the Gama server (C:\\Program Files\\Gama\\headless if local).
     """
 
     # Experiment and Gama-server constants
@@ -23,7 +23,11 @@ async def main():
     client = GamaSyncClient(args.url, args.port)
 
     print("connecting to Gama server")
-    client.sync_connect()
+    try:
+        client.sync_connect()
+    except Exception as e:
+        print("error while connecting to the server", e)
+        return
 
     print("uploading file to gama-server")
     gama_response = client.sync_upload(file, text)
