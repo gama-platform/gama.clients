@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 [project]
 name = "gama_client"
-version = "1.2.3"
+version = "1.2.4"
 authors = [
   { name="Baptiste Lesquoy", email="baptistelesquoy@protonmail.com" },
 ]

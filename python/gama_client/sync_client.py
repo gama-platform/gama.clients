@@ -288,7 +288,7 @@ class GamaSyncClient(GamaAsyncClient):
             be sent back with the command's answer. (for example an id for the client's internal use)
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(self.play_async(exp_id, sync, socket_id, additional_data))
+        return self.event_loop.run_until_complete(self.play_awaitable(exp_id, sync, socket_id, additional_data))
 
     async def pause_awaitable(self, exp_id: str, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
         """
