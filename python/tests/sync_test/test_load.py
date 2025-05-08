@@ -11,7 +11,11 @@ from gama_client.message_types import MessageTypes
 empty_model_path = str(Path(__file__).parents[1] / "gaml/empty.gaml")
 empty_model_batch_path = str(Path(__file__).parents[1] / "gaml/empty_batch.gaml")
 empty_model_test_path = str(Path(__file__).parents[1] / "gaml/empty_test.gaml")
-console_message_model_path = str(Path(__file__).parents[1] / "gaml/console_message.gaml")
+empty_model_console_path = str(Path(__file__).parents[1] / "gaml/console_message.gaml")
+empty_model_to_import_path = str(Path(__file__).parents[1] / "gaml/to_import.gaml")
+empty_model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gaml")
+faulty_model_path = str(Path(__file__).parents[1] / "gaml/faulty.gaml")
+model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_params.gaml")
 runtime_error_model_path = str(Path(__file__).parents[1] / "gaml/runtime_error.gaml")
 url = "localhost"
 port = 6868
@@ -81,7 +85,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def test_load_console(self): 
-        gama_response = self.client.load(console_message_model_path, "ex", True)
+        gama_response = self.client.load(empty_model_console_path, "ex", True)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
         gama_response = self.client.step(gama_response["content"])
@@ -95,13 +99,72 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         pass
 
     async def test_load_imported_model(self):
-        pass
+        gama_response = self.client.load(empty_model_to_import_path, "parent_ex")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
-    async def test_load_inerited_exp(self):
-        pass
+    async def test_load_inherited_exp(self):
+        gama_response = self.client.load(empty_model_importing_path, "with_parent")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+    async def test_load_inherited_virtual_exp(self):
+        gama_response = self.client.load(empty_model_importing_path, "with_virt_parent")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def test_load_parameters(self):
-        pass
+        params = [
+            {
+                "type": "int",
+                "value": 100,
+                "name": "i"
+            },
+            {
+                "type": "float",
+                "value": 10.34,
+                "name": "f"
+            },
+            {
+                "type": "string",
+                "value": "salut",
+                "name": "s"
+            },
+            {
+                "type": "rgb",
+                "value": {
+                    "r": 255,
+                    "g": 0,
+                    "b": 0
+                },
+                "name": "color"
+            }
+        ]
+
+        gama_response = self.client.load(model_with_param_path, "ex", parameters=params)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        experiment_id = gama_response["content"]
+
+        # check i
+        gama_response = self.client.expression(experiment_id, "i")
+        print(gama_response)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert gama_response["content"] == 100
+
+
+        # check f
+        gama_response = self.client.expression(experiment_id, "f")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert gama_response["content"] == 10.34
+
+
+        # check s
+        gama_response = self.client.expression(experiment_id, "s")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert gama_response["content"] == "salut"
+
+
+        # check color
+        gama_response = self.client.expression(experiment_id, "color")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert gama_response["content"] == {'gaml_type': 'rgb', 'red': 255, 'green': 0, 'blue': 0, 'alpha': 255}
 
     async def test_load_fake_name_parameters(self):
         pass
@@ -117,6 +180,13 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
 
     async def test_load_multiple(self):
         pass
+
+    async def test_load_faulty_model(self):
+        gama_response = self.client.load(faulty_model_path, "with_virt_parent")
+        assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
+        assert "content" in gama_response.keys()
+        assert "exception" in gama_response["content"]
+        assert gama_response["content"]["exception"] == 'GamaCompilationFailedException'
 
     async def test_load_runtime_error(self):
         gama_response = self.client.load(runtime_error_model_path, "exp", runtime=True)
