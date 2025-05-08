@@ -3,6 +3,8 @@ model console
 global {
 
     reflex r {
-        write "hello";
+        write "hello" color:#red;
     }
 }
+
+experiment ex;

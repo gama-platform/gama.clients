@@ -1,0 +1,6 @@
+model faulty
+
+experiment exp{
+
+
+}
