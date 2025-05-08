@@ -13,7 +13,7 @@ class GAMA {
     req = "";
     result = "";
     executor;
-    executor_speed = 5;
+    executor_speed = 500;
     endCondition = "";
     param = [];
     logger;
@@ -87,6 +87,15 @@ class GAMA {
                 console.log(this.req);
                 this.wSocket.send(JSON.stringify(this.req)); // console.log("request " + JSON.stringify(this.req));
 
+                // Wait 4s for GAMA GUI to fully load
+                if (this.req["type"] == "load"){
+                    var endTimer = new Date().getTime();
+                    var startTimer = endTimer - 4000;
+                    while(endTimer < startTimer) {
+                        endTimer = new Date().getTime();
+                    }
+                } 
+
                 // if (this.logger) {
                 //     this.logger("request " + JSON.stringify(this.req));
                 // }
@@ -105,14 +114,6 @@ class GAMA {
     }
 
     evalExpr(q, c, es) {
-        // var cmd = {
-        //     "type": "expression",
-        //     "socket_id": this.socket_id,
-        //     "exp_id": this.exp_id,
-        //     "escaped": es ? es : false,
-        //     "expr": q,
-        //     "callback": c
-        // };  
         var cmd = {
             // "atimestamp": Math.floor(Math.random() * Date.now()).toString(16),
             "type": "expression",
