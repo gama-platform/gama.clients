@@ -1,9 +1,11 @@
+
 import json
 from asyncio import Future
-from typing import Dict, Callable, Awaitable, Any, List, Coroutine
+from typing import Dict, Callable, Awaitable, Any, List
 import nest_asyncio
+
 from gama_client.command_types import CommandTypes
-from gama_client.base_client import GamaAsyncClient
+from gama_client.async_client import GamaAsyncClient
 import uuid
 
 # Mandatory to handle nested asyncio calls
@@ -52,24 +54,24 @@ class GamaSyncClient(GamaAsyncClient):
         self.other_message_handler = other_message_handler
         self.unregistered_command_handler = async_command_handler
 
-    async def execute_cmd_inside(self, cmd: Dict[str, Any], id: str) -> Dict[str, Any]:
+    async def execute_cmd_inside(self, cmd: Dict[str, Any], command_id: str) -> Dict[str, Any]:
         """
         For internal use only.
 
         :param cmd: the command to execute
-        :param id: the id of the command to wait
+        :param command_id: the id of the command to wait
         :return: the answer to the command sent by gama-server
         """
         await self.socket.send(json.dumps(cmd))
-        return await self.futures[id]
+        return await self.futures[command_id]
 
-    async def execute_cmd_awaitable(self, cmd: Dict[str, Any]) -> Coroutine[Any, Any, Dict[str, Any]]:
+    async def execute_cmd_awaitable(self, cmd: Dict[str, Any]) -> Dict[str, Any]:
         command_id: str = str(uuid.uuid1())
 
         # we add an entry in the command to be able to find it back in the answer messages
         cmd["api_id"] = command_id
         self.futures[command_id] = self.event_loop.create_future()
-        return self.execute_cmd_inside(cmd, command_id)
+        return await self.execute_cmd_inside(cmd, command_id)
 
     def connect(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20,
                 ping_timeout: float = 20) -> None:
@@ -94,7 +96,7 @@ class GamaSyncClient(GamaAsyncClient):
     async def load_awaitable(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                              dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
                              socket_id: str = "",
-                             additional_data: Dict = None):
+                             additional_data: Dict = None) -> Dict[str, Any]:
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -149,12 +151,12 @@ class GamaSyncClient(GamaAsyncClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
     def load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
              dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
              socket_id: str = "",
-             additional_data: Dict = None):
+             additional_data: Dict = None) -> Dict[str, Any]:
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -187,11 +189,11 @@ class GamaSyncClient(GamaAsyncClient):
             experiment's id.
         """
 
-        return self.event_loop.run_until_complete(
-            self.load_awaitable(file_path, experiment_name, console, status, dialog, runtime, parameters, until,
-                                socket_id, additional_data))
+        return self.event_loop.run_until_complete(self.load_awaitable(file_path, experiment_name, console, status,
+                                                                      dialog, runtime, parameters, until,
+                                                                      socket_id, additional_data))
 
-    async def download_awaitable(self, file_path: str) -> Coroutine:
+    async def download_awaitable(self, file_path: str) -> Dict[str, Any]:
         """
         Downloads a file from gama server file system
         :type file_path: the path of the file to download on gama-server's file system
@@ -202,9 +204,9 @@ class GamaSyncClient(GamaAsyncClient):
             "type": CommandTypes.Download.value,
             "file": file_path,
         }
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
-    def download(self, file_path):
+    def download(self, file_path) -> Dict[str, Any]:
         """
         Downloads a file from gama server file system
         :type file_path: the path of the file to download on gama-server's file system
@@ -213,7 +215,7 @@ class GamaSyncClient(GamaAsyncClient):
         """
         return self.event_loop.run_until_complete(self.download_awaitable(file_path))
 
-    async def upload_awaitable(self, file_path: str, content: str) -> Coroutine:
+    async def upload_awaitable(self, file_path: str, content: str) -> Dict[str, Any]:
         """
         Uploads a file to gama-server's file-system
         :param file_path: the path on gama-server file-system where the content is going to be saved
@@ -224,9 +226,9 @@ class GamaSyncClient(GamaAsyncClient):
             "file": file_path,
             "content": content
         }
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
-    def upload(self, file_path: str, content: str):
+    def upload(self, file_path: str, content: str) -> Dict[str, Any]:
         """
         Uploads a file to gama-server's file-system
         :param file_path: the path on gama-server file-system where the content is going to be saved
@@ -234,7 +236,7 @@ class GamaSyncClient(GamaAsyncClient):
         """
         return self.event_loop.run_until_complete(self.upload_awaitable(file_path, content))
 
-    def close_connection(self, close_code=1000, reason=""):
+    def close_connection(self, close_code=1000, reason="") -> None:
         """
         Closes the connection
         :param close_code: the close code, 1000 by default
@@ -244,7 +246,7 @@ class GamaSyncClient(GamaAsyncClient):
         self.event_loop.run_until_complete(self.close_connection_async(close_code, reason))
 
     async def play_awaitable(self, exp_id: str, sync: bool = None, socket_id: str = "",
-                             additional_data: Dict = None) -> Coroutine:
+                             additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to run the experiment **exp_id**
 
@@ -270,9 +272,9 @@ class GamaSyncClient(GamaAsyncClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
-    def play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
+    def play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to run the experiment **exp_id**
 
@@ -288,7 +290,7 @@ class GamaSyncClient(GamaAsyncClient):
         """
         return self.event_loop.run_until_complete(self.play_async(exp_id, sync, socket_id, additional_data))
 
-    async def pause_awaitable(self, exp_id: str, socket_id: str = "", additional_data: Dict = None) -> Coroutine:
+    async def pause_awaitable(self, exp_id: str, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to pause the experiment **exp_id**
 
@@ -309,9 +311,9 @@ class GamaSyncClient(GamaAsyncClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
-    def pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+    def pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to pause the experiment **exp_id**
 
@@ -325,7 +327,7 @@ class GamaSyncClient(GamaAsyncClient):
         return self.event_loop.run_until_complete(self.pause_awaitable(exp_id, socket_id, additional_data))
 
     async def step_awaitable(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
-                             additional_data: Dict = None) -> Coroutine:
+                             additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to run **nb_step** of the experiment **exp_id**
 
@@ -353,10 +355,10 @@ class GamaSyncClient(GamaAsyncClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
     def step(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
-             additional_data: Dict = None):
+             additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to run **nb_step** of the experiment **exp_id**
 
@@ -374,7 +376,7 @@ class GamaSyncClient(GamaAsyncClient):
             self.step_awaitable(exp_id, nb_step, sync, socket_id, additional_data))
 
     async def step_back_awaitable(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
-                                  additional_data: Dict = None) -> Coroutine:
+                                  additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to run **nb_step** steps backwards of the experiment **exp_id**
 
@@ -402,10 +404,10 @@ class GamaSyncClient(GamaAsyncClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
     def step_back(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
-                  additional_data: Dict = None):
+                  additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to run **nb_step** steps backwards of the experiment **exp_id**
 
@@ -422,7 +424,7 @@ class GamaSyncClient(GamaAsyncClient):
         return self.event_loop.run_until_complete(
             self.step_back_awaitable(exp_id, nb_step, sync, socket_id, additional_data))
 
-    async def stop_awaitable(self, exp_id: str, socket_id: str = "", additional_data: Dict = None) -> Coroutine:
+    async def stop_awaitable(self, exp_id: str, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to stop (kill) the experiment **exp_id**
 
@@ -443,9 +445,9 @@ class GamaSyncClient(GamaAsyncClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
-    def stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+    def stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to stop (kill) the experiment **exp_id**
 
@@ -459,7 +461,7 @@ class GamaSyncClient(GamaAsyncClient):
         return self.event_loop.run_until_complete(self.stop_awaitable(exp_id, socket_id, additional_data))
 
     async def reload_awaitable(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-                               additional_data: Dict = None) -> Coroutine:
+                               additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -489,10 +491,10 @@ class GamaSyncClient(GamaAsyncClient):
             cmd["until"] = until
         if additional_data:
             cmd.update(additional_data)
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
     def reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-               additional_data: Dict = None):
+               additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -513,7 +515,7 @@ class GamaSyncClient(GamaAsyncClient):
             self.reload_awaitable(exp_id, parameters, until, socket_id, additional_data))
 
     async def expression_awaitable(self, exp_id: str, expression: str, socket_id: str = "",
-                                   additional_data: Dict = None) -> Coroutine:
+                                   additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to evaluate a gaml expression in the experiment **exp_id**
 
@@ -537,9 +539,9 @@ class GamaSyncClient(GamaAsyncClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_awaitable(cmd)
+        return await self.execute_cmd_awaitable(cmd)
 
-    def expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) -> Coroutine:
+    def expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
         """
         Sends a command to evaluate a gaml expression in the experiment **exp_id**
 
@@ -556,7 +558,7 @@ class GamaSyncClient(GamaAsyncClient):
             self.expression_awaitable(exp_id, expression, socket_id, additional_data))
 
     def describe(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
-                 species_variables: bool = True, species_actions: bool = True, additional_data: Dict = None):
+                 species_variables: bool = True, species_actions: bool = True, additional_data: Dict = None) -> Dict[str, Any]:
         """
         This command is used to ask the server more information on a given model. When received, the server will
         compile the model and return the different components found, depending on the option picked by the client.
@@ -580,3 +582,4 @@ class GamaSyncClient(GamaAsyncClient):
             cmd.update(additional_data)
 
         return self.event_loop.run_until_complete(self.execute_cmd_awaitable(cmd))
+

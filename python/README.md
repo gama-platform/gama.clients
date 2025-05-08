@@ -16,7 +16,7 @@ For advanced users, you can find the package on the [pypi website](https://pypi.
 You can check that everything went well by opening a python console and try the following line:
 
 ```python
-from gama_client.base_client import GamaBaseClient
+from gama_client.async_client import GamaBaseClient
 ```
 
 If you don't see any error message then `gama-client` has been installed correctly.
@@ -41,10 +41,13 @@ which you must customize to respond according to your program's current state an
 
 Before doing anything you will have to create an instance of that class with the `url` and `port` of the running gama-server as well as the function that should be called when a message is received.
 for example to connect to a local gama-server running on port 6868 and printing received message:
+
 ```python
 import asyncio
 
-from gama_client.base_client import GamaBaseClient
+from gama_client.async_client import GamaBaseClient
+
+
 async def message_handler(message):
     print("received message:", message)
 
@@ -55,6 +58,7 @@ async def main():
 
     while True:
         await asyncio.sleep(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -160,21 +164,24 @@ Answers to commands include a `command` field, containing the entirety of the co
 In every command function, there is an optional parameter called `additional_data`, you can use it to store metadata about your command, for example an id, and use it to find to which precise command does an answer responds to because those additional data will also be stored in the `command` field of the answer.
 
 For example here we run 3 identical load commands, and we want to have a special treatment for the second one only, so we give it a special id in the `additional_data` in order to find the corresponding answer in the `message-handler` function:
+
 ```python
 import asyncio
 from typing import Dict
 
-from gama_client.base_client import GamaBaseClient
+from gama_client.async_client import GamaBaseClient
 
 load_command_secret_id = 123
 other_id = 1
 
 
 async def message_handler(message: Dict):
-    if "command" in message.keys() and "my_secret_id" in message['command'] and message['command']["my_secret_id"] == load_command_secret_id:
+    if "command" in message.keys() and "my_secret_id" in message['command'] and message['command'][
+        "my_secret_id"] == load_command_secret_id:
         print("answer for the load command we wanted to retrieve received:", message)
     else:
         print("other kind of message", message)
+
 
 async def main():
     client = GamaBaseClient("localhost", 6868, message_handler)
@@ -193,6 +200,7 @@ async def main():
 
     while True:
         await asyncio.sleep(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

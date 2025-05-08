@@ -5,7 +5,7 @@ from asyncio import Future
 from pathlib import Path
 from typing import Dict
 
-from gama_client.base_client import GamaBaseClient
+from gama_client.async_client import GamaBaseClient
 from gama_client.command_types import CommandTypes
 from gama_client.message_types import MessageTypes
 
