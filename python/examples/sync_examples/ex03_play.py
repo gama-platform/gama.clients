@@ -25,29 +25,39 @@ async def main():
 
     print("connecting to Gama server")
     try:
-        client.sync_connect()
+        client.connect()
     except Exception as e:
         print("error while connecting to the server", e)
         return
 
     print("loading a gaml model")
-    gama_response = client.sync_load(gaml_file_path, exp_name, False, False, False, True)
+    gama_response = client.load(gaml_file_path, exp_name, False, False, False, True)
+
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("error while loading", gama_response)
         return
     print("initialization successful")
+
     experiment_id = gama_response["content"]
 
     print("running the model for 1 second")
-    gama_response = client.sync_play(experiment_id)
+    gama_response = client.play(experiment_id)
+
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("error while trying to run the experiment", gama_response)
         return
     
     await asyncio.sleep(1)
 
+    print("killing the experiment")
+    gama_response = client.stop(experiment_id)
+    if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
+        print("Unable to stop the experiment", gama_response)
+        return
+    print("experiment stopped")
+
     print("closing the connection")
-    client.sync_close_connection()
+    client.close_connection()
 
 if __name__ == "__main__":
     asyncio.run(main())

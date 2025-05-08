@@ -193,6 +193,25 @@ class GamaSyncClient(GamaAsyncClient):
                                                                       dialog, runtime, parameters, until,
                                                                       socket_id, additional_data))
 
+    async def exit_awaitable(self):
+        """
+        Sends a command to kill the gama-server
+        :return: if everything goes well, gama-server will send back a message containing the
+        experiment's id.
+        """
+        cmd = {
+            "type": CommandTypes.Exit.value,
+        }
+        return self.execute_cmd_awaitable(cmd)
+
+    def exit(self):
+        """
+        Sends a command to kill the gama-server
+        :return: if everything goes well, gama-server will send back a message containing the
+        experiment's id.
+        """
+        return self.event_loop.run_until_complete(self.exit_awaitable())
+
     async def download_awaitable(self, file_path: str) -> Dict[str, Any]:
         """
         Downloads a file from gama server file system

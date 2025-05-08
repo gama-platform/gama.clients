@@ -24,27 +24,28 @@ async def main():
 
     print("connecting to Gama server")
     try:
-        client.sync_connect()
+        client.connect()
     except Exception as e:
         print("error while connecting to the server", e)
         return
 
     print("uploading file to gama-server")
-    gama_response = client.sync_upload(file, text)
+    gama_response = client.upload(file, text)
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("error while trying to upload the file", gama_response)
         return
     print("file uploaded successfully")
 
     print("downloading file from gama-server");
-    gama_response = client.sync_download(file)
+    gama_response = client.download(file)
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("error while trying to download the file", gama_response)
         return
     print("file downloaded successfully, here is the content:")
     print(gama_response["content"])
 
-    client.sync_close_connection()
+    print("closing connection")
+    client.close_connection()
 
 if __name__ == "__main__":
     asyncio.run(main())

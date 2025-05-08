@@ -7,9 +7,10 @@ from gama_client.message_types import MessageTypes
 
 async def main():
     """
-    This example shows how to stop a Gama experiment using the GamaSyncClient.
-    It first connects to the server, loads the model.
-    Then it stops the experiment and closes the connection.
+    This example shows how to perform a certain number of steps in a Gama experiment using the GamaSyncClient.
+    First it connects to the server and loads the model.
+    Then it runs the experiment for a given number of steps and closes the connection.
+    It also prints the current step number before and after running the steps.
     """
 
     # Experiment and Gama-server constants
@@ -25,27 +26,40 @@ async def main():
 
     print("connecting to Gama server")
     try:
-        client.sync_connect()
+        client.connect()
     except Exception as e:
         print("error while connecting to the server", e)
         return
 
     print("loading a gaml model")
-    gama_response = client.sync_load(gaml_file_path, exp_name, False, False, False, True)
+    gama_response = client.load(gaml_file_path, exp_name, False, False, False, True)
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("error while loading", gama_response)
         return
     print("initialization successful")
     experiment_id = gama_response["content"]
+
+    gama_response = client.expression(experiment_id, r"cycle")
+    print("asking simulation the value of: cycle =", gama_response["content"])
+
+    print("asking gama to run 10 steps of the experiment")
+    gama_response = client.step(experiment_id, 10, sync=True)
+    if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
+        print("error while trying to run the experiment", gama_response)
+        return
     
-    print("killing the simulation")
-    gama_response = client.sync_stop(experiment_id)
+    gama_response = client.expression(experiment_id, r"cycle")
+    print("asking simulation the value of: cycle =", gama_response["content"])
+
+    print("killing the experiment")
+    gama_response = client.stop(experiment_id)
     if gama_response["type"] != MessageTypes.CommandExecutedSuccessfully.value:
         print("Unable to stop the experiment", gama_response)
         return
-    print("simulation stopped")
+    print("experiment stopped")
 
-    client.sync_close_connection()
+    print("closing the connection")
+    client.close_connection()
 
 if __name__ == "__main__":
     asyncio.run(main())

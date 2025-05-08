@@ -23,18 +23,21 @@ async def main():
 
     print("connecting to Gama server")
     try:
-        client.sync_connect()
+        client.connect()
     except Exception as e:
         print("error while connecting to the server", e)
         return
 
     print("describing a gama model")
-    gama_response = await client.describe(gaml_file_path)
+    gama_response = client.describe(gaml_file_path)
     try:
         description = gama_response["content"]
     except Exception as e:
         print("error while describing the model", gama_response, e)
     print(description)
+
+    print("closing connection")
+    client.close_connection()
 
 if __name__ == "__main__":
     asyncio.run(main())
