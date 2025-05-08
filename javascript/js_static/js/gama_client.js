@@ -38,12 +38,9 @@ const attribute2Name = 'type';*/
 // var species1Name = 'Individual';
 // var attribute1Name = 'state';
 
-<<<<<<< Updated upstream
-const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
-=======
 const experiment = new GAMA("ws://localhost:1000/", modelPath, experimentName);
 experiment.connect(on_connected, on_disconnected);
->>>>>>> Stashed changes
+
 function on_connected() {
 	start_sim();
 }
