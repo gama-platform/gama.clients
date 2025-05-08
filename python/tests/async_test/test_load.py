@@ -19,7 +19,7 @@ model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_pa
 
 # TODO: load from a file
 url = "localhost"
-port = 1002
+port = 6868
 
 # TODO: handle timeout to avoid infinite loops
 
@@ -162,9 +162,10 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
             {
                 "type": "rgb",
                 "value": {
-                    "r": 255,
-                    "g": 0,
-                    "b": 0
+                    "red": 255,
+                    "green": 0,
+                    "blue": 0,
+                    "alpha": 255
                 },
                 "name": "color"
             }
@@ -180,36 +181,28 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         await self.client.expression_async(experiment_id, "i")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
-        assert gama_response["content"] == 100
-
+        assert gama_response["content"] == "100"
 
         # check f
         self.future_command1 = Future()
-        await self.client.expression_async(experiment_id, "i")
+        await self.client.expression_async(experiment_id, "f")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
-        assert gama_response["content"] == 10.34
-
+        assert gama_response["content"] == "10.34"
 
         # check s
         self.future_command1 = Future()
-        await self.client.expression_async(experiment_id, "i")
+        await self.client.expression_async(experiment_id, "s")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == "salut"
-
 
         # check color
         self.future_command1 = Future()
         await self.client.expression_async(experiment_id, "color")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
-        assert gama_response["content"]["r"] == 255
-        assert gama_response["content"]["g"] == 0
-        assert gama_response["content"]["b"] == 0
-
-
-
+        assert gama_response["content"] == 'color[red]'
 
 
     async def test_load_fake_name_parameters(self):
