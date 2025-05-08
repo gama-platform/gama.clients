@@ -16,9 +16,60 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         self.client = GamaSyncClient(url, port)
         self.client.connect()
 
-    async def test_load(self):
+    async def test_load_classic(self):
         gama_response = self.client.load(empty_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+    async def test_load_fake_model():
+        pass
+
+    async def test_load_fake_exp(self):
+        pass
+
+    async def test_load_none_model(self):
+        pass
+
+    async def test_load_none_exp(self):
+        pass
+
+    async def test_load_empty_model(self):
+        pass
+    
+    async def test_load_empty_exp(self):
+        pass
+
+    async def test_load_batch(self):
+        pass
+
+    async def test_load_test(self):
+        pass
+
+    async def test_load_console(self):
+        pass
+
+    async def test_load_virtual(self):
+        pass
+
+    async def test_load_imported_model(self):
+        pass
+
+    async def test_load_inerited_exp(self):
+        pass
+
+    async def test_load_parameters(self):
+        pass
+
+    async def test_load_fake_name_parameters(self):
+        pass
+
+    async def test_load_fake_type_parameters(self):
+        pass
+
+    async def test_load_empty_parameters(self):
+        pass
+
+    async def test_load_global_parameters(self):
+        pass
 
     async def test_fake(self):
         assert True
