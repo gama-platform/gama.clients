@@ -13,13 +13,12 @@ var show3DBuilding = Boolean(false);
 
 //GAMA PATH
 
-// var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/'
-// var modelPath = '/Users/arno/Projects/GitHub/SaReine/SaReine/models/Plan_des_pistes.gaml';
-// var experimentName = 'demo';
+// var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
+var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/'
 
-var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/'; 
-var modelPath = ABSOLUTE_PATH_TO_GAMA+ 'gama/gama.library/models/Tutorials/Road Traffic/models/Model 05.gaml';
-var experimentName = 'road_traffic';
+var modelPath = '/Users/arno/Projects/GitHub/SaReine/SaReine/models/Plan_des_pistes.gaml';
+//var modelPath = '/Users/arno/Projects/GitHub/I-Maroc/IMaroc_GAMA/models/Population_Mobility_DataViz.gaml';
+var experimentName = 'demo';
 var species1Name = 'people';
 var attribute1Name = 'objective';
 var species2Name = 'building';
@@ -39,7 +38,12 @@ const attribute2Name = 'type';*/
 // var species1Name = 'Individual';
 // var attribute1Name = 'state';
 
+<<<<<<< Updated upstream
 const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
+=======
+const experiment = new GAMA("ws://localhost:1000/", modelPath, experimentName);
+experiment.connect(on_connected, on_disconnected);
+>>>>>>> Stashed changes
 function on_connected() {
 	start_sim();
 }
@@ -115,10 +119,11 @@ function start_renderer() {
 const map = new mapboxgl.Map({
 	container: 'map', // container id
 	style: 'mapbox://styles/mapbox/satellite-v9',
+	//style: 'mapbox://styles/mapbox/light-v9',
 	pitch: 45,
 	bearing: -17.6,
 	antialias: true,
-	center: [105.8249019, 21.0076181], // TLU -84.5, 38.05starting position 
+	center: [-7.991405559068491,31.62418156481035], // TLU -84.5, 38.05starting position 
 	zoom: 13 // starting zoom
 });
 
