@@ -64,15 +64,15 @@ class GamaSyncClient(GamaBaseClient):
         await self.socket.send(json.dumps(cmd))
         return await self.futures[id]
 
-    def execute_cmd_sync(self, cmd: Dict[str, Any]):
+    async def execute_cmd_awaitable(self, cmd: Dict[str, Any]):
         id: str = str(uuid.uuid1())
 
         # we add an entry in the command to be able to find it back in the answer messages
         cmd["api_id"] = id
         self.futures[id] = self.event_loop.create_future()
-        return self.event_loop.run_until_complete(self.execute_cmd_inside(cmd, id))
+        return self.execute_cmd_inside(cmd, id)
 
-    def sync_connect(self, set_socket_id: bool = True, ping_interval: [Any, float] = 20, ping_timeout: float = 20):
+    def sync_connect(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20, ping_timeout: float = 20):
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
@@ -91,7 +91,7 @@ class GamaSyncClient(GamaBaseClient):
         """
         self.event_loop.run_until_complete(self.connect(set_socket_id, ping_interval, ping_timeout))
 
-    def sync_load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
+    async def awaitable_load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                   dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
                   socket_id: str = "",
                   additional_data: Dict = None):
@@ -149,9 +149,47 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
+                  dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
+                  socket_id: str = "",
+                  additional_data: Dict = None):
+        """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
-    def sync_download(self, file_path: str):
+        **Note**
+            The parameters must follow this format: ::
+
+                {
+                    "type": "<type of the parameter>",
+                    "value": "<value of the parameter>",
+                    "name": "<name of the parameter in the gaml file>"
+                }
+
+            Example value of parameters: ``[{"type": "float", "value": "0.75", "name": "conversion_rate"}]``
+
+        :param file_path: The path of the file containing the experiment to run
+        :param experiment_name: The name of the experiment to run
+        :param socket_id: The socket that will be linked to the experiment, if empty uses current connection
+        :param console: True if you want gama-server to redirect the simulation's console outputs
+        :param status: True if you want gama-server to redirect the simulation's status changes
+        :param dialog: True if you want gama-server to redirect the simulation's dialogs
+        :param runtime: True if you want gama-server to redirect the simulation's runtime errors
+        :param parameters: A list of dictionaries, each dictionary representing the initial value of an experiment
+            parameter.
+            They will be set at the initialization phase of the experiment.
+        :param until: A string representing an ending condition to stop an experiment run by gama-server.
+            It must be expressed in the gaml language.
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+
+        :returns: If everything goes well on the server side, gama-server will send back a message containing the
+            experiment's id.
+        """
+        
+        return self.event_loop.run_until_complete(self.awaitable_load(file_path, experiment_name, console, status, dialog, runtime, parameters, until, socket_id, additional_data))
+
+    async def awaitable_download(self, file_path: str):
         """
         Downloads a file from gama server file system
         :type file_path: the path of the file to download on gama-server's file system
@@ -162,9 +200,18 @@ class GamaSyncClient(GamaBaseClient):
             "type": CommandTypes.Download.value,
             "file": file_path,
         }
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def download(self, file_path):
+        """
+        Downloads a file from gama server file system
+        :type file_path: the path of the file to download on gama-server's file system
+        :return: if everything goes well, gama-server will send back an object containing the entirety
+        of the file as a string
+        """
+        return self.event_loop.run_until_complete(self.awaitable_download(file_path))
 
-    def sync_upload(self, file_path: str, content: str):
+    async def awaitable_upload(self, file_path: str, content: str):
         """
         Uploads a file to gama-server's file-system
         :param file_path: the path on gama-server file-system where the content is going to be saved
@@ -175,9 +222,17 @@ class GamaSyncClient(GamaBaseClient):
             "file": file_path,
             "content": content
         }
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def upload(self, file_path: str, content: str):
+        """
+        Uploads a file to gama-server's file-system
+        :param file_path: the path on gama-server file-system where the content is going to be saved
+        :param content: the content of the file to be uploaded
+        """
+        return self.event_loop.run_until_complete(self.awaitable_upload(file_path, content))
 
-    def sync_close_connection(self, close_code=1000, reason=""):
+    def close_connection(self, close_code=1000, reason=""):
         """
         Closes the connection
         :param close_code: the close code, 1000 by default
@@ -186,7 +241,7 @@ class GamaSyncClient(GamaBaseClient):
         """
         self.event_loop.run_until_complete(self.socket.close(close_code, reason))
 
-    def sync_play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
+    async def awaitable_play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to run the experiment **exp_id**
 
@@ -212,9 +267,25 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
+        """
+        Sends a command to run the experiment **exp_id**
 
-    def sync_pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param sync: Boolean used to specify if the simulation must send a message once the command is received, or wait
+            until the end condition is reached. Note: it only works if you previously set a value for the parameter
+            "until" in the "load" command.
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: Nothing
+        """
+        return self.event_loop.run_until_complete(self.awaitable_play(exp_id, sync, socket_id, additional_data))
+
+    async def awaitable_pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to pause the experiment **exp_id**
 
@@ -235,9 +306,22 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+        """
+        Sends a command to pause the experiment **exp_id**
 
-    def sync_step(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
+        :param exp_id: The id of the experiment to run on which the command applies
+            (sent by gama-server after the load command)
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: Nothing
+        """
+        return self.event_loop.run_until_complete(self.awaitable_pause(exp_id, socket_id, additional_data))
+
+    async def awaitable_step(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
                   additional_data: Dict = None):
         """
         Sends a command to run **nb_step** of the experiment **exp_id**
@@ -266,9 +350,26 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def step(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
+                  additional_data: Dict = None):
+        """
+        Sends a command to run **nb_step** of the experiment **exp_id**
 
-    def sync_step_back(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param nb_step: The number of steps to execute
+        :param sync: If True gama-server will wait for the step(s) to finish before sending a success message, else
+            the message will be sent as soon as the steps are planned by gama-server.
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: Nothing
+        """
+        return self.event_loop.run_until_complete(self.awaitable_step(exp_id, nb_step, sync, socket_id, additional_data))
+
+    async def awaitable_step_back(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
                        additional_data: Dict = None):
         """
         Sends a command to run **nb_step** steps backwards of the experiment **exp_id**
@@ -297,9 +398,26 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def step_back(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
+                       additional_data: Dict = None):
+        """
+        Sends a command to run **nb_step** steps backwards of the experiment **exp_id**
 
-    def sync_stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param nb_step: The number of steps to execute
+        :param sync: If True gama-server will wait for the step(s) to finish before sending a success message, else
+            the message will be sent as soon as the steps are planned by gama-server.
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: Nothing
+        """
+        return self.event_loop.run_until_complete(self.awaitable_step_back(exp_id, nb_step, sync, socket_id, additional_data))
+
+    async def awaitable_stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to stop (kill) the experiment **exp_id**
 
@@ -320,9 +438,22 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+        """
+        Sends a command to stop (kill) the experiment **exp_id**
 
-    def sync_reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: Nothing
+        """
+        return self.event_loop.run_until_complete(self.awaitable_stop(exp_id, socket_id, additional_data))
+
+    async def awaitable_reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
                     additional_data: Dict = None):
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
@@ -353,9 +484,29 @@ class GamaSyncClient(GamaBaseClient):
             cmd["until"] = until
         if additional_data:
             cmd.update(additional_data)
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
+                    additional_data: Dict = None):
+        """
+        Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
+        parameters as well as the end condition.
 
-    def sync_expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) -> Dict:
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param parameters: A list of dictionaries, each dictionary representing the initial value of an experiment
+            parameter.
+            They will be set at the initialization phase of the experiment.
+        :param until: A string representing an ending condition to stop an experiment run by gama-server.
+            It must be expressed in the gaml language.
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: Nothing
+        """
+        return self.event_loop.run_until_complete(self.awaitable_reload(exp_id, parameters, until, socket_id, additional_data))
+
+    async def awaitable_expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) -> Dict:
         """
         Sends a command to evaluate a gaml expression in the experiment **exp_id**
 
@@ -379,9 +530,24 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.execute_cmd_awaitable(cmd)
+    
+    def expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) -> Dict:
+        """
+        Sends a command to evaluate a gaml expression in the experiment **exp_id**
 
-    async def describe(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param expression: The expression to evaluate. Must follow the gaml syntax.
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: The result of the evaluation of the expression will be sent back to the user and caught by the
+            listening_loop
+        """
+        return self.event_loop.run_until_complete(self.awaitable_expression(exp_id, expression, socket_id, additional_data))
+
+    def describe(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
                        species_variables: bool = True, species_actions: bool = True, additional_data: Dict = None):
         """
         This command is used to ask the server more information on a given model. When received, the server will
@@ -405,4 +571,4 @@ class GamaSyncClient(GamaBaseClient):
         if additional_data:
             cmd.update(additional_data)
 
-        return self.execute_cmd_sync(cmd)
+        return self.event_loop.run_until_complete(self.execute_cmd_awaitable(cmd))
