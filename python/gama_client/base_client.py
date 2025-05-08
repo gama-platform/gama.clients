@@ -33,7 +33,8 @@ class GamaBaseClient:
         self.event_loop = asyncio.get_running_loop()
         self.connection_future = None
 
-    async def connect(self, set_socket_id: bool = True, ping_interval: [Any, float] = 20, ping_timeout: float = 20):
+    async def connect_async(self, set_socket_id: bool = True, ping_interval: [Any, float] = 20,
+                            ping_timeout: float = 20):
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
@@ -87,10 +88,10 @@ class GamaBaseClient:
                     print("Error while waiting for a message from gama-server. Exiting", sock_ex)
                     sys.exit(-1)
 
-    async def load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
-                   dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
-                   socket_id: str = "",
-                   additional_data: Dict = None):
+    async def load_async(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
+                         dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
+                         socket_id: str = "",
+                         additional_data: Dict = None):
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -147,7 +148,7 @@ class GamaBaseClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def exit(self):
+    async def exit_async(self):
         """
         Sends a command to kill gama-server
 
@@ -158,7 +159,7 @@ class GamaBaseClient:
         }
         await self.socket.send(json.dumps(cmd))
 
-    async def download(self, file_path: str):
+    async def download_async(self, file_path: str):
         """
         Downloads a file from gama server file system
         :type file_path: the path of the file to download on gama-server's file system
@@ -171,11 +172,12 @@ class GamaBaseClient:
         }
         await self.socket.send(json.dumps(cmd))
 
-    async def upload(self, file_path: str, content: str):
+    async def upload_async(self, file_path: str, content: str):
         """
         Uploads a file to gama-server's file-system
         :param file_path: the path on gama-server file-system where the content is going to be saved
         :param content: the content of the file to be uploaded
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
         """
         cmd = {
             "type": CommandTypes.Upload.value,
@@ -184,16 +186,15 @@ class GamaBaseClient:
         }
         await self.socket.send(json.dumps(cmd))
 
-    async def close_connection(self, close_code=1000, reason=""):
+    async def close_connection_async(self, close_code=1000, reason=""):
         """
         Closes the connection
         :param close_code: the close code, 1000 by default
         :param reason: a human-readable reason for closing.
-        :return:
         """
         await self.socket.close(close_code, reason)
 
-    async def play(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
+    async def play_async(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to run the experiment **exp_id**
 
@@ -205,7 +206,7 @@ class GamaBaseClient:
             "until" in the "load" command.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
-        :return: Nothing
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
         """
         cmd = {
             "type": CommandTypes.Play.value,
@@ -221,7 +222,7 @@ class GamaBaseClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def pause(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+    async def pause_async(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to pause the experiment **exp_id**
 
@@ -230,7 +231,7 @@ class GamaBaseClient:
         :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
-        :return: Nothing
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
         """
         cmd = {
             "type": CommandTypes.Pause.value,
@@ -244,8 +245,8 @@ class GamaBaseClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def step(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
-                   additional_data: Dict = None):
+    async def step_async(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
+                         additional_data: Dict = None):
         """
         Sends a command to run **nb_step** of the experiment **exp_id**
 
@@ -257,7 +258,7 @@ class GamaBaseClient:
             the message will be sent as soon as the steps are planned by gama-server.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
-        :return: Nothing
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
         """
         cmd = {
             "type": CommandTypes.Step.value,
@@ -275,8 +276,8 @@ class GamaBaseClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def step_back(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
-                        additional_data: Dict = None):
+    async def step_back_async(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
+                              additional_data: Dict = None):
         """
         Sends a command to run **nb_step** steps backwards of the experiment **exp_id**
 
@@ -288,7 +289,7 @@ class GamaBaseClient:
             the message will be sent as soon as the steps are planned by gama-server.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
-        :return: Nothing
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
         """
         cmd = {
             "type": CommandTypes.StepBack.value,
@@ -306,7 +307,7 @@ class GamaBaseClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def stop(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
+    async def stop_async(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to stop (kill) the experiment **exp_id**
 
@@ -315,7 +316,7 @@ class GamaBaseClient:
         :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
-        :return: Nothing
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
         """
         cmd = {
             "type": CommandTypes.Stop.value,
@@ -329,8 +330,8 @@ class GamaBaseClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-                     additional_data: Dict = None):
+    async def reload_async(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
+                           additional_data: Dict = None):
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -345,7 +346,7 @@ class GamaBaseClient:
             It must be expressed in the gaml language.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
-        :return: Nothing
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
         """
         cmd = {
             "type": CommandTypes.Reload.value,
@@ -362,7 +363,7 @@ class GamaBaseClient:
             cmd.update(additional_data)
         await self.socket.send(json.dumps(cmd))
 
-    async def expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None):
+    async def expression_async(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None):
         """
         Sends a command to evaluate a gaml expression in the experiment **exp_id**
 
@@ -388,8 +389,9 @@ class GamaBaseClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def describe(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
-                       species_variables: bool = True, species_actions: bool = True, additional_data: Dict = None):
+    async def describe_async(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
+                             species_variables: bool = True, species_actions: bool = True,
+                             additional_data: Dict = None):
         """
         This command is used to ask the server more information on a given model. When received, the server will
         compile the model and return the different components found, depending on the option picked by the client.
@@ -398,6 +400,9 @@ class GamaBaseClient:
         :param species_names: Whether to show the species names
         :param species_variables: Whether to show the species variables
         :param species_actions: Whether to show the species actions
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: The description asked will be sent back to the user and caught by the listening_loop
         """
         cmd = {
             "type": "describe",
