@@ -1,0 +1,46 @@
+name: Python Continuous Integration
+
+on:
+  push:
+    paths:
+    - 'python'
+  workflow_dispatch: # For manual trigger
+
+jobs:
+  release-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@latest
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Get APT dependencies
+        run: apt install -y jq curl wget
+
+      - name: Prepare GAMA to start in headless
+        run: |
+          apt install -y jq curl wget
+          echo "Downloading pre-release: " \
+            $(curl -s "https://api.github.com/repos/gama-platform/gama/releases?per_page=1" | jq '.[] | select(.prerelease == true) | .tag_name' | tr -d \") \
+            ", with link: " \
+            $(curl -s "https://api.github.com/repos/gama-platform/gama/releases?per_page=1" | jq '.[] | select(.prerelease == true) | .assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url' | tr -d \")
+          # Real download
+          wget -q $(curl -s "https://api.github.com/repos/gama-platform/gama/releases?per_page=1" | jq '.[] | select(.prerelease == true) | .assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url' | tr -d \") -O "gama-alpha.zip"
+          unzip -q gama-alpha.zip && rm gama-alpha.zip
+          # Start GAMA Server as a background job
+          bash ./headless/gama-headless.sh -socket 6868 &
+
+      - name: Build & install package
+        working-directory: ./python
+        run: |
+          # Build
+          python -m pip install build twine
+          python -m build
+          # Install
+          python -m pip install dist/gama_client-*-py3-none-any.whl
+
+      - name: Unit testing
+        working-directory: ./python
+        run: find ./tests -name "*.py" -not -name "__init__.py" -print -exec python {} \;
