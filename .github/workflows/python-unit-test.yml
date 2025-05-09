@@ -9,7 +9,8 @@ on:
 jobs:
   release-build:
     runs-on: ubuntu-latest
-
+    if: github.actor != 'gama-bot'
+    
     steps:
       - uses: actions/checkout@v4
 
