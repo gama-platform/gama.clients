@@ -27,16 +27,16 @@ If you don't see any error message then `gama-client` has been installed correct
 ## Requirements
 
 To use `gama-client` you first need to have an instance of [gama-server](https://gama-platform.org/wiki/next/HeadlessServer) open and the python package installed. 
-Then you can interact with gama-server in python using the `GamaAsyncClient` or `GamaSyncClient` class.
+Then you can interact with gama-server in python using the `GamaBaseClient` or `GamaSyncClient` class.
 
 ## Available functions
 The wrapper supports all the commands described in the gama-server [documentation](https://gama-platform.org/wiki/next/HeadlessServer#available-commands).
 
 ## Quick overview
 
-### GamaAsyncClient
+### GamaBaseClient
 
-As previously mentioned, the `GamaAsyncClient` class serves as the typical method for engaging with gama-server, and it operates in an asynchronous manner. Consequently, all messages from gama-server are delivered to a function, 
+As previously mentioned, the `GamaBaseClient` class serves as the typical method for engaging with gama-server, and it operates in an asynchronous manner. Consequently, all messages from gama-server are delivered to a function, 
 which you must customize to respond according to your program's current state and the content of the received messages.
 
 Before doing anything you will have to create an instance of that class with the `url` and `port` of the running gama-server as well as the function that should be called when a message is received.
@@ -45,7 +45,7 @@ for example to connect to a local gama-server running on port 6868 and printing 
 ```python
 import asyncio
 
-from gama_client.async_client import GamaAsyncClient
+from gama_client.async_client import GamaBaseClient
 
 
 async def message_handler(message):
@@ -53,7 +53,7 @@ async def message_handler(message):
 
 
 async def main():
-    client = GamaAsyncClient("localhost", 6868, message_handler)
+    client = GamaBaseClient("localhost", 6868, message_handler)
     await client.connect(False)
 
     while True:
@@ -67,10 +67,10 @@ When running main, your python program should connect to gama-server and when th
 ```yaml
 received message: {'type': 'ConnectionSuccessful', 'content': '480777042'}
 ```
-**Note:** make sure to define your `message_handler` as an **async** function, as it's what's expected by `GamaAsyncClient`.
+**Note:** make sure to define your `message_handler` as an **async** function, as it's what's expected by `GamaBaseClient`.
 
 As explained in the gama-server documentation [here](https://gama-platform.org/wiki/next/HeadlessServer#connection) and [there](https://gama-platform.org/wiki/next/HeadlessServer#connection-related-answers) you should then use the `content` value (here '480777042') as a **socket id** in the rest of your interactions with gama-server. 
-The class `GamaAsyncClient` contains a variable `socket_id` that you can use to store the socket id of your client, or for more simplicity you can connect with:
+The class `GamaBaseClient` contains a variable `socket_id` that you can use to store the socket id of your client, or for more simplicity you can connect with:
 ```python
 await client.connect(True)
 ```
@@ -90,7 +90,7 @@ you can later reconnect with the same `client` object the same way you did the f
 
 Alternatively you can use the class `GamaSyncClient` to establish the connection. This is recommended for simple scripts as it makes the call of commands
 easier, but you may encounter some limitation in case of exceptions raised by gama-server for example.
-This class inherits from `GamaAsyncClient` and so you can also use it to run async commands if you wish to.
+This class inherits from `GamaBaseClient` and so you can also use it to run async commands if you wish to.
 
 The connection works like this:
 ```python
@@ -118,9 +118,9 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-This time, you have to provide two message handlers, the first one will be used only for answers of asynchronous commands (the same as in `GamaAsyncClient`), the second one will be used for all kind of messages that are not answers to commands (synchronous or not), like for example status bar updates, messages writen in the console, some exceptions etc..
+This time, you have to provide two message handlers, the first one will be used only for answers of asynchronous commands (the same as in `GamaBaseClient`), the second one will be used for all kind of messages that are not answers to commands (synchronous or not), like for example status bar updates, messages writen in the console, some exceptions etc..
 
-The `connect` function works exactly as the `GamaAsyncClient` and all the remarks made previously hold for `GamaSyncClient`
+The `connect` function works exactly as the `GamaBaseClient` and all the remarks made previously hold for `GamaSyncClient`
 
 ### Running commands
 Once connected you will want to run commands, the principle is pretty simple: all commands can be from run your `client` variable through functions. For example if you want to run the [load command](https://gama-platform.org/wiki/next/HeadlessServer#the-load-command) you just have to call the `load` function with the proper parameters.
@@ -129,7 +129,7 @@ await client.load("path/to/gaml/file", "my_experiment_name")
 ```
 
 
-If you are using a `GamaAsyncClient`, the program will proceed once the command is dispatched to gama-server. However, it won't pause to await the response, whether it's a success, failure, or the result of an expression you requested for evaluation. You will need to manage the response within the `message_handler` function you established when creating your client.
+If you are using a `GamaBaseClient`, the program will proceed once the command is dispatched to gama-server. However, it won't pause to await the response, whether it's a success, failure, or the result of an expression you requested for evaluation. You will need to manage the response within the `message_handler` function you established when creating your client.
 
 With a client of type `GamaSyncClient`, you have access to those functions too plus synchronous ones. With synchronous functions the program will stop at each command call and wait for gama-server to answer, then the answer will be passed as the return of the command function. 
 Those functions are preceded by the word `sync`. For example the synchronous load functions is called this way:
@@ -169,7 +169,7 @@ For example here we run 3 identical load commands, and we want to have a special
 import asyncio
 from typing import Dict
 
-from gama_client.async_client import GamaAsyncClient
+from gama_client.async_client import GamaBaseClient
 
 load_command_secret_id = 123
 other_id = 1
@@ -184,7 +184,7 @@ async def message_handler(message: Dict):
 
 
 async def main():
-    client = GamaAsyncClient("localhost", 6868, message_handler)
+    client = GamaBaseClient("localhost", 6868, message_handler)
     await client.connect()
 
     gaml_file = "path/to/gaml/file"
@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
 ## Example code
 Some working examples are provided in the `examples` directory, you just have to change the values of the variables `server_url`, `server_port`, `gaml_file_path`, `exp_name` and `exp_parameters` to the one corresponding to your own gama-server and experiment to try it.
-The example `sequential_example.py` focuses on the use of `GamaAsyncClient` while `sync_client_example.py` focuses on `GamaSyncClient`. 
+The example `sequential_example.py` focuses on the use of `GamaBaseClient` while `sync_client_example.py` focuses on `GamaSyncClient`. 
  
 # To generate a new release (for contributors only)
 ## Upload the new files to pypi
