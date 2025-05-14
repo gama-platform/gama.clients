@@ -1,3 +1,5 @@
+**DISCLAIMER: The following documentation is only compatible with gama-client 1.2.2. **
+
 # Gama client
 
 Gama-client is a Python module designed to facilitate interactions with the headless mode of the modeling and simulation platform known as [gama](https://gama-platform.org/). It is compatible with gama version 1.9.3. This wrapper handles the connection to gama-server and sends properly formatted requests. It is designed to accommodate the asynchronous nature of gama-server, enabling users to manage multiple simulations simultaneously. However, users are responsible for handling received messages, such as command confirmations, simulation outputs, and errors. We provide a functional example that demonstrates how to structure your code for sequential execution.
@@ -8,7 +10,7 @@ Starting from version 1.2.0 of the wrapper, a new class has been introduced to a
 In your python environment, install the gama-client package with the command:
 
 ```
-pip install gama-client
+pip install gama-client==1.2.2
 ```
 
 For advanced users, you can find the package on the [pypi website](https://pypi.org/project/gama-client/) and do it yourself instead of using the `pip` tool.
