@@ -54,7 +54,7 @@ async def message_handler(message):
 
 async def main():
     client = GamaAsyncClient("localhost", 6868, message_handler)
-    await client.connect_async(False)
+    await client.connect(False)
 
     while True:
         await asyncio.sleep(1)
@@ -72,11 +72,11 @@ received message: {'type': 'ConnectionSuccessful', 'content': '480777042'}
 As explained in the gama-server documentation [here](https://gama-platform.org/wiki/next/HeadlessServer#connection) and [there](https://gama-platform.org/wiki/next/HeadlessServer#connection-related-answers) you should then use the `content` value (here '480777042') as a **socket id** in the rest of your interactions with gama-server. 
 The class `GamaAsyncClient` contains a variable `socket_id` that you can use to store the socket id of your client, or for more simplicity you can connect with:
 ```python
-await client.connect_async(True)
+await client.connect(True)
 ```
 or
 ```python
-await client.connect_async()
+await client.connect()
 ```
 And the client will take care of handling this first message and setting the `socket_id` by itself.
 
