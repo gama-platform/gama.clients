@@ -16,7 +16,7 @@ For advanced users, you can find the package on the [pypi website](https://pypi.
 You can check that everything went well by opening a python console and try the following line:
 
 ```python
-from gama_client.async_client import GamaBaseClient
+from gama_client.async_client import GamaAsyncClient
 ```
 
 If you don't see any error message then `gama-client` has been installed correctly.
