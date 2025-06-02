@@ -159,6 +159,24 @@ class GamaAsyncClient:
         }
         await self.socket.send(json.dumps(cmd))
 
+    async def validate_async(self, expressions: str, syntax: bool, escaped: bool, additional_data: Dict = None):
+        """
+        Sends a command to check some gaml expressions validity.
+        :param expressions: The code to check
+        :param syntax: True to only check the syntax
+        :param escaped: True if the expressions are escaped already
+        :return: Nothing
+        """
+        cmd = {
+            "type": CommandTypes.Validate.value,
+            "expr": expressions,
+            "syntax": syntax,
+            "escaped": escaped
+        }
+        if additional_data:
+            cmd.update(additional_data)
+        await self.socket.send(json.dumps(cmd))
+
     async def download_async(self, file_path: str):
         """
         Downloads a file from gama server file system
@@ -389,6 +407,38 @@ class GamaAsyncClient:
 
         await self.socket.send(json.dumps(cmd))
 
+    async def ask_async(self, exp_id: str, action: str, args: Dict, agent: str, escaped: bool, socket_id: str = "",
+                        additional_data: Dict = None):
+        """
+        Sends a command to call an action defined in agents in the experiment **exp_id**
+
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param action: The action to call
+        :param args: The arguments of the action
+        :param agent: the agent from which to call the action
+        :param escaped: True if the expression is escaped
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: Nothing
+        """
+        cmd = {
+            "type": CommandTypes.Ask.value,
+            "exp_id": exp_id,
+            "action": action,
+            "args": args,
+            "agent": agent,
+            "escaped": escaped
+        }
+        # adding optional parameters
+        if socket_id != "":
+            cmd["socket_id"] = socket_id
+        if additional_data:
+            cmd.update(additional_data)
+
+        await self.socket.send(json.dumps(cmd))
+
     async def describe_async(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
                              species_variables: bool = True, species_actions: bool = True,
                              additional_data: Dict = None):
@@ -405,7 +455,7 @@ class GamaAsyncClient:
         :return: The description asked will be sent back to the user and caught by the listening_loop
         """
         cmd = {
-            "type": "describe",
+            "type": CommandTypes.Describe.value,
             "model": path_to_model,
             "experiments": experiments,
             "speciesNames": species_names,

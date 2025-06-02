@@ -201,6 +201,36 @@ class GamaSyncClient(GamaAsyncClient):
         """
         return self.event_loop.run_until_complete(self.exit_async())
 
+    async def validate_awaitable(self, expressions: str, syntax: bool, escaped: bool, additional_data: Dict = None) \
+            -> Dict[str, Any]:
+        """
+        Sends a command to check some gaml expressions validity.
+        :param expressions: The code to check
+        :param syntax: True to only check the syntax
+        :param escaped: True if the expressions are escaped already
+        :return: Nothing
+        """
+        cmd = {
+            "type": CommandTypes.Validate.value,
+            "expr": expressions,
+            "syntax": syntax,
+            "escaped": escaped
+        }
+        if additional_data:
+            cmd.update(additional_data)
+        return await self.execute_cmd_awaitable(cmd)
+
+    def validate(self, expressions: str, syntax: bool, escaped: bool, additional_data: Dict = None) \
+            -> Dict[str, Any]:
+        """
+        Sends a command to check some gaml expressions validity.
+        :param expressions: The code to check
+        :param syntax: True to only check the syntax
+        :param escaped: True if the expressions are escaped already
+        :return: Nothing
+        """
+        return self.event_loop.run_until_complete(self.validate_awaitable(expressions, syntax, escaped, additional_data))
+
     async def download_awaitable(self, file_path: str) -> Dict[str, Any]:
         """
         Downloads a file from gama server file system
@@ -549,7 +579,8 @@ class GamaSyncClient(GamaAsyncClient):
 
         return await self.execute_cmd_awaitable(cmd)
 
-    def expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) -> Dict[str, Any]:
+    def expression(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None) \
+            -> Dict[str, Any]:
         """
         Sends a command to evaluate a gaml expression in the experiment **exp_id**
 
@@ -566,7 +597,8 @@ class GamaSyncClient(GamaAsyncClient):
             self.expression_awaitable(exp_id, expression, socket_id, additional_data))
 
     def describe(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
-                 species_variables: bool = True, species_actions: bool = True, additional_data: Dict = None) -> Dict[str, Any]:
+                 species_variables: bool = True, species_actions: bool = True, additional_data: Dict = None) \
+            -> Dict[str, Any]:
         """
         This command is used to ask the server more information on a given model. When received, the server will
         compile the model and return the different components found, depending on the option picked by the client.
@@ -575,7 +607,8 @@ class GamaSyncClient(GamaAsyncClient):
         :param species_names: Whether to show the species names
         :param species_variables: Whether to show the species variables
         :param species_actions: Whether to show the species actions
-        :param additional_data: any additional
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
         """
         cmd = {
             "type": "describe",
@@ -585,9 +618,7 @@ class GamaSyncClient(GamaAsyncClient):
             "speciesVariables": species_variables,
             "speciesActions": species_actions
         }
-
         if additional_data:
             cmd.update(additional_data)
-
         return self.event_loop.run_until_complete(self.execute_cmd_awaitable(cmd))
 
