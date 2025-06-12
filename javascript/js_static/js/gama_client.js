@@ -12,12 +12,7 @@ var staticLayerCalled = Boolean(false);
 var show3DBuilding = Boolean(false);
 
 //GAMA PATH
-
-// var ABSOLUTE_PATH_TO_GAMA = '/Users/hqn88/git/';
-var ABSOLUTE_PATH_TO_GAMA = '/Users/arno/git/'
-
-var modelPath = '/Users/arno/Projects/GitHub/SaReine/SaReine/models/Plan_des_pistes.gaml';
-//var modelPath = '/Users/arno/Projects/GitHub/I-Maroc/IMaroc_GAMA/models/Population_Mobility_DataViz.gaml';
+var modelPath = "C:\\Users\\baptiste\\Documents\\GitHub\\SaReine\\SaReine\\models\\Plan_des_pistes.gaml";
 var experimentName = 'demo';
 var species1Name = 'people';
 var attribute1Name = 'objective';
@@ -25,20 +20,7 @@ var species2Name = 'building';
 var attribute2Name = 'type';
 
 
-/*const modelPath = '/Users/arno/Projects/GitHub/UD_ReAgent_ABM/ReAgent/models/Gratte_Ciel_Demo.gaml';
-const experimentName = 'Demo';
-const species1Name = 'people';
-const attribute1Name = 'type';
-const species2Name = 'building';
-const attribute2Name = 'type';*/
-
-// var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Lockdown\\LockDown.gaml';
-// var modelPath = 'C:\\git\\PROJECT\\COMOKIT-Model\\COMOKIT\\Meso\\Models\\Experiments\\Activity Restrictions\\School and Workplace Closure.gaml';
-// var experimentName = 'Closures';
-// var species1Name = 'Individual';
-// var attribute1Name = 'state';
-
-const experiment = new GAMA("ws://localhost:1000/", modelPath, experimentName);
+const experiment = new GAMA("ws://localhost:6868/", modelPath, experimentName);
 experiment.connect(on_connected, on_disconnected);
 
 function on_connected() {
@@ -55,10 +37,14 @@ function start_sim() {
 		console.log(ee);
 		ee = JSON.parse(ee).content.replace(/[{}]/g, "");
 		var eee = ee.split(",");
-		console.log(eee[0]);
-		console.log(eee[1]);
+		console.log(eee);
+		console.log(eee[1].split(":")[1]);
+		console.log(eee[2].split(":")[1]);
+		var x = parseFloat(eee[1].split(":")[1]);
+		var y = parseFloat(eee[2].split(":")[1]);
+		console.log(x, y);
 		map.flyTo({
-			center: [eee[0], eee[1]],
+			center: [x, y],
 			essential: true,
 			duration: 0,
 			zoom: 15
@@ -116,7 +102,6 @@ function start_renderer() {
 const map = new mapboxgl.Map({
 	container: 'map', // container id
 	style: 'mapbox://styles/mapbox/satellite-v9',
-	//style: 'mapbox://styles/mapbox/light-v9',
 	pitch: 45,
 	bearing: -17.6,
 	antialias: true,
@@ -172,44 +157,7 @@ map.on('load', async () => {
 		},
 	});
 	const layers = map.getStyle().layers;
-	// const labelLayerId = layers.find(
-	// 	(layer) => layer.type === 'symbol' && layer.layout['text-field']
-	// ).id;
-	// if (show3DBuilding) {
-	// 	map.addLayer(
-	// 		{
-	// 			'id': 'add-3d-buildings',
-	// 			'source': 'composite',
-	// 			'source-layer': 'building',
-	// 			'filter': ['==', 'extrude', 'true'],
-	// 			'type': 'fill-extrusion',
-	// 			'minzoom': 15,
-	// 			'paint': {
-	// 				'fill-extrusion-color': '#aaa',
-	// 				'fill-extrusion-height': [
-	// 					'interpolate',
-	// 					['linear'],
-	// 					['zoom'],
-	// 					15,
-	// 					0,
-	// 					15.05,
-	// 					['get', 'height']
-	// 				],
-	// 				'fill-extrusion-base': [
-	// 					'interpolate',
-	// 					['linear'],
-	// 					['zoom'],
-	// 					15,
-	// 					0,
-	// 					15.05,
-	// 					['get', 'min_height']
-	// 				],
-	// 				'fill-extrusion-opacity': 0.6
-	// 			}
-	// 		},
-	// 		labelLayerId
-	// 	);
-	// }
+
 	// Add some fog in the background
 	map.setFog({
 		'range': [-0.5, 5],
