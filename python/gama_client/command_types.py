@@ -14,3 +14,6 @@ class CommandTypes(Enum):
     Expression  = "expression"
     Download    = "download"
     Upload      = "upload"
+    Validate    = "validate"
+    Describe    = "describe"
+    Ask         = "ask"
