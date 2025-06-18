@@ -17,6 +17,7 @@ empty_model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gam
 faulty_model_path = str(Path(__file__).parents[1] / "gaml/faulty.gaml")
 model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_params.gaml")
 runtime_error_model_path = str(Path(__file__).parents[1] / "gaml/runtime_error.gaml")
+long_init_model_path = str(Path(__file__).parents[1] / "gaml/long_init.gaml")
 
 # TODO: load from a file
 url = "localhost"
@@ -220,6 +221,16 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == {'gaml_type': 'rgb', 'red': 255, 'green': 0, 'blue': 0, 'alpha': 255}
+
+    async def test_load_long_init(self):
+        """
+        This runs a model that waits for 1 minute in its init block.
+        Both sides of the communication should be properly multithreaded to ensure that the
+        connection is kept alive.
+        """
+        await self.client.load_async(long_init_model_path, "ex")
+        gama_response = await self.future_command1
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def test_load_fake_name_parameters(self):
         pass
