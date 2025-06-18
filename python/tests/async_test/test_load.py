@@ -16,7 +16,7 @@ empty_model_to_import_path = str(Path(__file__).parents[1] / "gaml/to_import.gam
 empty_model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gaml")
 faulty_model_path = str(Path(__file__).parents[1] / "gaml/faulty.gaml")
 model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_params.gaml")
-runtime_error_model_path = str(Path(__file__).parents[1] / "gaml/runtime_error.gaml")
+init_error_model_path = str(Path(__file__).parents[1] / "gaml/init_error.gaml")
 long_init_model_path = str(Path(__file__).parents[1] / "gaml/long_init.gaml")
 
 # TODO: load from a file
@@ -253,21 +253,17 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         assert gama_response["content"]["exception"] == 'GamaCompilationFailedException'
 
     async def test_load_runtime_error(self):
-        await self.client.load_async(runtime_error_model_path, "exp", runtime=True)
+        await self.client.load_async(init_error_model_path, "exp", runtime=True)
         gama_response = await self.future_command1
+        print(gama_response)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
-        print("loaded")
 
-        await self.client.step_async(gama_response["content"])
-        gama_response = await self.future_command2
-        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
-        print("stepped")
-
+        assert False # For now GS is not sending an error message even though there should be an exception in the init block
         error_message = await self.future_error
+        print(error_message)
         assert error_message["type"] == MessageTypes.SimulationError.value
         assert error_message["content"]["exception"].endswith('GamaRuntimeException')
         assert error_message["content"]["message"] == "Division by zero"
-
 
     # Clean up after each test
     async def asyncTearDown(self):

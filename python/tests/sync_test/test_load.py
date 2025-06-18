@@ -1,8 +1,7 @@
-import asyncio
 import unittest
 from asyncio import Future
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
@@ -16,7 +15,7 @@ empty_model_to_import_path = str(Path(__file__).parents[1] / "gaml/to_import.gam
 empty_model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gaml")
 faulty_model_path = str(Path(__file__).parents[1] / "gaml/faulty.gaml")
 model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_params.gaml")
-runtime_error_model_path = str(Path(__file__).parents[1] / "gaml/runtime_error.gaml")
+init_error_model_path = str(Path(__file__).parents[1] / "gaml/init_error.gaml")
 url = "localhost"
 port = 6868
 
@@ -25,6 +24,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
 
     client: GamaSyncClient
     future_console: Future
+    sim_id: List[str]
 
     async def message_handler(self, message: Dict[str, Any]):
         self.future_console.set_result(message)
@@ -144,7 +144,6 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
 
         # check i
         gama_response = self.client.expression(experiment_id, "i")
-        print(gama_response)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == 100
 
@@ -189,14 +188,13 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         assert gama_response["content"]["exception"] == 'GamaCompilationFailedException'
 
     async def test_load_runtime_error(self):
-        gama_response = self.client.load(runtime_error_model_path, "exp", runtime=True)
+        gama_response = self.client.load(init_error_model_path, "exp", runtime=True)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
-        gama_response = self.client.step(gama_response["content"])
-        print("after step: ", gama_response)
-        # error_message = await self.future_console
-        # print(error_message)
-        assert False
+        assert False # TODO: not working currently because GS is not throwing the error in the init
+        gama_response = await self.future_console
+        assert gama_response["type"] == MessageTypes.RuntimeError.value
+        assert gama_response["content"]["message"] == "Division by zero"
 
     async def asyncTearDown(self):
         for id in self.sim_id:
