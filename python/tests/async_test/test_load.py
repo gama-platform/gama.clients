@@ -9,15 +9,15 @@ from gama_client.message_types import MessageTypes
 
 
 empty_model_path = str(Path(__file__).parents[1] / "gaml/empty.gaml")
-empty_model_batch_path = str(Path(__file__).parents[1] / "gaml/empty_batch.gaml")
-empty_model_test_path = str(Path(__file__).parents[1] / "gaml/empty_test.gaml")
-empty_model_console_path = str(Path(__file__).parents[1] / "gaml/console_message.gaml")
-empty_model_to_import_path = str(Path(__file__).parents[1] / "gaml/to_import.gaml")
-empty_model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gaml")
+model_batch_path = str(Path(__file__).parents[1] / "gaml/empty_batch.gaml")
+model_test_path = str(Path(__file__).parents[1] / "gaml/empty_test.gaml")
+model_console_path = str(Path(__file__).parents[1] / "gaml/console_message.gaml")
+model_to_import_path = str(Path(__file__).parents[1] / "gaml/to_import.gaml")
+model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gaml")
 faulty_model_path = str(Path(__file__).parents[1] / "gaml/faulty.gaml")
 model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_params.gaml")
-init_error_model_path = str(Path(__file__).parents[1] / "gaml/init_error.gaml")
-long_init_model_path = str(Path(__file__).parents[1] / "gaml/long_init.gaml")
+model_init_error_path = str(Path(__file__).parents[1] / "gaml/init_error.gaml")
+model_long_init_path = str(Path(__file__).parents[1] / "gaml/long_init.gaml")
 
 # TODO: load from a file
 url = "localhost"
@@ -103,57 +103,59 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         assert gama_response["content"].startswith("'' is not an experiment present in '")
 
     async def test_load_batch(self):
-        await self.client.load_async(empty_model_batch_path, "ex")
+        await self.client.load_async(model_batch_path, "ex")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_test(self):
-        await self.client.load_async(empty_model_test_path, "ex")
+        await self.client.load_async(model_test_path, "ex")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_console(self):
         # first load the model
-        await self.client.load_async(empty_model_console_path, "ex")
+        await self.client.load_async(model_console_path, "ex")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
-        # then ask for a step to be executed
-        simulation_id = gama_response["content"]
-        await self.client.step_async(simulation_id)
-        await self.future_command2
+        # wait for the console message send in the init
+        console_message = await self.future_console
+        assert console_message["type"] == MessageTypes.SimulationOutput.value
+        assert console_message["content"]["message"].startswith("hello")
+        assert console_message["content"]["color"] == {'gaml_type': 'rgb', 'red': 255, 'green': 0, 'blue': 0, 'alpha': 255}
 
-        # finally wait for the console message
-        gama_response = await self.future_console
-        assert gama_response["type"] == MessageTypes.SimulationOutput.value
-        assert gama_response["content"]["message"].startswith("hello")
-        assert gama_response["content"]["color"] == {'gaml_type': 'rgb', 'red': 255, 'green': 0, 'blue': 0, 'alpha': 255}
-
+        # now we check for the messages send in the reflexes, so we need to execute at least one step
+        self.future_console = Future()  # resetting the future for console messages
+        await self.client.step_async(gama_response["content"])
+        console_message = await self.future_console
+        assert console_message["type"] == MessageTypes.SimulationOutput.value
+        assert console_message["content"]["message"].startswith("Hey")
+        assert console_message["content"]["color"] == {'gaml_type': 'rgb', 'red': 0, 'green': 128, 'blue': 0, 'alpha': 255}
 
     async def test_load_virtual(self):
         # TODO: is that normal ???? Should we open an issue ?
-        await self.client.load_async(empty_model_to_import_path, "parent_ex")
+        await self.client.load_async(model_to_import_path, "parent_ex")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_imported_model(self):
-        await self.client.load_async(empty_model_to_import_path, "parent_ex")
+        await self.client.load_async(model_to_import_path, "parent_ex")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_inherited_exp(self):
-        await self.client.load_async(empty_model_importing_path, "with_parent")
+        await self.client.load_async(model_importing_path, "with_parent")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_inherited_virtual_exp(self):
-        await self.client.load_async(empty_model_importing_path, "with_virt_parent")
+        await self.client.load_async(model_importing_path, "with_virt_parent")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
@@ -228,7 +230,7 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         Both sides of the communication should be properly multithreaded to ensure that the
         connection is kept alive.
         """
-        await self.client.load_async(long_init_model_path, "ex")
+        await self.client.load_async(model_long_init_path, "ex")
         gama_response = await self.future_command1
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
@@ -253,7 +255,7 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         assert gama_response["content"]["exception"] == 'GamaCompilationFailedException'
 
     async def test_load_runtime_error(self):
-        await self.client.load_async(init_error_model_path, "exp", runtime=True)
+        await self.client.load_async(model_init_error_path, "exp", runtime=True)
         gama_response = await self.future_command1
         print(gama_response)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
