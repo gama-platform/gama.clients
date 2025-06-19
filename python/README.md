@@ -1,4 +1,4 @@
-**DISCLAIMER: The following documentation is only compatible with gama-client 1.2.2. **
+**DISCLAIMER: The following documentation is only compatible with gama-client 1.2.2.**
 
 # Gama client
 
