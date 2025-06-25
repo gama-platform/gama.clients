@@ -137,9 +137,10 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
             {
                 "type": "rgb",
                 "value": {
-                    "r": 255,
-                    "g": 0,
-                    "b": 0
+                    "red": 255,
+                    "green": 0,
+                    "blue": 0,
+                    "alpha": 255
                 },
                 "name": "color"
             }
@@ -173,19 +174,19 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         assert gama_response["content"] == {'gaml_type': 'rgb', 'red': 255, 'green': 0, 'blue': 0, 'alpha': 255}
 
     async def test_load_fake_name_parameters(self):
-        pass
+        assert False, "This test is not implemented yet"
 
     async def test_load_fake_type_parameters(self):
-        pass
+        assert False, "This test is not implemented yet"
 
     async def test_load_empty_parameters(self):
-        pass
+        assert False, "This test is not implemented yet"
 
     async def test_load_global_parameters(self):
-        pass
+        assert False, "This test is not implemented yet"
 
     async def test_load_multiple(self):
-        pass
+        assert False, "This test is not implemented yet"
 
     async def test_load_faulty_model(self):
         gama_response = self.client.load(faulty_model_path, "with_virt_parent")
@@ -198,7 +199,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         gama_response = self.client.load(init_error_model_path, "exp", runtime=True)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
-        assert False # TODO: not working currently because GS is not throwing the error in the init
+        assert False, "Not sure how to make it work in GS currently"
         gama_response = await self.future_console
         assert gama_response["type"] == MessageTypes.RuntimeError.value
         assert gama_response["content"]["message"] == "Division by zero"

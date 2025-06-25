@@ -44,6 +44,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         gama_response = self.client.load(empty_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
         gama_response = self.client.reload(ex_id)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
@@ -54,8 +55,9 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         :return:
         """
         gama_response = self.client.load(empty_model_path, "ex")
-        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value        
         ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
         gama_response = self.client.expression(ex_id, "seed")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         prev_seed = gama_response["content"]
@@ -63,8 +65,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         gama_response = self.client.expression(ex_id, "seed")
         new_seed = gama_response["content"]
-        print(prev_seed, new_seed)
-        assert prev_seed != new_seed
+        assert prev_seed != new_seed, "Seed did not change after reload"
 
     async def test_reload_set_one_parameter(self):
         """
@@ -74,32 +75,180 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         gama_response = self.client.load(model_with_param_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
         gama_response = self.client.reload(ex_id, parameters=[{"type": "int", "name": "i", "value": 123}])
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         val_i = self.client.expression(ex_id, "i")
         assert val_i["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert val_i["content"] == 123
 
-    async def test_reload_after_setting_parameters(self):
+    async def test_reload_without_parameter_after_load_with_parameter(self):
         """
         One parameter has already been set by the load function the first time.
 
-        In the reload we don't give any value to this parameter, it should be set to its default value
-        and not the value of the first load
+        In the reload we don't give any value to this parameter, it should be reset to the value given in the
+        first load, and not the init value nor the last value it had during the execution of the model.
         """
-        assert False
+        # Load with custom parameter value
+        gama_response = self.client.load(
+            model_with_param_path, 
+            "ex", 
+            parameters=[{"type": "int", "name": "i", "value": 999}]
+        )
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
+        
+        # Verify parameter was set
+        val_i = self.client.expression(ex_id, "i")
+        assert val_i["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_i["content"] == 999
+        
+        # Change the parameter value during execution
+        gama_response = self.client.expression(ex_id, "i <- 1234;")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+        # Reload without specifying parameter - should reset to previous load value
+        gama_response = self.client.reload(ex_id)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value        
+        
+        # Check that parameter is back to default value
+        val_i = self.client.expression(ex_id, "i")
+        assert val_i["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_i["content"] == 999
 
     async def test_reload_updating_one_parameter(self):
         """
         One parameter has already been set by the load function the first time.
 
-        In the reload we give a different value to this parameter, it should be set to it and not the default value
+        In the reload we give a different value to this parameter, it should be set to it and not the init value
         nor the value of the first load
         """
-        assert False
+        # Load with initial parameter value
+        gama_response = self.client.load(
+            model_with_param_path, 
+            "ex", 
+            parameters=[{"type": "int", "name": "i", "value": 500}]
+        )
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
+        
+        # Verify initial parameter was set
+        val_i = self.client.expression(ex_id, "i")
+        assert val_i["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_i["content"] == 500
+          # Reload with different parameter value
+        gama_response = self.client.reload(ex_id, parameters=[{"type": "int", "name": "i", "value": 777}])
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        
+        # Check that parameter has the new value (not default or old value)
+        val_i = self.client.expression(ex_id, "i")
+        assert val_i["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_i["content"] == 777  # new value from reload
 
-    async def test_reload_unset_runtime_error(self):
-        assert False
+    async def test_reload_syntax_error(self):
+        """
+        Test that reload returns an error when the model has syntax errors.
+        """
+        gama_response = self.client.load(faulty_model_path, "ex")
+        assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
+        assert "compilation errors" in gama_response["content"]["message"].lower(), "Expected syntax error message not found"
+
+    async def test_reload_runtime_error(self):
+        """
+        Test that reload works correctly with a model that has runtime errors.
+        """        
+        # Load a model that will cause runtime errors  
+        gama_response = self.client.load(init_error_model_path, "exp", runtime=True)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
+        
+        # Try to reload the same experiment - should succeed even with runtime errors in the model
+        gama_response = self.client.reload(ex_id)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+    async def test_reload_multiple_parameters(self):
+        """
+        Test reloading with multiple parameters to ensure all are properly set.
+        """
+        # Load with multiple parameters
+        params = [
+            {"type": "int", "name": "i", "value": 100},
+            {"type": "float", "name": "f", "value": 25.5},
+            {"type": "string", "name": "s", "value": "test"},
+            {"type": "rgb", "name": "color", "value": [255, 0, 0, 255]}
+        ]
+        gama_response = self.client.load(model_with_param_path, "ex", parameters=params)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
+        
+        # Reload with different values for all parameters
+        new_params = [
+            {"type": "int", "name": "i", "value": 200},
+            {"type": "float", "name": "f", "value": 50.7},
+            {"type": "string", "name": "s", "value": "reloaded"},
+            {"type": "rgb", "name": "color", "value": [0, 255, 0, 125]}
+        ]
+        gama_response = self.client.reload(ex_id, parameters=new_params)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        
+        # Verify all parameters were updated
+        val_i = self.client.expression(ex_id, "i")
+        assert val_i["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_i["content"] == 200
+        
+        val_f = self.client.expression(ex_id, "f")
+        assert val_f["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_f["content"] == 50.7
+        
+        val_s = self.client.expression(ex_id, "s")
+        assert val_s["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_s["content"] == "reloaded"
+
+        val_color = self.client.expression(ex_id, "color")
+        assert val_color["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert val_color["content"] == {"gaml_type": "rgb", "red": 0, "green": 255, "blue": 0, "alpha": 125}
+
+    async def test_reload_invalid_experiment_id(self):
+        """
+        Test reload with a non-existent experiment ID to ensure proper error handling.
+        """
+        gama_response = self.client.reload("non_existent_id")
+        assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
+
+    async def test_reload_with_until_condition(self):
+        """
+        Test reload with an 'until' condition parameter.
+        """
+        gama_response = self.client.load(empty_model_path, "ex")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        ex_id = gama_response["content"]
+        self.sim_id.append(ex_id)
+        
+        # Reload with an until condition
+        gama_response = self.client.reload(ex_id, until="cycle >= 5")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+    async def test_reload_preserves_experiment_id(self):
+        """
+        Test that reload preserves the same experiment ID. To do so we reload and
+        try to interact with the experiment using the same ID.
+        """
+        gama_response = self.client.load(empty_model_path, "ex")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        original_ex_id = gama_response["content"]
+        self.sim_id.append(original_ex_id)
+        
+        # Reload the experiment
+        gama_response = self.client.reload(original_ex_id)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        
+        # The experiment ID should remain the same after reload
+        gama_response = self.client.expression(original_ex_id, "cycle")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def asyncTearDown(self):
         for id in self.sim_id:
