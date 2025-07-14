@@ -30,7 +30,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         self.future_console.set_result(message)
 
     async def asyncSetUp(self):
-        self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler)
+        self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler, default_timeout=10)
         self.client.connect()
         self.future_console = Future()
         self.sim_id = []

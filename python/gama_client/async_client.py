@@ -33,12 +33,13 @@ class GamaAsyncClient:
         self.event_loop = asyncio.get_running_loop()
         self.connection_future = None
 
-    async def connect_async(self, set_socket_id: bool = True, ping_interval: [Any, float] = 20,
+    async def connect_async(self, set_socket_id: bool = True, ping_interval: Any | float = 20,
                             ping_timeout: float = 20):
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
-        is True
+        is True.
+
         :param set_socket_id: If True, the listening loop will filter out the messages of type ConnectionSuccessful
             and the GamaClient will set its socket_id itself. If set to false, the users will have to set the client's
             socket_id field themselves in the message_handler function
@@ -61,7 +62,7 @@ class GamaAsyncClient:
     async def start_listening_loop(self, handle_connection_message: bool):
         """
         Internal method. It starts an infinite listening loop that will transmit gama-server's messages to the
-        message_handler function
+        message_handler function.
 
         :param handle_connection_message: If set to true, the function checks for messages of type ConnectionSuccessful
             and will set its content field as the result of connection_future that is used in connect to wait for the
@@ -162,9 +163,12 @@ class GamaAsyncClient:
     async def validate_async(self, expressions: str, syntax: bool, escaped: bool, additional_data: Dict = None):
         """
         Sends a command to check some gaml expressions validity.
+
         :param expressions: The code to check
         :param syntax: True to only check the syntax
         :param escaped: True if the expressions are escaped already
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
         :return: Nothing
         """
         cmd = {
@@ -179,8 +183,9 @@ class GamaAsyncClient:
 
     async def download_async(self, file_path: str):
         """
-        Downloads a file from gama server file system
-        :type file_path: the path of the file to download on gama-server's file system
+        Downloads a file from gama server file system.
+
+        :param file_path: the path of the file to download on gama-server's file system
         :return: if everything goes well, gama-server will send back an object containing the entirety
         of the file as a string
         """
@@ -192,7 +197,8 @@ class GamaAsyncClient:
 
     async def upload_async(self, file_path: str, content: str):
         """
-        Uploads a file to gama-server's file-system
+        Uploads a file to gama-server's file-system.
+
         :param file_path: the path on gama-server file-system where the content is going to be saved
         :param content: the content of the file to be uploaded
         :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
@@ -206,7 +212,8 @@ class GamaAsyncClient:
 
     async def close_connection_async(self, close_code=1000, reason=""):
         """
-        Closes the connection
+        Closes the connection.
+
         :param close_code: the close code, 1000 by default
         :param reason: a human-readable reason for closing.
         """
@@ -214,7 +221,7 @@ class GamaAsyncClient:
 
     async def play_async(self, exp_id: str, sync: bool = None, socket_id: str = "", additional_data: Dict = None):
         """
-        Sends a command to run the experiment **exp_id**
+        Sends a command to run the experiment **exp_id**.
 
         :param exp_id: The id of the experiment on which the command applies
             (sent by gama-server after the load command)
@@ -242,7 +249,7 @@ class GamaAsyncClient:
 
     async def pause_async(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
-        Sends a command to pause the experiment **exp_id**
+        Sends a command to pause the experiment **exp_id**.
 
         :param exp_id: The id of the experiment to run on which the command applies
             (sent by gama-server after the load command)
@@ -266,7 +273,7 @@ class GamaAsyncClient:
     async def step_async(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
                          additional_data: Dict = None):
         """
-        Sends a command to run **nb_step** of the experiment **exp_id**
+        Sends a command to run **nb_step** of the experiment **exp_id**.
 
         :param exp_id: The id of the experiment on which the command applies
             (sent by gama-server after the load command)
@@ -297,7 +304,7 @@ class GamaAsyncClient:
     async def step_back_async(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
                               additional_data: Dict = None):
         """
-        Sends a command to run **nb_step** steps backwards of the experiment **exp_id**
+        Sends a command to run **nb_step** steps backwards of the experiment **exp_id**.
 
         :param exp_id: The id of the experiment on which the command applies
             (sent by gama-server after the load command)
@@ -327,7 +334,7 @@ class GamaAsyncClient:
 
     async def stop_async(self, exp_id: str, socket_id: str = "", additional_data: Dict = None):
         """
-        Sends a command to stop (kill) the experiment **exp_id**
+        Sends a command to stop (kill) the experiment **exp_id**.
 
         :param exp_id: The id of the experiment on which the command applies
             (sent by gama-server after the load command)
@@ -383,7 +390,7 @@ class GamaAsyncClient:
 
     async def expression_async(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None):
         """
-        Sends a command to evaluate a gaml expression in the experiment **exp_id**
+        Sends a command to evaluate a gaml expression in the experiment **exp_id**.
 
         :param exp_id: The id of the experiment on which the command applies
             (sent by gama-server after the load command)
@@ -410,7 +417,7 @@ class GamaAsyncClient:
     async def ask_async(self, exp_id: str, action: str, args: Dict, agent: str, escaped: bool, socket_id: str = "",
                         additional_data: Dict = None):
         """
-        Sends a command to call an action defined in agents in the experiment **exp_id**
+        Sends a command to call an action defined in agents in the experiment **exp_id**.
 
         :param exp_id: The id of the experiment on which the command applies
             (sent by gama-server after the load command)
@@ -445,6 +452,7 @@ class GamaAsyncClient:
         """
         This command is used to ask the server more information on a given model. When received, the server will
         compile the model and return the different components found, depending on the option picked by the client.
+        
         :param path_to_model: the model to describe
         :param experiments: Whether to show the experiment descriptions
         :param species_names: Whether to show the species names

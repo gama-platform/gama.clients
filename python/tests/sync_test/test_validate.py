@@ -20,13 +20,13 @@ url = "localhost"
 port = 6868
 
 
-class TestLoad(unittest.IsolatedAsyncioTestCase):
+class TestValidate(unittest.IsolatedAsyncioTestCase):
 
     client: GamaSyncClient
     sim_id: List[str]
 
     async def asyncSetUp(self):
-        self.client = GamaSyncClient(url, port)
+        self.client = GamaSyncClient(url, port, default_timeout=10)
         self.client.connect()
         self.sim_id = []
 

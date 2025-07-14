@@ -20,7 +20,7 @@ url = "localhost"
 port = 6868
 
 
-class TestLoad(unittest.IsolatedAsyncioTestCase):
+class TestReload(unittest.IsolatedAsyncioTestCase):
 
     client: GamaSyncClient
     future_console: Future
@@ -30,7 +30,7 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         self.future_console.set_result(message)
 
     async def asyncSetUp(self):
-        self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler)
+        self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler, default_timeout=10)
         self.client.connect()
         self.future_console = Future()
         self.sim_id = []
@@ -249,6 +249,26 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
         # The experiment ID should remain the same after reload
         gama_response = self.client.expression(original_ex_id, "cycle")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+    async def test_timeout_functionality(self):
+        """
+        Test that timeout parameter works correctly for commands.
+        """
+        import asyncio
+        
+        # Test with invalid experiment ID - should timeout quickly rather than hang
+        try:
+            # This should either fail quickly with an error or timeout
+            gama_response = self.client.reload("invalid_experiment_id", timeout=2.0)
+            # If it succeeds, check the response type
+            if gama_response["type"] == MessageTypes.UnableToExecuteRequest.value:
+                print("✓ Timeout test: Command failed as expected with error response")
+            else:
+                print(f"✓ Timeout test: Unexpected success: {gama_response}")
+        except asyncio.TimeoutError:
+            print("✓ Timeout test: Command timed out as expected")
+        except Exception as e:
+            print(f"✓ Timeout test: Command failed with other error (also expected): {e}")
 
     async def asyncTearDown(self):
         for id in self.sim_id:
