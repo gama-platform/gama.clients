@@ -24,17 +24,18 @@ yarn-debug.log*
 *.pem
 .vscode
 
-/javascript/client/node_modules
-/javascript/client/.DS_Store
-/javascript/client/.env.local
-/javascript/client/.env.development.local
-/javascript/client/.env.test.local
-/javascript/client/.env.production.local 
+javascript/Docker/client/build
+javascript/Docker/client/node_modules
+javascript/Docker/client/.DS_Store
+javascript/Docker/client/.env.local
+javascript/Docker/client/.env.development.local
+javascript/Docker/client/.env.test.local
+javascript/Docker/client/.env.production.local 
  
-/javascript/server/.env
-/javascript/server/node_modules
-/javascript/server/client/node_modules
-/javascript/server/server.log 
-/javascript/server/server.error
-/javascript/client/package-lock.json
-/javascript/server/package-lock.json 
+javascript/Docker/server/.env
+javascript/Docker/server/node_modules
+javascript/Docker/server/client/node_modules
+javascript/Docker/server/server.log 
+javascript/Docker/server/server.error
+javascript/Docker/client/package-lock.json
+javascript/Docker/server/package-lock.json  
