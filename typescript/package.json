@@ -19,6 +19,6 @@
         "typescript": "^5.8.3"
     },
     "scripts": {
-        "test": "npx jest"
+        "test": "npx jest --detectOpenHandles"
     }
 }
