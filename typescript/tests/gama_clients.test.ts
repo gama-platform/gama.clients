@@ -30,7 +30,7 @@ describe('GamaClient', () => {
         expect(client.host).toBe("localhost")
         expect(client.listMessages).toEqual([]);
         expect(client.jsonGamaState.connected).toBe(false);
-    });
+    }),10000;
 })
 
 
@@ -47,43 +47,42 @@ describe('GamaClient', () => {
 
 describe('GamaClient', () => {
     it("should not break while using two consecutive pauses", async () => {
-        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator")
-        client.pause()
-        client.pause()
-        expect(client.jsonGamaState.experiment_state).toContain("PAUSED")
+        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator");
+        client.pause();
+        client.pause();
+        expect(client.jsonGamaState.experiment_state).toContain("PAUSED");
     })
 })
 
 describe('GamaClient', () => {
     it("should stop the current experiment", async () => {
-        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator")
-        await client.play()
-        await client.pause()
-        await client.stop()
-        expect(client.jsonGamaState.experiment_state).toContain("NONE")
+        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator");
+        await client.play();
+        await client.pause();
+        await client.stop();
+        expect(client.jsonGamaState.experiment_state).toContain("NONE");
     })
 })
 
 describe('GamaClient', () => {
     it("should update the current experiment", async () => {
-        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator")
-        expect(client.jsonGamaState.experiment_id).toBe('0')
-        await client.stop()
-        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Modeling/Model Coupling/Co-AntPreyPredator/Ants Adapter.gaml", "Experiment Base")
-        expect(client.jsonGamaState.experiment_name).toBe("Experiment Base")
+        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator");
+        expect(client.jsonGamaState.experiment_id).toBe('0');
+        await client.stop();
+        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Modeling/Model Coupling/Co-AntPreyPredator/Ants Adapter.gaml", "Experiment Base");
+        expect(client.jsonGamaState.experiment_name).toBe("Experiment Base");
     }, 10000)
 })
 
 
 describe('GamaClient', () => {
     it("should not unpause while using pause", async () => {
-        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator")
-        await client.pause()
-        await client.pause()
-        expect(client.jsonGamaState.experiment_state).toContain('PAUSED')
+        await client.loadExperiment("C:/Users/guill/Documents/gama/gama.library/models/Tutorials/Predator Prey/models/Model 13.gaml", "prey_predator");
+        await client.pause();
+        await client.pause();
+        expect(client.jsonGamaState.experiment_state).toContain('PAUSED');
 
     }, 10000);
-
 })
 
 describe('GamaClient', () => {
