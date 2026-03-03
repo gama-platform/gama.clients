@@ -1,3 +1,7 @@
+// to run these tests, use command "npm run test" in your terminal.
+// Checklist before running the tests:
+// dependencies are installed: (run npm install)
+// gama is opened
 import GamaClient from "../src/gama_client";
 let client!: GamaClient;
 
