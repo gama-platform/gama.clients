@@ -3,6 +3,7 @@
     "type": "module",
     "description": "library to control simulations from a js client",
     "dependencies": {
+        "@logtape/logtape": "^2.0.4",
         "path": "^0.12.7",
         "react": "^18.3.1",
         "ws": "^8.17.1"
