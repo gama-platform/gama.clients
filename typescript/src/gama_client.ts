@@ -5,7 +5,7 @@ import { getLogger } from '@logtape/logtape';
 const logger = getLogger(["GAMA-library", "GAMA-client"])
 /**
  * This class creates a websocket client for Gama Server.
- * uses port 8080 and host localhost unless specified otherwise.
+ * uses port 1000 and host localhost unless specified otherwise.
  */
 export default class GamaClient {
     jsonGamaState: GamaState;
