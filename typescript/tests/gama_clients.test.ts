@@ -22,6 +22,10 @@ afterEach(async () => {
     }
 });
 
+afterAll(async () => {
+    client.closeConnection() 
+})
+
 
 describe('GamaClient', () => {
     it("should create an instance with default values", async () => {
