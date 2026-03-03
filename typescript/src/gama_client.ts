@@ -83,7 +83,11 @@ export default class GamaClient {
         }
     }
 
-
+    public closeConnection() {
+        if (this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING) {
+            this.gama_socket.close();
+        }
+    }
 
 
 
