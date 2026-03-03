@@ -46,7 +46,7 @@ export default class GamaClient {
         if (!this.gama_socket) {
             throw new Error("socket not found");
         }
-        //@ts-ignore both are integer...
+        //@ts-expect-error both are integer...
         if (!this.gama_socket.readyState === WebSocket.OPEN) {
             throw new Error("socket not in the OPEN state")
         }
