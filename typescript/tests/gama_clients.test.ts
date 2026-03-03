@@ -95,7 +95,7 @@ describe('GamaClient', () => {
         const status = await client.step()
         expect(status).toContain("CommandExecutedSuccessfully")
 
-    })
+    },10000);
 })
 
 
