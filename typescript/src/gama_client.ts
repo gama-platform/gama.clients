@@ -448,11 +448,26 @@ export default class GamaClient {
 
 
     }
-
-    async describe() {
+    /**
+     * This command is used to ask the server more information on a given model. When received, 
+     * the server will compile the model and return the different components found, depending on the option picked by the client.
+     * @param model_path path to the model to evaluate
+     * @param experimentsNames optional boolean that returns the name of all the experiments of the model
+     * @param speciesNames optional boolean that returns all of the species' names
+     * @param speciesVariables optional boolean that returns all variables of the species
+     * @param speciesActions optional boolean that returns all actions in the species
+     */
+    async describe(model_path: string, experimentsNames?: boolean, speciesNames?: boolean, speciesVariables?: boolean, speciesActions?: boolean) {
         this.socketCheck()
-
-        //TODO finish this function
+        const payload = {
+            "type": "describe",
+            "model": model_path,
+            ...(experimentsNames && { "experiments": experimentsNames }),
+            ...(speciesNames     && { "speciesNames": speciesNames }),
+            ...(speciesActions   && { "speciesActions": speciesActions }),
+            ...(speciesVariables && { "speciesVariables": speciesVariables })
+        }
+        return await this.success("CommandExecutedSuccessfully")
     }
 
 
