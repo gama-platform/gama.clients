@@ -466,6 +466,7 @@ export default class GamaClient {
             ...(speciesActions   && { "speciesActions": speciesActions }),
             ...(speciesVariables && { "speciesVariables": speciesVariables })
         }
+        this.sendPayload(payload)
         return await this.success("CommandExecutedSuccessfully")
     }
 
