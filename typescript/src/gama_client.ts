@@ -346,7 +346,6 @@ export default class GamaClient {
             return new Promise((resolve) => {
                 resolve("couldn't stop experiment")
             })
-
         }
         return new Promise((resolve) => {
             resolve("couldn't stop experiment")
