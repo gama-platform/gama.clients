@@ -9,11 +9,11 @@ const logger = getLogger(["GAMA-library", "GAMA-client"])
  */
 export default class GamaClient {
     jsonGamaState: GamaState;
-    port: number = 1000;                         //default port number pointing to the gama server. can be redefined when using the constructor
+    port: number = 1000;                       //default port number pointing to the gama server. can be redefined when using the constructor
     host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
-    gama_socket!: WebSocket;   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used
-    verbose?: boolean = false;                         //Optionnal parameter to show extra console logs
-    listMessages: any[] = [];
+    gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used
+    verbose?: boolean = false;                 //Optionnal parameter to show extra console logs
+    listMessages: any[] = [];                  //payload to be sent to GAMA
 
     /**
      * 
@@ -408,7 +408,7 @@ export default class GamaClient {
      * @param action gaml code to be run from an agent
      * @param args arguments of the action
      * @param agent what agent this code applies to
-     * @param escaped 
+     * @param escaped optional parameter, if true will escape the action and args before sending them to gama
      * @param exp_id optionnal parameter to specify the experiment. if none is given it will instead default to the last used experiment
      * @returns a stringified response containing the result of the execution of the command
      */
