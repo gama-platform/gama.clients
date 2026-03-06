@@ -38,6 +38,32 @@ export default class GamaClient {
         this.verbose = verbose
     }
 
+    //? SETTERS --------------------------------------------------------------------------------------------------------------------------------------
+
+    private setConnected(connected: boolean) {
+        this.jsonGamaState.connected = connected;
+    }
+
+    private setExperimentState(state: string) {
+        this.jsonGamaState.experiment_state = state;
+    }
+
+    private setLoading(loading: boolean) {
+        this.jsonGamaState.loading = loading;
+    }
+
+    private setContentError(content_error: string) {
+        this.jsonGamaState.content_error = content_error;
+    }
+
+    private setExperimentId(experiment_id: string) {
+        this.jsonGamaState.experiment_id = experiment_id;
+    }
+
+    private setExperimentName(experiment_name: string) {
+        this.jsonGamaState.experiment_name = experiment_name;
+    }
+
 
     //? INTERNAL UTILITIES ---------------------------------------------------------------------------------------------------------------------------
 
