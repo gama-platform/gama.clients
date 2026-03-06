@@ -12,17 +12,15 @@ export default class GamaClient {
     jsonGamaState: GamaState;                  // json object detailing the state of the gama server, including: if connected, experiment details, errors from the server, and loading status
     port: number = 1000;                       //default port number pointing to the gama server. can be redefined when using the constructor
     host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
-    gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used
-    verbose?: boolean = false;                 //Optionnal parameter to show extra console logs
+    gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used               
     listMessages: any[] = [];                  //payload to be sent to GAMA
 
     /**
      * 
      * @param port port of gama server you want to reach
      * @param host host of the gama server you want to reach
-     * @param verbose adds extra logs for easier debugging
      */
-    constructor(port?: number, host?: string, verbose?: boolean) {
+    constructor(port?: number, host?: string) {
 
         // Initialise class and settings before first attempt to connect to gama
         this.jsonGamaState = {
@@ -35,7 +33,7 @@ export default class GamaClient {
         };
         this.port = port || 1000;
         this.host = host || "localhost";
-        this.verbose = verbose
+
     }
 
     //? SETTERS --------------------------------------------------------------------------------------------------------------------------------------
@@ -74,9 +72,14 @@ export default class GamaClient {
     private socketCheck() {
         if (!this.gama_socket) {
             throw new Error("socket not found");
+        } else if (this.jsonGamaState.connected === false) {
+            throw new Error("Gama is not connected")
         }
-        if (!(this.gama_socket.readyState === WebSocket.OPEN)) {
+        else if (!(this.gama_socket.readyState === WebSocket.OPEN)) {
             throw new Error("socket not in the OPEN state")
+        } else {
+            logger.trace("Websocket is connected and open")
+            this.setConnected(true)
         }
     }
 
@@ -109,9 +112,14 @@ export default class GamaClient {
         }
     }
 
-    public closeConnection() {
+    /**
+     * Closes the websocket connection, and runs the callback function passed in parameter if any.
+     * @param optional callback Function to be called after the websocket's connection is closed
+     */
+    public closeConnection(callback?: () => void) {
         if (this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING) {
             this.gama_socket.close();
+            if (callback) callback()
         }
     }
 
@@ -126,23 +134,22 @@ export default class GamaClient {
     */
     async connectGama(): Promise<void> {
         return new Promise((resolve, reject) => {
-            if (this.gama_socket
-                && (this.gama_socket.readyState === WebSocket.OPEN)
-            ) {
+            if (this.gama_socket && (this.gama_socket.readyState === WebSocket.OPEN)) {
+                this.setConnected(true)
                 logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.gama_socket.readyState });
-
-                resolve();
-                return; // Prevent multiple connection attempts
+                return resolve();; // Prevent multiple connection attempts
             }
-            else if (this.gama_socket) { logger.debug("gama socket state:{state}", { state: this.gama_socket.readyState }) }
             try {
                 this.gama_socket = new WebSocket(`ws://${this.host}:${this.port}`);
                 this.gama_socket.onopen = () => {
-                    logger.info("created new connection to web server at the address", { host: this.host, port: this.port })
-                    resolve()
+                    this.setConnected(true)
+                    logger.info("created new connection to {host}:{port}", { host: this.host, port: this.port })
                     this.gama_socket.onclose = () => {
+                        this.setConnected(false)
+                        this.setExperimentState("NONE")
                         logger.info("successfully closed the websocket.")
                     }
+
                     /**
                      * function that creates a listener that updates the simulation status contained in the jsongamastate
                      * it listens for messages of type SimulationStatus, then updates using the content of the message
@@ -158,12 +165,25 @@ export default class GamaClient {
                     }
                     this.gama_socket.addEventListener('message', simulationStatus)
                 }
+                this.gama_socket.onerror = (error) => {
+                    this.setConnected(false);
+                    if (error.error.code == 'ECONNREFUSED') {
+                        logger.trace(`full stack trace for Error CONNREFUSED {error}`, { error });
+                        logger.error("The platform can't connect to GAMA at address {host}:{port}", { host: this.host, port: this.port });
+                        reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port} with error code ECONNREFUSED`))
+                    } else {
+                        logger.error(`An error happened within the Gama Server WebSocket\n{error}`, { error });
+                        reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port}`))
+                    }
+                }
             }
             catch (e) {
                 const err = e as Error;
-                logger.error("could not create new web socket, dumping:{error}", { error: err.message })
+                logger.error("Synchronous error when creating the websocket:{error}", { error: err.message })
                 reject(e)
+
             }
+
         })
     }
     /**
@@ -182,6 +202,7 @@ export default class GamaClient {
                     resolve(JSON.stringify(message))
                 } else if (type in GAMA_ERROR_MESSAGES) {
                     this.gama_socket.removeEventListener('message', onMessage)
+                    this.setContentError(message.content)
                     reject(`Couldn't execute command on the Gama Server. ${type}: ${JSON.stringify(message.content)}`)
                 }
             }
@@ -198,9 +219,11 @@ export default class GamaClient {
      * @param expectedValue what you expect the field value to be
      * @returns a resolved promise containing a boolean
      */
+
+    //Voir pour retourner le message au lieu de juste retourner un booléen ? 
     async listenFor(messageType: string, field: string, expectedValue: any): Promise<boolean> {
         if (!this.gama_socket) {
-            throw new Error("couldn't find an active gama socket. called in listenFor():")
+            throw new Error("couldn't find an active gama socket when creating a listener:")
         }
         return new Promise((resolve) => {
             const listener = (event: WebSocket.MessageEvent) => {
@@ -213,9 +236,8 @@ export default class GamaClient {
                 }
             }
             this.gama_socket.addEventListener('message', listener)
+            logger.debug("added an event listener to the gama_socket")
         })
-
-
     }
 
 
@@ -330,7 +352,7 @@ export default class GamaClient {
 
 
     /** 
-     * ! does NOT work at the moment, must also check if the type of the experiment is 
+     * ! does NOT work at the moment, must also check if the type of the experiment is compatible (memorize)
      * This command is used to rollback a specific amount of steps.
      * Can only be used if the experiment is of type "memorize"
      * @param exp_id  the name of the experiment you want to step to. if not used, then the last used experiment Id will be used
@@ -373,9 +395,6 @@ export default class GamaClient {
                 resolve("couldn't stop experiment")
             })
         }
-        return new Promise((resolve) => {
-            resolve("couldn't stop experiment")
-        })
 
     }
 
@@ -488,15 +507,13 @@ export default class GamaClient {
             "type": "describe",
             "model": model_path,
             ...(experimentsNames && { "experiments": experimentsNames }),
-            ...(speciesNames     && { "speciesNames": speciesNames }),
-            ...(speciesActions   && { "speciesActions": speciesActions }),
+            ...(speciesNames && { "speciesNames": speciesNames }),
+            ...(speciesActions && { "speciesActions": speciesActions }),
             ...(speciesVariables && { "speciesVariables": speciesVariables })
         }
         this.sendPayload(payload)
         return await this.success("CommandExecutedSuccessfully")
     }
-
-
 }
 
 
