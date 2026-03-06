@@ -137,19 +137,19 @@ export default class GamaClient {
             if (this.gama_socket && (this.gama_socket.readyState === WebSocket.OPEN)) {
                 this.setConnected(true)
                 logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.gama_socket.readyState });
-                return resolve();; // Prevent multiple connection attempts
+                return resolve(); // Prevent multiple connection attempts
             }
             try {
                 this.gama_socket = new WebSocket(`ws://${this.host}:${this.port}`);
                 this.gama_socket.onopen = () => {
                     this.setConnected(true)
                     logger.info("created new connection to {host}:{port}", { host: this.host, port: this.port })
+                    
                     this.gama_socket.onclose = () => {
                         this.setConnected(false)
                         this.setExperimentState("NONE")
                         logger.info("successfully closed the websocket.")
                     }
-
                     /**
                      * function that creates a listener that updates the simulation status contained in the jsongamastate
                      * it listens for messages of type SimulationStatus, then updates using the content of the message
@@ -164,6 +164,7 @@ export default class GamaClient {
                         logger.info("JsonGamaState:{state}", { state: this.jsonGamaState.experiment_state })
                     }
                     this.gama_socket.addEventListener('message', simulationStatus)
+                    return resolve();
                 }
                 this.gama_socket.onerror = (error) => {
                     this.setConnected(false);
