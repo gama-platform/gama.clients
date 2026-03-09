@@ -2,7 +2,7 @@
 // Checklist before running the tests:
 // dependencies are installed: (run npm install)
 // gama is opened
-import GamaClient from "../src/gama_client";
+import GamaClient from "../src/gama_client.ts";
 let client!: GamaClient;
 
 beforeEach(async () => {
