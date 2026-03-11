@@ -463,19 +463,7 @@ export default class GamaClient {
         });
     }
 
-    /**
-     * closes the websocket connection to the gama server
-     */
-    async disconnectGama() {
-        try {
-            this.gama_socket.close()
 
-        } catch (error) {
-            throw new Error(`Couldn't close connection:${error}`);
-
-
-        }
-    }
 
     /**
      * kills the gama server.
