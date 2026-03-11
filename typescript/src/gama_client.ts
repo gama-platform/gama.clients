@@ -108,7 +108,7 @@ public getHost() : string {
      */
     private socketCheck() {
         if (!this.gama_socket) {
-            throw new Error("socket not found");
+            throw new Error("No socket connected to GAMA Server found");
         } else if (this.jsonGamaState.connected === false) {
             throw new Error("Gama is not connected")
         }
