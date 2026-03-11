@@ -157,10 +157,30 @@ export default class GamaClient {
      * Closes the websocket connection, and runs the callback function passed in parameter if any.
      * @param optional callback Function to be called after the websocket's connection is closed
      */
-    public closeConnection(callback?: () => void) {
+    public async closeConnection(callback?: () => void) {
+        if (!this.gama_socket || this.gama_socket.readyState === WebSocket.CLOSED) {
+            logger.warn("Websocket already closed, running the callback function")
+            if (callback) callback();
+            return;
+        }
+
         if (this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING) {
-            this.gama_socket.close();
-            if (callback) callback()
+            await new Promise<void>((resolve, reject) => {
+                const timer = setTimeout(() => {
+                    this.gama_socket.removeEventListener('close', internalListener);
+                    reject(new Error("Websocket timed out"))
+                })
+
+                const internalListener = () => {
+                    clearTimeout(timer);
+                    this.gama_socket.removeEventListener('close', internalListener);
+                    resolve();
+                }
+                this.gama_socket.addEventListener('close', internalListener)
+                this.gama_socket.close();
+            })
+
+            if (callback) callback();
         }
     }
 
