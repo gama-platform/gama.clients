@@ -112,7 +112,7 @@ public getHost() : string {
         } else if (!this.jsonGamaState.connected) {
             throw new Error("Gama is not connected")
         }
-        else if (!(this.gama_socket.readyState === WebSocket.OPEN)) {
+        else if (!(this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING)) {
             throw new Error("socket not in the OPEN state")
         } else {
             logger.trace("Websocket is connected and open")
@@ -171,7 +171,7 @@ public getHost() : string {
     */
     async connectGama(): Promise<void> {
         return new Promise((resolve, reject) => {
-            if (this.gama_socket && (this.gama_socket.readyState === WebSocket.OPEN)) {
+            if (this.gama_socket && (this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING)) {
                 this.setConnected(true)
                 logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.gama_socket.readyState });
                 return resolve(); // Prevent multiple connection attempts
