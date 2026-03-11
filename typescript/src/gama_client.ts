@@ -132,7 +132,7 @@ export default class GamaClient {
     private sendPayload(payload: any) {
         try {
             this.gama_socket.send(JSON.stringify(payload))
-            logger.debug("sent message to websocket:{payload}", { payload: payload })
+            logger.debug("sent message to websocket:{payload}", { payload })
         } catch (error) {
             throw new Error(`couldn't send the message to the websocket:${error}`);
         }
