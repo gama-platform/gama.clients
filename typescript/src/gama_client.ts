@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { GamaState, GAMA_ERROR_MESSAGES } from "./constants";
+import { GamaState, GAMA_ERROR_MESSAGES } from "./constants.ts";
 import { getLogger } from '@logtape/logtape';
 
 const logger = getLogger(["GAMA-library", "GAMA-client"])
