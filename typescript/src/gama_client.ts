@@ -154,7 +154,9 @@ export default class GamaClient {
     }
 
     /**
-     * Closes the websocket connection, and runs the callback function passed in parameter if any.
+     * async function that closes the websocket connection, and runs the callback function passed in parameter if any.
+     * When called, creates a promise that either rejects after 15 seconds to avoid timeout lockdowns,
+     * or resolves after the close internalListener fires. 
      * @param optional callback Function to be called after the websocket's connection is closed
      */
     public async closeConnection(callback?: () => void) {
