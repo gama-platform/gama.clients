@@ -37,41 +37,45 @@ export default class GamaClient {
 
     //? GETTERS
 
-public isConnected(): boolean {
-    return this.jsonGamaState.connected;
-}
+    public isConnected(): boolean {
+        return this.jsonGamaState.connected;
+    }
 
-public getExperimentState(): string {
-    return this.jsonGamaState.experiment_state;
-}
+    public getExperimentState(): string {
+        return this.jsonGamaState.experiment_state;
+    }
 
-public isLoading(): boolean {
-    return this.jsonGamaState.loading;
-}
+    public isLoading(): boolean {
+        return this.jsonGamaState.loading;
+    }
 
-public getContentError(): string {
-    return this.jsonGamaState.content_error;
-}
+    public getContentError(): string {
+        return this.jsonGamaState.content_error;
+    }
 
-public getExperimentId(): string {
-    return this.jsonGamaState.experiment_id;
-}
+    public getExperimentId(): string {
+        return this.jsonGamaState.experiment_id;
+    }
 
-public getExperimentName(): string {
-    return this.jsonGamaState.experiment_name;
-}
+    public getExperimentName(): string {
+        return this.jsonGamaState.experiment_name;
+    }
 
-public getReadyState(): number {
-    return this.gama_socket.readyState
-}
+    public getReadyState(): number {
+        return this.gama_socket.readyState;
+    }
 
-public getPort(): number {
-    return this.port
-}
+    public getPort(): number {
+        return this.port;
+    }
 
-public getHost() : string {
-    return this.host
-}
+    public getHost(): string {
+        return this.host;
+    }
+
+    public getSocket(): WebSocket{
+        return this.gama_socket;
+    }
 
     //? SETTERS --------------------------------------------------------------------------------------------------------------------------------------
 
