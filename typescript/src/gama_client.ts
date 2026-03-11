@@ -9,11 +9,10 @@ const logger = getLogger(["GAMA-library", "GAMA-client"])
  */
 export default class GamaClient {
 
-    jsonGamaState: GamaState;                  // json object detailing the state of the gama server, including: if connected, experiment details, errors from the server, and loading status
-    port: number = 1000;                       //default port number pointing to the gama server. can be redefined when using the constructor
-    host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
-    gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used               
-    listMessages: any[] = [];                  //payload to be sent to GAMA
+    private jsonGamaState: GamaState;                  // json object detailing the state of the gama server, including: if connected, experiment details, errors from the server, and loading status
+    private port: number = 1000;                       //default port number pointing to the gama server. can be redefined when using the constructor
+    private host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
+    private gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used               
 
     /**
      * 
