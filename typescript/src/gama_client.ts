@@ -109,7 +109,7 @@ public getHost() : string {
     private socketCheck() {
         if (!this.gama_socket) {
             throw new Error("No socket connected to GAMA Server found");
-        } else if (this.jsonGamaState.connected === false) {
+        } else if (!this.jsonGamaState.connected) {
             throw new Error("Gama is not connected")
         }
         else if (!(this.gama_socket.readyState === WebSocket.OPEN)) {
