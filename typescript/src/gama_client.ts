@@ -152,7 +152,7 @@ export default class GamaClient {
      */
     getId(new_exp_id?: string): string {
         if (new_exp_id) {
-            this.jsonGamaState.experiment_id = new_exp_id
+            this.setExperimentId(new_exp_id);
             return new_exp_id
         } else {
             if (this.jsonGamaState.experiment_id === "") throw new Error("no current experiment called");
@@ -214,11 +214,12 @@ export default class GamaClient {
                 this.gama_socket.onopen = () => {
                     this.setConnected(true)
                     logger.info("created new connection to {host}:{port}", { host: this.host, port: this.port })
-                    
+
                     this.gama_socket.onclose = () => {
                         this.setConnected(false)
                         this.setExperimentState("NONE")
                         logger.info("successfully closed the websocket.")
+
                     }
                     /**
                      * function that creates a listener that updates the simulation status contained in the jsongamastate
@@ -228,8 +229,8 @@ export default class GamaClient {
                     const simulationStatus = (event: WebSocket.MessageEvent) => {
                         const message = JSON.parse(event.data as string)
                         if (message.type === 'SimulationStatus') {
-                            this.jsonGamaState.experiment_state = message.content
-                            this.jsonGamaState.experiment_id = message.exp_id
+                            this.setExperimentState(message.content);
+                            this.setExperimentId(message.exp_id)
                         }
                         logger.info("JsonGamaState:{state}", { state: this.jsonGamaState.experiment_state })
                     }
@@ -332,7 +333,8 @@ export default class GamaClient {
         }
         this.sendPayload(payload)
         this.setModelPath(model_path);
-        this.setExperimentName(experiment_name = experiment
+        this.setExperimentName(experiment);
+        this.setExperimentId(experiment)
         await this.success("CommandExecutedSuccessfully")
         return await this.listenFor("SimulationStatus", "content", "PAUSED")
     }
