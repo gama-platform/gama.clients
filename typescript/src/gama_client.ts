@@ -155,8 +155,8 @@ export default class GamaClient {
             this.setExperimentId(new_exp_id);
             return new_exp_id
         } else {
-            if (this.jsonGamaState.experiment_id === "") throw new Error("no current experiment called");
-            return this.jsonGamaState.experiment_id
+            if (this.getExperimentId() === "") throw new Error("no current experiment to be called");
+            return this.getExperimentId()
         }
     }
 
@@ -167,13 +167,13 @@ export default class GamaClient {
      * @param optional callback Function to be called after the websocket's connection is closed
      */
     public async closeConnection(callback?: () => void) {
-        if (!this.gama_socket || this.gama_socket.readyState === WebSocket.CLOSED) {
+        if (!this.gama_socket || this.getReadyState() === WebSocket.CLOSED) {
             logger.warn("Websocket already closed, running the callback function")
             if (callback) callback();
             return;
         }
 
-        if (this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING) {
+        if (this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING) {
             await new Promise<void>((resolve, reject) => {
                 const timer = setTimeout(() => {
                     this.gama_socket.removeEventListener('close', internalListener);
@@ -204,9 +204,9 @@ export default class GamaClient {
     */
     async connectGama(): Promise<void> {
         return new Promise((resolve, reject) => {
-            if (this.gama_socket && (this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING)) {
+            if (this.gama_socket && (this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING)) {
                 this.setConnected(true)
-                logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.gama_socket.readyState });
+                logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.getReadyState() });
                 return resolve(); // Prevent multiple connection attempts
             }
             try {
@@ -232,7 +232,7 @@ export default class GamaClient {
                             this.setExperimentState(message.content);
                             this.setExperimentId(message.exp_id)
                         }
-                        logger.info("JsonGamaState:{state}", { state: this.jsonGamaState.experiment_state })
+                        logger.info("JsonGamaState:{state}", { state: this.getExperimentName() })
                     }
                     this.gama_socket.addEventListener('message', simulationStatus)
                     return resolve();
@@ -365,10 +365,11 @@ export default class GamaClient {
      */
     async play(exp_id?: string, sync?: boolean) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state === "NOTREADY") {
+        if (this.getExperimentState() === "NOTREADY") {
+            logger.warn("Simulation not ready yet, waiting for PAUSED simulationstatus")
             await this.listenFor("Simulationstatus", "content", "PAUSED")
         }
-        else if (this.jsonGamaState.experiment_state === 'PAUSED') {
+        else if (this.getExperimentState() === 'PAUSED') {
 
             const payload = {
                 "type": "play",
@@ -378,7 +379,7 @@ export default class GamaClient {
             this.sendPayload(payload)
             return await this.success("CommandExecutedSuccessfully")
         }
-        else if (this.jsonGamaState.experiment_state === "RUNNING") {
+        else if (this.getExperimentState() === "RUNNING") {
             logger.warn("cannot unpause a running simulation")
         }
     }
@@ -399,7 +400,7 @@ export default class GamaClient {
 
     async reload(exp_id?: string, parameters?: string, until?: string) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state === "NOTREADY") {
+        if (this.getExperimentState() === "NOTREADY") {
             await this.listenFor("Simulationstatus", "content", "PAUSED")
         }
         const payload = {
@@ -424,11 +425,11 @@ export default class GamaClient {
      */
     async step(nb_step?: number, sync?: boolean, exp_id?: string) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state === "NOTREADY") {
-            logger.warn("The experiment is not yet ready:{state}", { state: this.jsonGamaState.experiment_state })
+        if (this.getExperimentState() === "NOTREADY") {
+            logger.warn("The experiment is not yet ready:{state}", { state: this.getExperimentState() })
             await this.listenFor("Simulationstatus", "content", "PAUSED")
         }
-        const exp_id_payload = exp_id ? exp_id : this.jsonGamaState.experiment_id
+        const exp_id_payload = exp_id ? exp_id : this.getExperimentId();
         if (exp_id_payload === "") throw new Error("no experience_id specified, and no experiment in the jsongamastate")
 
         const payload = {
@@ -469,7 +470,7 @@ export default class GamaClient {
      */
     async stop(exp_id?: string) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state !== "NONE") {
+        if (this.getExperimentState() !== "NONE") {
             try {
                 const payload = {
                     "type": "stop",
@@ -567,7 +568,11 @@ export default class GamaClient {
             ...(escaped && { "escaped": escaped })
         }
         this.sendPayload(payload)
-        return await this.success("")
+        try {
+            return await this.success("CommandExecutedSuccessfully")
+        } catch (err) {
+            throw err as Error
+        }
 
 
     }
