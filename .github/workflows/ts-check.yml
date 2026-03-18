@@ -1,0 +1,27 @@
+name: TypeScript Continuous Integration
+
+on:
+  push:
+    paths:
+      - 'typescript/**'
+  workflow_dispatch:
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    if: github.actor != 'gama-bot'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: ./typescript
+        run: npm ci
+
+      - name: Type check
+        working-directory: ./typescript
+        run: npx tsc --noEmit
