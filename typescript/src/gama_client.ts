@@ -445,7 +445,7 @@ export default class GamaClient {
     /** 
      * ! you must be sure that the type of the experiment is compatible (record) before using this
      * This command is used to rollback a specific amount of steps.
-     * Can only be used if the experiment is of type "memorize"
+     * Can only be used if the experiment is of type "record"
      * @param exp_id  the name of the experiment you want to step to. if not used, then the last used experiment Id will be used
      * @param nb_step  the number of steps you want to simulate. if none is specified, it will default to one step
      */
