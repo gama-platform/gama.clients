@@ -123,7 +123,7 @@ export default class GamaClient {
         } else if (!this.jsonGamaState.connected) {
             throw new Error("Gama is not connected")
         }
-        else if (!(this.gama_socket.readyState === WebSocket.OPEN || this.gama_socket.readyState === WebSocket.CONNECTING)) {
+        else if (!(this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING)) {
             throw new Error("socket not in the OPEN state")
         } else {
             logger.trace("Websocket is connected and open")
