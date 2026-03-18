@@ -3,6 +3,7 @@ export interface GamaState {
     experiment_state: string;
     loading: boolean;
     content_error: string;
+    model_path: string;
     experiment_id: string;
     experiment_name: string;
 }

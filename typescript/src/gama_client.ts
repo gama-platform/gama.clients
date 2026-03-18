@@ -24,6 +24,7 @@ export default class GamaClient {
         // Initialise class and settings before first attempt to connect to gama
         this.jsonGamaState = {
             connected: false,
+            model_path: "",
             experiment_state: "NONE",
             loading: false,
             content_error: "",
@@ -55,6 +56,9 @@ export default class GamaClient {
 
     public getExperimentId(): string {
         return this.jsonGamaState.experiment_id;
+    }
+    public getModelPath(): string {
+        return this.jsonGamaState.model_path;
     }
 
     public getExperimentName(): string {
@@ -103,6 +107,9 @@ export default class GamaClient {
         this.jsonGamaState.experiment_name = experiment_name;
     }
 
+    private setModelPath(model_path: string) {
+        this.jsonGamaState.model_path = model_path;
+    }
 
     //? INTERNAL UTILITIES ---------------------------------------------------------------------------------------------------------------------------
 
@@ -324,7 +331,8 @@ export default class GamaClient {
             "experiment": experiment,
         }
         this.sendPayload(payload)
-        this.jsonGamaState.experiment_name = experiment
+        this.setModelPath(model_path);
+        this.setExperimentName(experiment_name = experiment
         await this.success("CommandExecutedSuccessfully")
         return await this.listenFor("SimulationStatus", "content", "PAUSED")
     }
@@ -553,7 +561,7 @@ export default class GamaClient {
      * @param speciesVariables optional boolean that returns all variables of the species
      * @param speciesActions optional boolean that returns all actions in the species
      */
-    async describe(model_path: string, experimentsNames?: boolean, speciesNames?: boolean, speciesVariables?: boolean, speciesActions?: boolean) {
+    async describe(model_path: string, experimentsNames?: boolean, speciesNames?: boolean, speciesVariables?: boolean, speciesActions?: boolean): Promise<string> {
         this.socketCheck()
         const payload = {
             "type": "describe",
