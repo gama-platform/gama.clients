@@ -178,7 +178,7 @@ export default class GamaClient {
                 const timer = setTimeout(() => {
                     this.gama_socket.removeEventListener('close', internalListener);
                     reject(new Error("Websocket timed out"))
-                })
+                }, 15000)
 
                 const internalListener = () => {
                     clearTimeout(timer);
