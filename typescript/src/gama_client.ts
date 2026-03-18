@@ -443,14 +443,14 @@ export default class GamaClient {
 
 
     /** 
-     * ! does NOT work at the moment, must also check if the type of the experiment is compatible (memorize)
+     * ! you must be sure that the type of the experiment is compatible (record) before using this
      * This command is used to rollback a specific amount of steps.
      * Can only be used if the experiment is of type "memorize"
      * @param exp_id  the name of the experiment you want to step to. if not used, then the last used experiment Id will be used
      * @param nb_step  the number of steps you want to simulate. if none is specified, it will default to one step
      */
 
-    private async stepback(nb_step?: number, exp_id?: string) {
+    async stepback(nb_step?: number, exp_id?: string) {
         this.socketCheck()
         const payload = {
             "type": "stepBack",
