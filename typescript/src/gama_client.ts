@@ -476,7 +476,7 @@ export default class GamaClient {
                     "type": "stop",
                     "exp_id": this.getId(exp_id)
                 }
-                this.gama_socket.send(JSON.stringify(payload))
+                this.sendPayload(payload)
                 return await this.success("CommandExecutedSuccessfully")
             } catch (error) {
                 throw new Error(`couldn't stop the experiment:${error}`);
