@@ -271,8 +271,8 @@ export default class GamaClient {
                 const type = message.type
                 if (type === successMessage) {
                     this.gama_socket.removeEventListener('message', onMessage)
-                    resolve(JSON.stringify(message))
-                } else if (GAMA_ERROR_MESSAGES.includes(type)){
+                    resolve(message)
+                } else if (GAMA_ERROR_MESSAGES.includes(type)) {
                     this.gama_socket.removeEventListener('message', onMessage)
                     this.setContentError(message.content)
                     reject(`Couldn't execute command on the Gama Server. ${type}: ${JSON.stringify(message.content)}`)
