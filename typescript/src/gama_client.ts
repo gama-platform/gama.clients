@@ -313,6 +313,15 @@ export default class GamaClient {
     }
 
 
+    async readyCheck() { // rrr
+        const isReady = new Promise(async (resolve, reject) => {
+            if (this.getExperimentState() === "PAUSED" || "RUNNING") {
+                resolve(true)
+            } else {
+                return await this.listenFor("SimulationStatus", "content", "PAUSED")
+            }
+        })
+    }
 
 
     //? GAMA FUNCTIONS ---------------------------------------------------------------------------------------------------------------------------
@@ -320,11 +329,11 @@ export default class GamaClient {
 
     /**
      * loads and launches an experiment using the absolute path of it's model and
-     * the identifier of the experiment
+     * the identifier of the experiment. Resolves when the server answers with a SimulationStatus of type "PAUSED"
      * @param model_path absolute path pointing to the model cointaining the experiment
      * @param experiment id of the experiment to load
      */
-    async loadExperiment(model_path: string, experiment: string): Promise<boolean> {
+    async loadExperiment(model_path: string, experiment: string): Promise<void> {
         this.socketCheck()
         const payload = {
             "type": "load",
@@ -336,7 +345,7 @@ export default class GamaClient {
         this.setExperimentName(experiment);
         this.setExperimentId(experiment)
         await this.success("CommandExecutedSuccessfully")
-        return await this.listenFor("SimulationStatus", "content", "PAUSED")
+        return await this.readyCheck()
     }
 
 
