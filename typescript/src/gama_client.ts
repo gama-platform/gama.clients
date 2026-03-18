@@ -297,16 +297,24 @@ export default class GamaClient {
         if (!this.gama_socket) {
             throw new Error("couldn't find an active gama socket when creating a listener:")
         }
-        return new Promise((resolve) => {
+
+        return new Promise((resolve, reject) => {
             const listener = (event: WebSocket.MessageEvent) => {
                 const message = JSON.parse(event.data as string)
                 logger.debug("message:  {message}", { message: message })
                 const type = message.type
                 if (type === messageType && message[field] === expectedValue) {
+                    clearTimeout(timer);
                     resolve(true)
                     this.gama_socket.removeEventListener('message', listener)
                 }
             }
+
+            const timer = setTimeout(() => {
+                this.gama_socket.removeEventListener('message', listener);
+                reject(new Error("Websocket timed out"))
+            }, 15000)
+
             this.gama_socket.addEventListener('message', listener)
             logger.debug("added an event listener to the gama_socket")
         })
