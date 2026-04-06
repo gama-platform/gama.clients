@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./typescript
-        run: npm ci
+        run: npm i
 
       - name: Type check
         working-directory: ./typescript
