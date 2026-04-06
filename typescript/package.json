@@ -1,6 +1,6 @@
 {
     "name": "gama-client",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "module",
     "description": "library to control simulations from a js client",
     "main": "./dist/gama_client.cjs",
