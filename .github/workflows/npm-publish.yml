@@ -1,0 +1,107 @@
+name: npm Release Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      BUMP_VERSION_NUMBER:
+        description: "Version number to bump to (if empty, publish with current version)"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: ./typescript
+        run: npm i
+
+      - name: Bump package version
+        if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
+        working-directory: ./typescript
+        run: npm version ${{ inputs.BUMP_VERSION_NUMBER }} --no-git-tag-version
+
+      - name: Build
+        working-directory: ./typescript
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-dist
+          path: |
+            typescript/dist/
+            typescript/package.json
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-dist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-gpr:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-dist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+
+      - name: Set scoped package name for GitHub Packages
+        run: npm pkg set name=@gama-platform/gama-client
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  commit-version-bump:
+    needs: [publish-npm, publish-gpr]
+    runs-on: ubuntu-latest
+    if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-dist
+          path: typescript/
+
+      - name: Commit and push version bump
+        working-directory: ./typescript
+        run: |
+          git config --global user.email "my.gama.bot@gmail.com"
+          git config --global user.name "GAMA Bot"
+          git add ./package.json
+          git commit -m "Bump package version to ${{ inputs.BUMP_VERSION_NUMBER }}"
+          git push

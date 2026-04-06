@@ -1,29 +1,30 @@
 import WebSocket from 'ws';
-import { GamaState, GAMA_ERROR_MESSAGES } from "./constants";
+import { GamaState, GAMA_ERROR_MESSAGES } from "./constants.ts";
+import { getLogger } from '@logtape/logtape';
 
+const logger = getLogger(["GAMA-library", "GAMA-client"])
 /**
  * This class creates a websocket client for Gama Server.
- * uses port 8080 and host localhost unless specified otherwise.
+ * uses port 1000 and host localhost unless specified otherwise.
  */
 export default class GamaClient {
-    jsonGamaState: GamaState;
-    port: number = 1000;                         //default port number pointing to the gama server. can be redefined when using the constructor
-    host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
-    gama_socket!: WebSocket;   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used
-    verbose?: boolean = false;                         //Optionnal parameter to show extra console logs
-    listMessages: any[] = [];
+
+    private jsonGamaState: GamaState;                  // json object detailing the state of the gama server, including: if connected, experiment details, errors from the server, and loading status
+    private port: number = 1000;                       //default port number pointing to the gama server. can be redefined when using the constructor
+    private host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
+    private gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used               
 
     /**
      * 
      * @param port port of gama server you want to reach
      * @param host host of the gama server you want to reach
-     * @param verbose adds extra logs for easier debugging
      */
-    constructor(port?: number, host?: string, verbose?: boolean) {
+    constructor(port?: number, host?: string) {
 
         // Initialise class and settings before first attempt to connect to gama
         this.jsonGamaState = {
             connected: false,
+            model_path: "",
             experiment_state: "NONE",
             loading: false,
             content_error: "",
@@ -32,9 +33,83 @@ export default class GamaClient {
         };
         this.port = port || 1000;
         this.host = host || "localhost";
-        this.verbose = verbose
+
     }
 
+    //? GETTERS
+
+    public isConnected(): boolean {
+        return this.jsonGamaState.connected;
+    }
+
+    public getExperimentState(): string {
+        return this.jsonGamaState.experiment_state;
+    }
+
+    public isLoading(): boolean {
+        return this.jsonGamaState.loading;
+    }
+
+    public getContentError(): string {
+        return this.jsonGamaState.content_error;
+    }
+
+    public getExperimentId(): string {
+        return this.jsonGamaState.experiment_id;
+    }
+    public getModelPath(): string {
+        return this.jsonGamaState.model_path;
+    }
+
+    public getExperimentName(): string {
+        return this.jsonGamaState.experiment_name;
+    }
+
+    public getReadyState(): number {
+        return this.gama_socket.readyState;
+    }
+
+    public getPort(): number {
+        return this.port;
+    }
+
+    public getHost(): string {
+        return this.host;
+    }
+
+    public getSocket(): WebSocket{
+        return this.gama_socket;
+    }
+
+    //? SETTERS --------------------------------------------------------------------------------------------------------------------------------------
+
+    private setConnected(connected: boolean) {
+        this.jsonGamaState.connected = connected;
+    }
+
+    private setExperimentState(state: string) {
+        this.jsonGamaState.experiment_state = state;
+    }
+
+    private setLoading(loading: boolean) {
+        this.jsonGamaState.loading = loading;
+    }
+
+    private setContentError(content_error: string) {
+        this.jsonGamaState.content_error = content_error;
+    }
+
+    private setExperimentId(experiment_id: string) {
+        this.jsonGamaState.experiment_id = experiment_id;
+    }
+
+    private setExperimentName(experiment_name: string) {
+        this.jsonGamaState.experiment_name = experiment_name;
+    }
+
+    private setModelPath(model_path: string) {
+        this.jsonGamaState.model_path = model_path;
+    }
 
     //? INTERNAL UTILITIES ---------------------------------------------------------------------------------------------------------------------------
 
@@ -44,11 +119,15 @@ export default class GamaClient {
      */
     private socketCheck() {
         if (!this.gama_socket) {
-            throw new Error("socket not found");
+            throw new Error("No socket connected to GAMA Server found");
+        } else if (!this.jsonGamaState.connected) {
+            throw new Error("Gama is not connected")
         }
-        //@ts-ignore both are integer...
-        if (!this.gama_socket.readyState === WebSocket.OPEN) {
+        else if (!(this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING)) {
             throw new Error("socket not in the OPEN state")
+        } else {
+            logger.trace("Websocket is connected and open")
+            this.setConnected(true)
         }
     }
 
@@ -60,7 +139,7 @@ export default class GamaClient {
     private sendPayload(payload: any) {
         try {
             this.gama_socket.send(JSON.stringify(payload))
-            if (this.verbose) console.log("sent message to websocket:", payload)
+            logger.debug("sent message to websocket:{payload}", { payload })
         } catch (error) {
             throw new Error(`couldn't send the message to the websocket:${error}`);
         }
@@ -73,15 +152,46 @@ export default class GamaClient {
      */
     getId(new_exp_id?: string): string {
         if (new_exp_id) {
-            this.jsonGamaState.experiment_id = new_exp_id
+            this.setExperimentId(new_exp_id);
             return new_exp_id
         } else {
-            if (this.jsonGamaState.experiment_id === "") throw new Error("no current experiment called");
-            return this.jsonGamaState.experiment_id
+            if (this.getExperimentId() === "") throw new Error("no current experiment to be called");
+            return this.getExperimentId()
         }
     }
 
+    /**
+     * async function that closes the websocket connection, and runs the callback function passed in parameter if any.
+     * When called, creates a promise that either rejects after 15 seconds to avoid timeout lockdowns,
+     * or resolves after the close internalListener fires. 
+     * @param optional callback Function to be called after the websocket's connection is closed
+     */
+    public async closeConnection(callback?: () => void) {
+        if (!this.gama_socket || this.getReadyState() === WebSocket.CLOSED) {
+            logger.warn("Websocket already closed, running the callback function")
+            if (callback) callback();
+            return;
+        }
 
+        if (this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING) {
+            await new Promise<void>((resolve, reject) => {
+                const timer = setTimeout(() => {
+                    this.gama_socket.removeEventListener('close', internalListener);
+                    reject(new Error("Websocket timed out"))
+                }, 15000)
+
+                const internalListener = () => {
+                    clearTimeout(timer);
+                    this.gama_socket.removeEventListener('close', internalListener);
+                    resolve();
+                }
+                this.gama_socket.addEventListener('close', internalListener)
+                this.gama_socket.close();
+            })
+
+            if (callback) callback();
+        }
+    }
 
 
 
@@ -94,22 +204,22 @@ export default class GamaClient {
     */
     async connectGama(): Promise<void> {
         return new Promise((resolve, reject) => {
-            if (this.gama_socket
-                && (this.gama_socket.readyState === WebSocket.OPEN)
-            ) {
-                console.log("Already connected or connecting. Skipping. status:", this.gama_socket.readyState);
-
-                resolve();
-                return; // Prevent multiple connection attempts
+            if (this.gama_socket && (this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING)) {
+                this.setConnected(true)
+                logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.getReadyState() });
+                return resolve(); // Prevent multiple connection attempts
             }
-            else if (this.gama_socket) { console.log(this.gama_socket.readyState) }
             try {
                 this.gama_socket = new WebSocket(`ws://${this.host}:${this.port}`);
                 this.gama_socket.onopen = () => {
-                    console.log("created new connection to web server at the address", this.host, this.port)
-                    resolve()
+                    this.setConnected(true)
+                    logger.info("created new connection to {host}:{port}", { host: this.host, port: this.port })
+
                     this.gama_socket.onclose = () => {
-                        console.log("successfully closed the websocket.")
+                        this.setConnected(false)
+                        this.setExperimentState("NONE")
+                        logger.info("successfully closed the websocket.")
+
                     }
                     /**
                      * function that creates a listener that updates the simulation status contained in the jsongamastate
@@ -119,18 +229,33 @@ export default class GamaClient {
                     const simulationStatus = (event: WebSocket.MessageEvent) => {
                         const message = JSON.parse(event.data as string)
                         if (message.type === 'SimulationStatus') {
-                            this.jsonGamaState.experiment_state = message.content
-                            this.jsonGamaState.experiment_id = message.exp_id
+                            this.setExperimentState(message.content);
+                            this.setExperimentId(message.exp_id)
                         }
-                        if (this.verbose) console.log("Jsongamastate:", this.jsonGamaState.experiment_state)
+                        logger.info("JsonGamaState:{state}", { state: this.getExperimentName() })
                     }
                     this.gama_socket.addEventListener('message', simulationStatus)
+                    return resolve();
+                }
+                this.gama_socket.onerror = (error) => {
+                    this.setConnected(false);
+                    if (error.error.code == 'ECONNREFUSED') {
+                        logger.trace(`full stack trace for Error CONNREFUSED {error}`, { error });
+                        logger.error("The platform can't connect to GAMA at address {host}:{port}", { host: this.host, port: this.port });
+                        reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port} with error code ECONNREFUSED`))
+                    } else {
+                        logger.error(`An error happened within the Gama Server WebSocket\n{error}`, { error });
+                        reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port}`))
+                    }
                 }
             }
             catch (e) {
-                console.log("could not create new web socket, dumping:", e)
+                const err = e as Error;
+                logger.error("Synchronous error when creating the websocket:{error}", { error: err.message })
                 reject(e)
+
             }
+
         })
     }
     /**
@@ -146,9 +271,10 @@ export default class GamaClient {
                 const type = message.type
                 if (type === successMessage) {
                     this.gama_socket.removeEventListener('message', onMessage)
-                    resolve(JSON.stringify(message))
-                } else if (type in GAMA_ERROR_MESSAGES) {
+                    resolve(message)
+                } else if (GAMA_ERROR_MESSAGES.includes(type)) {
                     this.gama_socket.removeEventListener('message', onMessage)
+                    this.setContentError(message.content)
                     reject(`Couldn't execute command on the Gama Server. ${type}: ${JSON.stringify(message.content)}`)
                 }
             }
@@ -165,27 +291,45 @@ export default class GamaClient {
      * @param expectedValue what you expect the field value to be
      * @returns a resolved promise containing a boolean
      */
+
+    //Voir pour retourner le message au lieu de juste retourner un booléen ? 
     async listenFor(messageType: string, field: string, expectedValue: any): Promise<boolean> {
         if (!this.gama_socket) {
-            throw new Error("couldn't find an active gama socket. called in listenFor():")
+            throw new Error("couldn't find an active gama socket when creating a listener:")
         }
-        return new Promise((resolve) => {
+
+        return new Promise((resolve, reject) => {
             const listener = (event: WebSocket.MessageEvent) => {
                 const message = JSON.parse(event.data as string)
-                console.log("message", message)
+                logger.debug("message:  {message}", { message: message })
                 const type = message.type
                 if (type === messageType && message[field] === expectedValue) {
+                    clearTimeout(timer);
                     resolve(true)
                     this.gama_socket.removeEventListener('message', listener)
                 }
             }
+
+            const timer = setTimeout(() => {
+                this.gama_socket.removeEventListener('message', listener);
+                reject(new Error("Websocket timed out"))
+            }, 15000)
+
             this.gama_socket.addEventListener('message', listener)
+            logger.debug("added an event listener to the gama_socket")
         })
-
-
     }
 
 
+    async readyCheck() { // rrr
+        const isReady = new Promise(async (resolve, reject) => {
+            if (this.getExperimentState() === "PAUSED" || "RUNNING") {
+                resolve(true)
+            } else {
+                return await this.listenFor("SimulationStatus", "content", "PAUSED")
+            }
+        })
+    }
 
 
     //? GAMA FUNCTIONS ---------------------------------------------------------------------------------------------------------------------------
@@ -193,11 +337,11 @@ export default class GamaClient {
 
     /**
      * loads and launches an experiment using the absolute path of it's model and
-     * the identifier of the experiment
+     * the identifier of the experiment. Resolves when the server answers with a SimulationStatus of type "PAUSED"
      * @param model_path absolute path pointing to the model cointaining the experiment
      * @param experiment id of the experiment to load
      */
-    async loadExperiment(model_path: string, experiment: string): Promise<boolean> {
+    async loadExperiment(model_path: string, experiment: string): Promise<void> {
         this.socketCheck()
         const payload = {
             "type": "load",
@@ -205,9 +349,11 @@ export default class GamaClient {
             "experiment": experiment,
         }
         this.sendPayload(payload)
-        this.jsonGamaState.experiment_name = experiment
+        this.setModelPath(model_path);
+        this.setExperimentName(experiment);
+        this.setExperimentId(experiment)
         await this.success("CommandExecutedSuccessfully")
-        return await this.listenFor("SimulationStatus", "content", "PAUSED")
+        return await this.readyCheck()
     }
 
 
@@ -219,10 +365,11 @@ export default class GamaClient {
      */
     async play(exp_id?: string, sync?: boolean) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state === "NOTREADY") {
+        if (this.getExperimentState() === "NOTREADY") {
+            logger.warn("Simulation not ready yet, waiting for PAUSED simulationstatus")
             await this.listenFor("Simulationstatus", "content", "PAUSED")
         }
-        else if (this.jsonGamaState.experiment_state === 'PAUSED') {
+        else if (this.getExperimentState() === 'PAUSED') {
 
             const payload = {
                 "type": "play",
@@ -232,8 +379,8 @@ export default class GamaClient {
             this.sendPayload(payload)
             return await this.success("CommandExecutedSuccessfully")
         }
-        else if (this.jsonGamaState.experiment_state === "RUNNING") {
-            console.warn("cannot unpause a running simulation")
+        else if (this.getExperimentState() === "RUNNING") {
+            logger.warn("cannot unpause a running simulation")
         }
     }
 
@@ -253,7 +400,7 @@ export default class GamaClient {
 
     async reload(exp_id?: string, parameters?: string, until?: string) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state === "NOTREADY") {
+        if (this.getExperimentState() === "NOTREADY") {
             await this.listenFor("Simulationstatus", "content", "PAUSED")
         }
         const payload = {
@@ -278,11 +425,11 @@ export default class GamaClient {
      */
     async step(nb_step?: number, sync?: boolean, exp_id?: string) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state === "NOTREADY") {
-            console.log("ça a chié dans la colle comissaire")
+        if (this.getExperimentState() === "NOTREADY") {
+            logger.warn("The experiment is not yet ready:{state}", { state: this.getExperimentState() })
             await this.listenFor("Simulationstatus", "content", "PAUSED")
         }
-        const exp_id_payload = exp_id ? exp_id : this.jsonGamaState.experiment_id
+        const exp_id_payload = exp_id ? exp_id : this.getExperimentId();
         if (exp_id_payload === "") throw new Error("no experience_id specified, and no experiment in the jsongamastate")
 
         const payload = {
@@ -297,14 +444,14 @@ export default class GamaClient {
 
 
     /** 
-     * ! does NOT work at the moment, must also check if the type of the experiment is 
+     * ! you must be sure that the type of the experiment is compatible (record) before using this
      * This command is used to rollback a specific amount of steps.
-     * Can only be used if the experiment is of type "memorize"
+     * Can only be used if the experiment is of type "record"
      * @param exp_id  the name of the experiment you want to step to. if not used, then the last used experiment Id will be used
      * @param nb_step  the number of steps you want to simulate. if none is specified, it will default to one step
      */
 
-    private async stepback(nb_step?: number, exp_id?: string) {
+    async stepback(nb_step?: number, exp_id?: string) {
         this.socketCheck()
         const payload = {
             "type": "stepBack",
@@ -323,27 +470,23 @@ export default class GamaClient {
      */
     async stop(exp_id?: string) {
         this.socketCheck()
-        if (this.jsonGamaState.experiment_state !== "NONE") {
+        if (this.getExperimentState() !== "NONE") {
             try {
                 const payload = {
                     "type": "stop",
                     "exp_id": this.getId(exp_id)
                 }
-                this.gama_socket.send(JSON.stringify(payload))
+                this.sendPayload(payload)
                 return await this.success("CommandExecutedSuccessfully")
             } catch (error) {
                 throw new Error(`couldn't stop the experiment:${error}`);
             }
         } else {
-            console.log(`couldn't stop the experiment, no experiment running`)
+            logger.warn(`couldn't stop the experiment, no experiment running`)
             return new Promise((resolve) => {
                 resolve("couldn't stop experiment")
             })
-
         }
-        return new Promise((resolve) => {
-            resolve("couldn't stop experiment")
-        })
 
     }
 
@@ -364,25 +507,13 @@ export default class GamaClient {
                 const parsed = JSON.parse(data.toString());
                 callback(parsed);
             } catch (err) {
-                console.warn('Received non-JSON message:', data);
+                logger.warn('Received non-JSON message:{data}', { data: data });
                 callback(data);
             }
         });
     }
 
-    /**
-     * closes the websocket connection to the gama server
-     */
-    async disconnectGama() {
-        try {
-            this.gama_socket.close()
 
-        } catch (error) {
-            throw new Error(`Couldn't close connection:${error}`);
-
-
-        }
-    }
 
     /**
      * kills the gama server.
@@ -401,7 +532,7 @@ export default class GamaClient {
      * @param action gaml code to be run from an agent
      * @param args arguments of the action
      * @param agent what agent this code applies to
-     * @param escaped 
+     * @param escaped optional parameter, if true will escape the action and args before sending them to gama
      * @param exp_id optionnal parameter to specify the experiment. if none is given it will instead default to the last used experiment
      * @returns a stringified response containing the result of the execution of the command
      */
@@ -437,18 +568,36 @@ export default class GamaClient {
             ...(escaped && { "escaped": escaped })
         }
         this.sendPayload(payload)
-        return await this.success("")
+        try {
+            return await this.success("CommandExecutedSuccessfully")
+        } catch (err) {
+            throw err as Error
+        }
 
 
     }
-
-    async describe() {
+    /**
+     * This command is used to ask the server more information on a given model. When received, 
+     * the server will compile the model and return the different components found, depending on the option picked by the client.
+     * @param model_path path to the model to evaluate
+     * @param experimentsNames optional boolean that returns the name of all the experiments of the model
+     * @param speciesNames optional boolean that returns all of the species' names
+     * @param speciesVariables optional boolean that returns all variables of the species
+     * @param speciesActions optional boolean that returns all actions in the species
+     */
+    async describe(model_path: string, experimentsNames?: boolean, speciesNames?: boolean, speciesVariables?: boolean, speciesActions?: boolean): Promise<string> {
         this.socketCheck()
-
-        //TODO finish this function
+        const payload = {
+            "type": "describe",
+            "model": model_path,
+            ...(experimentsNames && { "experiments": experimentsNames }),
+            ...(speciesNames && { "speciesNames": speciesNames }),
+            ...(speciesActions && { "speciesActions": speciesActions }),
+            ...(speciesVariables && { "speciesVariables": speciesVariables })
+        }
+        this.sendPayload(payload)
+        return await this.success("CommandExecutedSuccessfully")
     }
-
-
 }
 
 
