@@ -2,8 +2,12 @@ model console
 
 global {
 
-    reflex r {
+    init {
         write "hello" color:#red;
+    }
+
+    reflex r {
+        write "Hey" color:#green;
     }
 }
 

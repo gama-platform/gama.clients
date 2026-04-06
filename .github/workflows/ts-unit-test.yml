@@ -1,0 +1,38 @@
+name: TypeScript Continuous Integration
+
+on:
+  push:
+    paths:
+      - 'typescript/**'
+  workflow_dispatch:
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    if: github.actor != 'gama-bot'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare GAMA to start in headless
+        run: |
+          sudo apt install -y jq curl wget
+          wget -q $(curl -s "https://api.github.com/repos/gama-platform/gama/releases?per_page=1" | jq '.[] | select(.prerelease == true) | .assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url' | tr -d \") -O "gama-alpha.zip"
+          unzip -q gama-alpha.zip && rm gama-alpha.zip
+          bash ./headless/gama-headless.sh -socket 6868 &
+          echo "GAMA_HOME=$(pwd)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: ./typescript
+        run: npm i
+
+      - name: Unit testing
+        working-directory: ./typescript
+        run: npm test
+        env:
+          GAMA_PORT: 6868
+          GAMA_HOME: ${{ env.GAMA_HOME }}

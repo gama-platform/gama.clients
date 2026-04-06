@@ -36,6 +36,6 @@
     },
     "scripts": {
         "build": "tsup src/gama_client.ts --format esm,cjs --dts --out-dir dist",
-        "test": "npx jest --detectOpenHandles"
+        "test": "node --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles"
     }
 }
