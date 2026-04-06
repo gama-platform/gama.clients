@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./typescript
-        run: npm ci
+        run: npm i
 
       - name: Bump package version
         if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
