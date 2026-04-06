@@ -1,21 +1,21 @@
 import unittest
 from asyncio import Future
-from pathlib import Path
 from typing import Dict, Any, List
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
+from gaml_paths import (
+    MODEL_EMPTY as empty_model_path,
+    MODEL_BATCH as model_batch_path,
+    MODEL_TEST as model_test_path,
+    MODEL_CONSOLE as model_console_path,
+    MODEL_TO_IMPORT as model_to_import_path,
+    MODEL_IMPORTING as model_importing_path,
+    MODEL_FAULTY as faulty_model_path,
+    MODEL_WITH_PARAMS as model_with_param_path,
+    MODEL_INIT_ERROR as init_error_model_path,
+)
 
-
-empty_model_path = str(Path(__file__).parents[1] / "gaml/empty.gaml")
-model_batch_path = str(Path(__file__).parents[1] / "gaml/empty_batch.gaml")
-model_test_path = str(Path(__file__).parents[1] / "gaml/empty_test.gaml")
-model_console_path = str(Path(__file__).parents[1] / "gaml/console_message.gaml")
-model_to_import_path = str(Path(__file__).parents[1] / "gaml/to_import.gaml")
-model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gaml")
-faulty_model_path = str(Path(__file__).parents[1] / "gaml/faulty.gaml")
-model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_params.gaml")
-init_error_model_path = str(Path(__file__).parents[1] / "gaml/init_error.gaml")
 url = "localhost"
 port = 6868
 

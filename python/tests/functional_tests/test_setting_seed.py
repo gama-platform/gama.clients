@@ -1,14 +1,11 @@
 import unittest
 from asyncio import Future
-from pathlib import Path
 from typing import Dict, Any, List
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
+from gaml_paths import MODEL_EMPTY as empty_model_path, MODEL_RANDOM as random_model_path
 
-
-empty_model_path = str(Path(__file__).parents[1] / "gaml/empty.gaml")
-random_model_path = str(Path(__file__).parents[1] / "gaml/random.gaml")
 url = "localhost"
 port = 6868
 

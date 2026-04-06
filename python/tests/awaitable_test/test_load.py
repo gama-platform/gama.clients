@@ -1,12 +1,9 @@
 import unittest
-from pathlib import Path
 
 from gama_client.message_types import MessageTypes
-
 from gama_client.sync_client import GamaSyncClient
+from gaml_paths import MODEL_EMPTY as empty_model_path
 
-
-empty_model_path = str(Path(__file__).parents[1] / "gaml/empty.gaml")
 url = "localhost"
 port = 6868
 

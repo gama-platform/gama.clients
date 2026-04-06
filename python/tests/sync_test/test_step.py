@@ -1,12 +1,10 @@
 import unittest
 from asyncio import Future
-from pathlib import Path
 from typing import Dict, Any, List
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
-
-runtime_error_model_path = str(Path(__file__).parents[1] / "gaml/runtime_error.gaml")
+from gaml_paths import MODEL_RUNTIME_ERROR as runtime_error_model_path
 
 url = "localhost"
 port = 6868
