@@ -1,5 +1,5 @@
 import type { GamaState, GamaMessage, GamaParameter, ExperimentState } from "./constants.ts";
-import { GAMA_ERROR_MESSAGES, MessageTypes } from "./constants.ts";
+import { GAMA_ERROR_MESSAGES, MessageTypes, WS_READY_STATE } from "./constants.ts";
 import { getLogger } from '@logtape/logtape';
 
 const logger = getLogger(["GAMA-library", "GAMA-client"])
@@ -66,7 +66,7 @@ export default class GamaClient {
     }
 
     public getReadyState(): number {
-        if (!this.gama_socket) return 3; // WebSocket.CLOSED
+        if (!this.gama_socket) return WS_READY_STATE.CLOSED;
         return this.gama_socket.readyState;
     }
 
@@ -124,7 +124,7 @@ export default class GamaClient {
         } else if (!this.jsonGamaState.connected) {
             throw new Error("Gama is not connected")
         }
-        else if (!(this.getReadyState() === 1 /* OPEN */ || this.getReadyState() === 0 /* CONNECTING */)) {
+        else if (!(this.getReadyState() === WS_READY_STATE.OPEN || this.getReadyState() === WS_READY_STATE.CONNECTING)) {
             throw new Error("socket not in the OPEN state")
         } else {
             logger.trace("Websocket is connected and open")
@@ -168,13 +168,13 @@ export default class GamaClient {
      * @param optional callback Function to be called after the websocket's connection is closed
      */
     public async closeConnection(callback?: () => void) {
-        if (!this.gama_socket || this.getReadyState() === 3 /* CLOSED */) {
+        if (!this.gama_socket || this.getReadyState() === WS_READY_STATE.CLOSED) {
             logger.warn("Websocket already closed, running the callback function")
             if (callback) callback();
             return;
         }
 
-        if (this.getReadyState() === 1 /* OPEN */ || this.getReadyState() === 0 /* CONNECTING */) {
+        if (this.getReadyState() === WS_READY_STATE.OPEN || this.getReadyState() === WS_READY_STATE.CONNECTING) {
             await new Promise<void>((resolve, reject) => {
                 const timer = setTimeout(() => {
                     this.gama_socket.removeEventListener('close', internalListener);
