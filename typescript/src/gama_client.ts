@@ -1,4 +1,3 @@
-import WebSocket from 'ws';
 import type { GamaState, GamaMessage, GamaParameter, ExperimentState } from "./constants.ts";
 import { GAMA_ERROR_MESSAGES, MessageTypes } from "./constants.ts";
 import { getLogger } from '@logtape/logtape';
@@ -67,7 +66,7 @@ export default class GamaClient {
     }
 
     public getReadyState(): number {
-        if (!this.gama_socket) return WebSocket.CLOSED;
+        if (!this.gama_socket) return 3; // WebSocket.CLOSED
         return this.gama_socket.readyState;
     }
 
@@ -125,7 +124,7 @@ export default class GamaClient {
         } else if (!this.jsonGamaState.connected) {
             throw new Error("Gama is not connected")
         }
-        else if (!(this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING)) {
+        else if (!(this.getReadyState() === 1 /* OPEN */ || this.getReadyState() === 0 /* CONNECTING */)) {
             throw new Error("socket not in the OPEN state")
         } else {
             logger.trace("Websocket is connected and open")
@@ -169,13 +168,13 @@ export default class GamaClient {
      * @param optional callback Function to be called after the websocket's connection is closed
      */
     public async closeConnection(callback?: () => void) {
-        if (!this.gama_socket || this.getReadyState() === WebSocket.CLOSED) {
+        if (!this.gama_socket || this.getReadyState() === 3 /* CLOSED */) {
             logger.warn("Websocket already closed, running the callback function")
             if (callback) callback();
             return;
         }
 
-        if (this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING) {
+        if (this.getReadyState() === 1 /* OPEN */ || this.getReadyState() === 0 /* CONNECTING */) {
             await new Promise<void>((resolve, reject) => {
                 const timer = setTimeout(() => {
                     this.gama_socket.removeEventListener('close', internalListener);
@@ -205,14 +204,19 @@ export default class GamaClient {
     * @returns WebSocket properly initialised at the end of the asynchronous execution
     */
     async connectGama(): Promise<void> {
+        // Use native WebSocket in browsers, fall back to 'ws' package in Node.js
+        const WS: typeof WebSocket = typeof globalThis.WebSocket !== 'undefined'
+            ? globalThis.WebSocket
+            : (await import('ws')).default as unknown as typeof WebSocket;
+
         return new Promise((resolve, reject) => {
-            if (this.gama_socket && (this.getReadyState() === WebSocket.OPEN || this.getReadyState() === WebSocket.CONNECTING)) {
+            if (this.gama_socket && (this.getReadyState() === 1 /* OPEN */ || this.getReadyState() === 0 /* CONNECTING */)) {
                 this.setConnected(true)
                 logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.getReadyState() });
                 return resolve(); // Prevent multiple connection attempts
             }
             try {
-                this.gama_socket = new WebSocket(`ws://${this.host}:${this.port}`);
+                this.gama_socket = new WS(`ws://${this.host}:${this.port}`);
                 this.gama_socket.onopen = () => {
                     this.setConnected(true)
                     logger.info("created new connection to {host}:{port}", { host: this.host, port: this.port })
@@ -228,7 +232,7 @@ export default class GamaClient {
                      * it listens for messages of type SimulationStatus, then updates using the content of the message
                      * @param event
                      */
-                    const simulationStatus = (event: WebSocket.MessageEvent) => {
+                    const simulationStatus = (event: MessageEvent) => {
                         let message: GamaMessage;
                         try {
                             message = JSON.parse(event.data as string);
@@ -251,7 +255,9 @@ export default class GamaClient {
                 }
                 this.gama_socket.onerror = (error) => {
                     this.setConnected(false);
-                    if (error.error.code == 'ECONNREFUSED') {
+                    // error.error.code is Node.js-specific (ws library); not available in browsers
+                    const nodeCode = (error as unknown as { error?: { code?: string } }).error?.code;
+                    if (nodeCode === 'ECONNREFUSED') {
                         logger.trace(`full stack trace for Error CONNREFUSED {error}`, { error });
                         logger.error("The platform can't connect to GAMA at address {host}:{port}", { host: this.host, port: this.port });
                         reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port} with error code ECONNREFUSED`))
@@ -288,7 +294,7 @@ export default class GamaClient {
                 reject(new Error(`Timed out waiting for '${successMessage}' from GAMA server`));
             }, timeoutMs);
 
-            const onMessage = (event: WebSocket.MessageEvent) => {
+            const onMessage = (event: MessageEvent) => {
                 let message: GamaMessage;
                 try {
                     message = JSON.parse(event.data as string);
@@ -326,7 +332,7 @@ export default class GamaClient {
         }
 
         return new Promise((resolve, reject) => {
-            const listener = (event: WebSocket.MessageEvent) => {
+            const listener = (event: MessageEvent) => {
                 let message: GamaMessage;
                 try {
                     message = JSON.parse(event.data as string);
@@ -565,12 +571,12 @@ export default class GamaClient {
             throw new Error('WebSocket is not initialized');
         }
 
-        this.gama_socket.on('message', (data) => {
+        this.gama_socket.addEventListener('message', (event: MessageEvent) => {
             try {
-                const parsed = JSON.parse(data.toString());
+                const parsed = JSON.parse(event.data as string);
                 callback(parsed);
             } catch (err) {
-                logger.warn('Received non-JSON message:{data}', { data: data });
+                logger.warn('Received non-JSON message:{data}', { data: event.data });
             }
         });
     }
