@@ -105,8 +105,8 @@ jobs:
         working-directory: ./python
         run: |
           # Use pytest for better reporting
-          # It will automatically pick up unittest.IsolatedAsyncioTestCase
-          pytest tests -v --tb=short
+          # Use importlib mode to avoid import file mismatch errors when multiple tests have the same name
+          pytest tests -v --tb=short --import-mode=importlib
 
       - name: Test Summary
         if: always()
