@@ -36,6 +36,8 @@ def main():
     asyncio.run(ex10.main())
     print("example 11")
     asyncio.run(ex11.main())
+    print("example 12")
+    asyncio.run(ex12.main())
 
 
 if __name__ == "__main__":

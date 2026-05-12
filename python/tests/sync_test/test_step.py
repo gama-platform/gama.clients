@@ -94,7 +94,7 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
         # This means the number of cycles should be less than 5000
         expression_val = self.client.expression("cycle")
         self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
-        self.assertLessEqual(expression_val["content"], 5000)
+        self.assertLess(expression_val["content"], 5000)
         self.assertGreaterEqual(expression_val["content"], 0)
 
     async def test_step_sync_runtime_error(self):
