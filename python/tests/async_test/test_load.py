@@ -1,7 +1,7 @@
 import asyncio
 import unittest
 from asyncio import Future
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Awaitable
 
 from gama_client.async_client import GamaAsyncClient
 from gama_client.message_types import MessageTypes
