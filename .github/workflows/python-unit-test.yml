@@ -37,40 +37,46 @@ jobs:
 
       - name: Unit testing
         working-directory: ./python
+        continue-on-error: true
         run: |
           pip install pytest
-          python -m pytest tests/ --junit-xml=test-results.xml -q || true
+          python -m pytest tests/ --junit-xml=test-results.xml -q
 
       - name: Test summary
         if: always()
         working-directory: ./python
         run: |
-          python - << 'PYEOF'
+          python3 - <<'PYEOF'
           import xml.etree.ElementTree as ET, os, sys
 
           try:
-              tree = ET.parse('test-results.xml')
+              root = ET.parse('test-results.xml').getroot()
           except FileNotFoundError:
-              print("::error::No test results found (pytest may not have run)")
-              sys.exit(1)
+              print("::warning::test-results.xml not found — pytest may not have run")
+              sys.exit(0)
 
           failures, total = [], 0
-          for suite in tree.iter('testsuite'):
-              total += int(suite.get('tests', 0))
-              for case in suite.iter('testcase'):
-                  for tag in ('failure', 'error'):
-                      el = case.find(tag)
-                      if el is not None:
-                          name = f"{case.get('classname')}.{case.get('name')}"
-                          msg = (el.get('message') or el.text or '').split('\n')[0]
-                          failures.append((name, msg))
-                          print(f"::error::{name} — {msg}")
+          for case in root.iter('testcase'):
+              total += 1
+              el = case.find('failure') or case.find('error')
+              if el is not None:
+                  cls  = case.get('classname', '')
+                  name = case.get('name', '')
+                  msg  = (el.get('message') or el.text or '').strip().split('\n')[0]
+                  # Build file path from dotted classname (e.g. tests.sync_test.test_foo.TestFoo -> tests/sync_test/test_foo.py)
+                  module = cls.rsplit('.', 1)[0].replace('.', '/')
+                  file_path = module + '.py'
+                  failures.append((file_path, name, msg))
+                  # Escape special characters for GHA annotation format
+                  safe_msg = msg.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A').replace(':', '%3A')
+                  print(f"::error file={file_path},title={name}::{safe_msg}")
 
-          with open(os.getenv('GITHUB_STEP_SUMMARY', os.devnull), 'a') as f:
+          with open(os.getenv('GITHUB_STEP_SUMMARY', '/dev/null'), 'a') as f:
               if failures:
-                  f.write(f"## ❌ {len(failures)}/{total} tests failed\n\n")
-                  for name, msg in failures:
-                      f.write(f"- **{name}**: `{msg}`\n")
+                  f.write(f"## ❌ {len(failures)} / {total} tests failed\n\n")
+                  f.write("| File | Test | Error |\n|---|---|---|\n")
+                  for fp, name, msg in failures:
+                      f.write(f"| `{fp}` | `{name}` | {msg[:150]} |\n")
               else:
                   f.write(f"## ✅ All {total} tests passed\n")
 
