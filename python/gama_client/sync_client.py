@@ -83,28 +83,23 @@ class GamaSyncClient(GamaAsyncClient):
         
         # Use the provided timeout, or fall back to default_timeout
         actual_timeout = timeout if timeout is not None else self.default_timeout
-        
-        if actual_timeout is None or actual_timeout <= 0:
-            # No timeout
-            return await self.futures[command_id]
-        else:
-            # Apply timeout
-            try:
-                return await asyncio.wait_for(self.futures[command_id], timeout=actual_timeout)
-            except asyncio.TimeoutError:
-                # Clean up the future to prevent memory leaks
-                if command_id in self.futures:
-                    del self.futures[command_id]
-                raise asyncio.TimeoutError(f"Command timed out after {actual_timeout} seconds")
-            except Exception as e:
-                print(e)
-                # Clean up the future on any exception
-                if command_id in self.futures:
-                    del self.futures[command_id]
-                raise
+
+        try:
+            return await asyncio.wait_for(self.futures[command_id], timeout=actual_timeout)
+        except asyncio.TimeoutError:
+            # Clean up the future to prevent memory leaks
+            if command_id in self.futures:
+                del self.futures[command_id]
+            raise asyncio.TimeoutError(f"Command timed out after {actual_timeout} seconds")
+        except Exception as e:
+            print(e)
+            # Clean up the future on any exception
+            if command_id in self.futures:
+                del self.futures[command_id]
+            raise
 
 
-    def connect_awaitable(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20, ping_timeout: float = 20, timeout: float = None) -> Dict[str, Any]:
+    async def connect_awaitable(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20, ping_timeout: float = 20, timeout: float = None) -> None:
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
@@ -122,19 +117,7 @@ class GamaSyncClient(GamaAsyncClient):
             a socket_id is sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
-        # We define this function internally because it has no meaning outside
-        async def connect_with_timeout(self, to: float | None):
-            # Use the provided timeout, or fall back to default_timeout
-            actual_timeout = to if to is not None else self.default_timeout
-            
-            if actual_timeout is None or actual_timeout <= 0:
-                # No timeout
-                return await self.connect_async(set_socket_id, ping_interval, ping_timeout)
-            else:
-                # Apply timeout
-                return await asyncio.wait_for(self.connect_async(set_socket_id, ping_interval, ping_timeout), timeout=actual_timeout)
-        
-        return self.event_loop.run_until_complete(connect_with_timeout(self, timeout))
+        return await asyncio.wait_for(self.connect_async(set_socket_id, ping_interval, ping_timeout), timeout=timeout)
 
     def connect(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20,
                 ping_timeout: float = 20, timeout: float = None) -> None:
