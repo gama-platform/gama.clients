@@ -230,7 +230,7 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         connection is kept alive.
         """
         await self.client.load_async(model_long_init_path, "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await asyncio.wait_for(self.future_command1, timeout=60*2) # 2 min timeout as there's one minute of waiting
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def test_load_fake_name_parameters(self):
