@@ -1,7 +1,7 @@
 import json
 import asyncio
 from asyncio import Future
-from typing import Dict, Callable, Awaitable, Any, List
+from typing import Dict, Callable, Awaitable, Any, List, Optional
 import nest_asyncio
 
 from gama_client.command_types import CommandTypes
@@ -13,14 +13,11 @@ nest_asyncio.apply()
 
 
 class GamaSyncClient(GamaAsyncClient):
+
     # CLASS VARIABLES
-    futures: Dict[str, Future] = {}
-    unregistered_command_handler: Callable[[Dict], Awaitable]
-    other_message_handler: Callable[[Dict], Awaitable]
-    default_timeout: float
 
     @staticmethod
-    async def default_unregistered_command_handler(self, message: Dict):
+    async def default_unregistered_command_handler(message: Dict):
         raise Exception("cannot retrieve the command for which this message is an answer, message must contain an "
                         "'api_id' field: " + str(message))
 
@@ -43,7 +40,7 @@ class GamaSyncClient(GamaAsyncClient):
     def __init__(self, url: str, port: int,
                  async_command_handler: Callable[[Dict], Awaitable] = default_unregistered_command_handler,
                  other_message_handler: Callable[[Dict], Awaitable] = default_other_message_handler,
-                 default_timeout: float = None):
+                 default_timeout: Optional[float] = None):
         """
         Initialize the client. At this point no connection is made yet.
 
@@ -57,6 +54,7 @@ class GamaSyncClient(GamaAsyncClient):
         :param default_timeout: Default timeout in seconds for all commands. None means no timeout.
         """
         super().__init__(url, port, self.sync_message_handler)
+        self.futures: Dict[str, Future] = {}
         self.other_message_handler = other_message_handler
         self.unregistered_command_handler = async_command_handler
         self.default_timeout = default_timeout
