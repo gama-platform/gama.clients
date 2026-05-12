@@ -31,19 +31,24 @@ class TestValidate(unittest.IsolatedAsyncioTestCase):
         self.sim_id = []
 
     async def test_empty_text(self):
-        assert False
+        gama_response = self.client.validate("", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
 
     async def test_none_text(self):
-        assert False
+        gama_response = self.client.validate(None, True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.MalformedRequest.value)
 
     async def test_no_model_name(self):
-        assert False
+        gama_response = self.client.validate("model\n", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
 
     async def test_minimal_passing(self):
-        assert False
+        gama_response = self.client.validate("model test\n", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def test_forget_last_closing_bracket(self):
-        assert False
+        gama_response = self.client.validate("model test\nglobal {\n", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
         
     async def test_full_example_syntax_error(self):
         text_to_test = "model CrowdSimulation\n\nglobal {\n    int number_of_agents <- 100; // Number of people in the crowd\n    float max_speed <- 2#m/s;     // Maximum speed for each agent\n    geometry world_shape <- square(100); // Define the boundaries of the simulation area as a square with side length 100 meters\n\n    init {\n        create agents number: number_of_agents;\n    }\n}\n\nspecies agent skills:[moving] {\n    float speed <- max_speed / 2 + rand(max_speed / 2); // Randomize initial speed within half to full of max speed\n    point target_location; // Where the agent is moving towards\n\n    reflex move_around when: (target_location = nil or distance(target_location) < 1#m) {\n        target_location <- any_point_in(world_shape); // Set a new random target location within the world boundaries\n    }\n\n    reflex go_to_target {\n        do goto target: target_location speed: speed; // Move towards the target location at the given speed\n    }\n}\n\nexperiment CrowdExperiment type: gui {\n    output display my_display {\n        species_layer agents;\n    }\n}"
@@ -51,10 +56,12 @@ class TestValidate(unittest.IsolatedAsyncioTestCase):
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
 
     async def test_semantic_error_returned(self):
-        assert False
+        gama_response = self.client.validate("model test\nglobal { int a <- 'string'; }\n", False, True)
+        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
 
     async def test_semantic_error_not_returned(self):
-        assert False
+        gama_response = self.client.validate("model test\nglobal { int a <- 'string'; }\n", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def asyncTearDown(self):
         for id in self.sim_id:

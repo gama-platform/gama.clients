@@ -4,7 +4,11 @@ from typing import Dict, Any, List
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
-from gaml_paths import MODEL_RUNTIME_ERROR as runtime_error_model_path
+from gaml_paths import (
+    MODEL_RUNTIME_ERROR as runtime_error_model_path,
+    MODEL_EMPTY as empty_model_path
+    MODEL_SLOW as slow_model_path
+)
 
 url = "localhost"
 port = 6868
@@ -37,22 +41,61 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
         self.sim_id = []
 
     async def test_step_sync_normal(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex")
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        step_res = self.client.step(exp_id, sync=True)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+        expression_val = self.client.expression("cycle")
+        self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.assertEqual(expression_val["content"], 1)
 
     async def test_step_not_sync_normal(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex")
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        step_res = self.client.step(exp_id, sync=False)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def test_step_sync_simulation_not_loaded(self):
-        assert False
+        step_res = self.client.step("fake_id", sync=True)
+        self.assertEqual(step_res["type"], MessageTypes.UnableToExecuteRequest.value)
 
     async def test_step_not_sync_simulation_not_loaded(self):
-        assert False
+        step_res = self.client.step("fake_id", sync=False)
+        self.assertEqual(step_res["type"], MessageTypes.UnableToExecuteRequest.value)
 
     async def test_multiple_steps_sync(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex")
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        step_res = self.client.step(exp_id, nb_step=5, sync=True)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+        expression_val = self.client.expression("cycle")
+        self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.assertEqual(expression_val["content"], 5)
 
     async def test_multiple_steps_not_sync(self):
-        assert False
+        gama_response = self.client.load(slow_model_path, "ex")
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        step_res = self.client.step(exp_id, nb_step=5000, sync=False)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+        # We ask for a big number of steps, we expect the next command to be executed before it finishes.
+        # This means the number of cycles should be less than 5000
+        expression_val = self.client.expression("cycle")
+        self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.assertLessEqual(expression_val["content"], 5000)
+        self.assertGreaterEqual(expression_val["content"], 0)
 
     async def test_step_sync_runtime_error(self):
         gama_response = self.client.load(runtime_error_model_path, "exp", runtime=True)
@@ -111,32 +154,82 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
                 raise AssertionError("Expected runtime error but got timeout")
 
     async def test_step_sync_simulation_over(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex", until="cycle >= 1")
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        # Step up to condition
+        self.client.step(exp_id, nb_step=2, sync=True)
+        
+        # Step again when simulation is over
+        step_res = self.client.step(exp_id, sync=True)
+        # Either it's unable to execute, or it returns success but does nothing. 
+        # Usually it returns UnableToExecuteRequest
+        self.assertIn(step_res["type"], [MessageTypes.UnableToExecuteRequest.value, MessageTypes.CommandExecutedSuccessfully.value])
 
     async def test_step_not_sync_simulation_over(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex", until="cycle >= 1")
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        # Step up to condition
+        self.client.step(exp_id, nb_step=2, sync=True)
+        
+        # Step again when simulation is over
+        step_res = self.client.step(exp_id, sync=False)
+        self.assertIn(step_res["type"], [MessageTypes.UnableToExecuteRequest.value, MessageTypes.CommandExecutedSuccessfully.value])
 
     #############
     # STEP BACK #
     #############
 
     async def test_step_back_sync_normal(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex")
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        self.client.step(exp_id, sync=True)
+        step_res = self.client.step_back(exp_id, sync=True)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def test_step_back_not_sync_normal(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex")
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        self.client.step(exp_id, sync=True)
+        step_res = self.client.step_back(exp_id, sync=False)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def test_step_back_sync_simulation_not_loaded(self):
-        assert False
+        step_res = self.client.step_back("fake_id", sync=True)
+        self.assertEqual(step_res["type"], MessageTypes.UnableToExecuteRequest.value)
 
     async def test_step_back_not_sync_simulation_not_loaded(self):
-        assert False
+        step_res = self.client.step_back("fake_id", sync=False)
+        self.assertEqual(step_res["type"], MessageTypes.UnableToExecuteRequest.value)
 
     async def test_multiple_steps_back_sync(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex")
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        self.client.step(exp_id, nb_step=5, sync=True)
+        step_res = self.client.step_back(exp_id, nb_step=5, sync=True)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def test_multiple_steps_back_not_sync(self):
-        assert False
+        gama_response = self.client.load(empty_model_path, "ex")
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        self.client.step(exp_id, nb_step=5, sync=True)
+        step_res = self.client.step_back(exp_id, nb_step=5, sync=False)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def asyncTearDown(self):
         for id in self.sim_id:

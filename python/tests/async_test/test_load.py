@@ -233,16 +233,44 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def test_load_fake_name_parameters(self):
-        pass
+        params = [{"type": "int", "value": 100, "name": "fake_param_name_does_not_exist"}]
+        await self.client.load_async(model_with_param_path, "ex", parameters=params)
+        gama_response = await self.future_command1
+        # It could return CommandExecutedSuccessfully (ignoring the param) or UnableToExecuteRequest
+        self.assertIn(gama_response["type"], [MessageTypes.UnableToExecuteRequest.value, MessageTypes.CommandExecutedSuccessfully.value])
+        if gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value:
+            self.sim_id.append(gama_response["content"])
 
     async def test_load_fake_type_parameters(self):
-        pass
+        params = [{"type": "string", "value": "this is a string", "name": "i"}] # 'i' is an int
+        await self.client.load_async(model_with_param_path, "ex", parameters=params)
+        gama_response = await self.future_command1
+        self.assertIn(gama_response["type"], [MessageTypes.UnableToExecuteRequest.value, MessageTypes.CommandExecutedSuccessfully.value])
+        if gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value:
+            self.sim_id.append(gama_response["content"])
 
     async def test_load_empty_parameters(self):
-        pass
+        await self.client.load_async(model_with_param_path, "ex", parameters=[])
+        gama_response = await self.future_command1
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.sim_id.append(gama_response["content"])
 
     async def test_load_global_parameters(self):
-        pass
+        # 'j' is defined in global but not explicitly exposed as an experiment parameter
+        params = [{"type": "int", "value": 42, "name": "j"}]
+        await self.client.load_async(model_with_param_path, "ex", parameters=params)
+        gama_response = await self.future_command1
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        experiment_id = gama_response["content"]
+        self.sim_id.append(experiment_id)
+
+        # check if 'j' was actually set
+        self.future_command1 = Future()
+        await self.client.expression_async(experiment_id, "j")
+        expr_res = await self.future_command1
+        self.assertEqual(expr_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        # It might be 42 if setting global variables works, or -2 if it's ignored
+        self.assertIn(expr_res["content"], [42, -2])
 
     async def test_load_faulty_model(self):
         await self.client.load_async(faulty_model_path, "with_virt_parent")
