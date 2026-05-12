@@ -22,10 +22,9 @@ url = "localhost"
 port = 6868
 DEFAULT_TIMEOUT = 10
 
-# TODO: handle timeout to avoid infinite loops
 
 
-class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
+class TestLoadAsync(unittest.IsolatedAsyncioTestCase):
 
     client: GamaAsyncClient
     future_command1: Future
@@ -48,6 +47,8 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
             return await asyncio.wait_for(future, timeout=timeout)
         except asyncio.TimeoutError:
             self.fail(f"Timeout reached: command did not respond within {timeout} seconds")
+        except Exception as e:
+            self.fail(f"Error: {e}") 
 
     # Called before every test
     async def asyncSetUp(self):
@@ -147,8 +148,8 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
-    async def test_load_imported_model(self):
-        await self.client.load_async(model_to_import_path, "parent_ex")
+    async def test_load_imported_exp(self):
+        await self.client.load_async(model_importing_path, "parent_ex")
         gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
@@ -236,7 +237,7 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         connection is kept alive.
         """
         await self.client.load_async(model_long_init_path, "ex")
-        gama_response = await self.wait_for_future(self.future_command1, timeout=60*2) # 2 min timeout as there's one minute of waiting
+        gama_response = await self.wait_for_future(self.future_command1, timeout=80) # 80s timeout as there's 71s of waiting in the model
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def test_load_fake_name_parameters(self):
@@ -290,12 +291,9 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
     async def test_load_runtime_error(self):
         await self.client.load_async(model_init_error_path, "exp", runtime=True)
         gama_response = await self.wait_for_future(self.future_command1)
-        print(gama_response)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
-        assert False # For now GS is not sending an error message even though there should be an exception in the init block
         error_message = await self.wait_for_future(self.future_error)
-        print(error_message)
         assert error_message["type"] == MessageTypes.SimulationError.value
         assert error_message["content"]["exception"].endswith('GamaRuntimeException')
         assert error_message["content"]["message"] == "Division by zero"
