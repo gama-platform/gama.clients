@@ -31,15 +31,48 @@ jobs:
           # Start GAMA Server as a background job
           bash ./headless/gama-headless.sh -socket 6868 &
 
-      - name: Build & install package
+      - name: Install package
         working-directory: ./python
-        run: |
-          # Build
-          python -m pip install build twine
-          python -m build
-          # Install
-          python -m pip install dist/gama_client-*-py3-none-any.whl
+        run: pip install -e .
 
       - name: Unit testing
         working-directory: ./python
-        run: find ./tests -name "*.py" -not -name "__init__.py" -print -exec python {} \;
+        run: |
+          pip install pytest
+          python -m pytest tests/ --junit-xml=test-results.xml -q || true
+
+      - name: Test summary
+        if: always()
+        working-directory: ./python
+        run: |
+          python - << 'PYEOF'
+          import xml.etree.ElementTree as ET, os, sys
+
+          try:
+              tree = ET.parse('test-results.xml')
+          except FileNotFoundError:
+              print("::error::No test results found (pytest may not have run)")
+              sys.exit(1)
+
+          failures, total = [], 0
+          for suite in tree.iter('testsuite'):
+              total += int(suite.get('tests', 0))
+              for case in suite.iter('testcase'):
+                  for tag in ('failure', 'error'):
+                      el = case.find(tag)
+                      if el is not None:
+                          name = f"{case.get('classname')}.{case.get('name')}"
+                          msg = (el.get('message') or el.text or '').split('\n')[0]
+                          failures.append((name, msg))
+                          print(f"::error::{name} — {msg}")
+
+          with open(os.getenv('GITHUB_STEP_SUMMARY', os.devnull), 'a') as f:
+              if failures:
+                  f.write(f"## ❌ {len(failures)}/{total} tests failed\n\n")
+                  for name, msg in failures:
+                      f.write(f"- **{name}**: `{msg}`\n")
+              else:
+                  f.write(f"## ✅ All {total} tests passed\n")
+
+          sys.exit(1 if failures else 0)
+          PYEOF
