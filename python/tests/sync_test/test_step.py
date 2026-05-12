@@ -6,7 +6,7 @@ from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
 from gaml_paths import (
     MODEL_RUNTIME_ERROR as runtime_error_model_path,
-    MODEL_EMPTY as empty_model_path
+    MODEL_EMPTY as empty_model_path,
     MODEL_SLOW as slow_model_path
 )
 

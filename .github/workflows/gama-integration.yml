@@ -76,7 +76,7 @@ jobs:
       - name: Wait for GAMA Server to be ready
         run: |
           echo "Waiting for GAMA Server to start on port 6868..."
-          # We use a small python script to avoid netcat dependency issues
+          # We use a small python script to test connection to the server
           python3 -c "
           import socket
           import time
