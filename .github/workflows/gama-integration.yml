@@ -1,0 +1,81 @@
+name: GAMA Python Integration Tests
+
+on:
+  push:
+    paths:
+      - 'python/**'
+      - 'tests/gaml/**'
+  pull_request:
+    paths:
+      - 'python/**'
+      - 'tests/gaml/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        working-directory: ./python
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+          pip install pytest pytest-asyncio
+
+      - name: Prepare GAMA Server
+        run: |
+          sudo apt update
+          sudo apt install -y jq curl wget unzip netcat
+          
+          # Get the download URL for the latest alpha release with Linux JDK
+          DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/gama-platform/gama/releases" | jq -r 'map(select(.prerelease == true)) | .[0].assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url')
+          echo "Downloading GAMA from $DOWNLOAD_URL"
+          wget -q "$DOWNLOAD_URL" -O "gama.zip"
+          unzip -q gama.zip
+          
+          # Find the headless script
+          HEADLESS_SCRIPT=$(find . -name "gama-headless.sh" | head -n 1)
+          if [ -z "$HEADLESS_SCRIPT" ]; then
+            echo "Error: gama-headless.sh not found"
+            exit 1
+          fi
+          echo "GAMA headless script found at: $HEADLESS_SCRIPT"
+          chmod +x "$HEADLESS_SCRIPT"
+          
+          # Start GAMA Server as a background job
+          bash "$HEADLESS_SCRIPT" -socket 6868 &
+          
+      - name: Wait for GAMA Server to be ready
+        run: |
+          echo "Waiting for GAMA Server to start on port 6868..."
+          # Try to connect for up to 2 minutes
+          for i in {1..60}; do
+            if nc -z localhost 6868; then
+              echo "GAMA Server is ready and listening on port 6868!"
+              exit 0
+            fi
+            echo "Server not ready yet, waiting... ($i/60)"
+            sleep 2
+          done
+          echo "Error: GAMA Server failed to start within the timeout period."
+          exit 1
+
+      - name: Run Python Unit Tests
+        working-directory: ./python
+        run: |
+          # Use pytest for better reporting
+          # It will automatically pick up unittest.IsolatedAsyncioTestCase
+          pytest tests -v --tb=short
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "Tests finished. See the 'Run Python Unit Tests' step for details."
