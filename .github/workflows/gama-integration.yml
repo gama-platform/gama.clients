@@ -10,6 +10,11 @@ on:
       - 'python/**'
       - 'tests/gaml/**'
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'GAMA Release Tag (e.g. 1.9.3, leave empty for latest stable)'
+        required: false
+        default: ''
 
 jobs:
   test:
@@ -33,10 +38,25 @@ jobs:
       - name: Prepare GAMA Server
         run: |
           sudo apt update
-          sudo apt install -y jq curl wget unzip netcat
+          sudo apt install -y jq curl wget unzip
           
-          # Get the download URL for the latest alpha release with Linux JDK
-          DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/gama-platform/gama/releases" | jq -r 'map(select(.prerelease == true)) | .[0].assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url')
+          # Determine the API URL for the release
+          if [ -z "${{ github.event.inputs.release }}" ]; then
+            # Default to latest stable release
+            API_URL="https://api.github.com/repos/gama-platform/gama/releases/latest"
+          else
+            # Use specified release tag
+            API_URL="https://api.github.com/repos/gama-platform/gama/releases/tags/${{ github.event.inputs.release }}"
+          fi
+          
+          echo "Fetching release info from $API_URL"
+          DOWNLOAD_URL=$(curl -s "$API_URL" | jq -r '.assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url')
+          
+          if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" == "null" ]; then
+            echo "Error: Could not find a suitable Linux JDK asset for the selected release."
+            exit 1
+          fi
+          
           echo "Downloading GAMA from $DOWNLOAD_URL"
           wget -q "$DOWNLOAD_URL" -O "gama.zip"
           unzip -q gama.zip
@@ -56,17 +76,30 @@ jobs:
       - name: Wait for GAMA Server to be ready
         run: |
           echo "Waiting for GAMA Server to start on port 6868..."
-          # Try to connect for up to 2 minutes
-          for i in {1..60}; do
-            if nc -z localhost 6868; then
-              echo "GAMA Server is ready and listening on port 6868!"
-              exit 0
-            fi
-            echo "Server not ready yet, waiting... ($i/60)"
-            sleep 2
-          done
-          echo "Error: GAMA Server failed to start within the timeout period."
-          exit 1
+          # We use a small python script to avoid netcat dependency issues
+          python3 -c "
+          import socket
+          import time
+          import sys
+
+          start_time = time.time()
+          timeout = 120 # 2 minutes
+          ready = False
+
+          while time.time() - start_time < timeout:
+              try:
+                  with socket.create_connection(('localhost', 6868), timeout=1):
+                      print('GAMA Server is ready and listening on port 6868!')
+                      ready = True
+                      break
+              except (socket.timeout, ConnectionRefusedError, OSError):
+                  print(f'Server not ready yet, waiting... ({int(time.time() - start_time)}s)')
+                  time.sleep(2)
+
+          if not ready:
+              print('Error: GAMA Server failed to start within the timeout period.')
+              sys.exit(1)
+          "
 
       - name: Run Python Unit Tests
         working-directory: ./python
