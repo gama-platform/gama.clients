@@ -64,8 +64,8 @@ class GamaSyncClient(GamaAsyncClient):
 
     async def execute_cmd_awaitable(self, cmd: Dict[str, Any], timeout: float = None) -> Dict[str, Any]:
         """
-            For internal use only. Generates a unique command id, creates a linked future, adds the id to the command, sends the command to the server
-            with a possible timeout, waits for the answer from the server and returns it.
+        For internal use only. Generates a unique command id, creates a linked future, adds the id to the command, sends the command to the server
+        with a possible timeout, waits for the answer from the server and returns it.
 
         :param cmd: the command to execute
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
