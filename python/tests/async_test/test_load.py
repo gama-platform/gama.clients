@@ -43,10 +43,16 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         else:
             self.future_command2.set_result(message)
 
+    async def wait_for_future(self, future: Awaitable, timeout: float = DEFAULT_TIMEOUT) -> Dict[str, Any]:
+        try:
+            return await asyncio.wait_for(future, timeout=timeout)
+        except asyncio.TimeoutError:
+            self.fail(f"Timeout reached: command did not respond within {timeout} seconds")
+
     # Called before every test
     async def asyncSetUp(self):
         self.client = GamaAsyncClient(url, port, self.message_handler)
-        await asyncio.wait_for(self.client.connect_async(), timeout=DEFAULT_TIMEOUT)
+        await self.wait_for_future(self.client.connect_async())
         self.future_command1 = Future()
         self.future_command2 = Future()
         self.future_console = Future()
@@ -55,73 +61,73 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
 
     async def test_load(self):
         await self.client.load_async(empty_model_path, "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_fake_model(self):
         await self.client.load_async("does/not/exist", "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
         assert "content" in gama_response
         assert gama_response["content"].endswith("exist' does not exist")
 
     async def test_load_fake_exp(self):
         await self.client.load_async(empty_model_path, "expe_does_not_exist")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
         assert "content" in gama_response
         assert gama_response["content"].startswith("'expe_does_not_exist' is not an experiment present in '")
 
     async def test_load_none_model(self):
         await self.client.load_async(None, "expe_does_not_exist")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.MalformedRequest.value
         assert "content" in gama_response
         assert gama_response["content"] == "For load, mandatory parameters are: 'model' and 'experiment'"
 
     async def test_load_none_exp(self):
         await self.client.load_async(empty_model_path, None)
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.MalformedRequest.value
         assert "content" in gama_response
         assert gama_response["content"] == "For load, mandatory parameters are: 'model' and 'experiment'"
 
     async def test_load_empty_model(self):
         await self.client.load_async("", "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
         assert "content" in gama_response
         assert gama_response["content"].endswith("' does not exist")
 
     async def test_load_empty_exp(self):
         await self.client.load_async(empty_model_path, "")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
         assert "content" in gama_response
         assert gama_response["content"].startswith("'' is not an experiment present in '")
 
     async def test_load_batch(self):
         await self.client.load_async(model_batch_path, "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_test(self):
         await self.client.load_async(model_test_path, "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_console(self):
         # first load the model
         await self.client.load_async(model_console_path, "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
         # wait for the console message send in the init
-        console_message = await self.future_console
+        console_message = await self.wait_for_future(self.future_console)
         assert console_message["type"] == MessageTypes.SimulationOutput.value
         assert console_message["content"]["message"].startswith("hello")
         assert console_message["content"]["color"] == {'gaml_type': 'rgb', 'red': 255, 'green': 0, 'blue': 0, 'alpha': 255}
@@ -129,7 +135,7 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         # now we check for the messages send in the reflexes, so we need to execute at least one step
         self.future_console = Future()  # resetting the future for console messages
         await self.client.step_async(gama_response["content"])
-        console_message = await self.future_console
+        console_message = await self.wait_for_future(self.future_console)
         assert console_message["type"] == MessageTypes.SimulationOutput.value
         assert console_message["content"]["message"].startswith("Hey")
         assert console_message["content"]["color"] == {'gaml_type': 'rgb', 'red': 0, 'green': 128, 'blue': 0, 'alpha': 255}
@@ -137,25 +143,25 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
     async def test_load_virtual(self):
         # TODO: is that normal ???? Should we open an issue ?
         await self.client.load_async(model_to_import_path, "parent_ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_imported_model(self):
         await self.client.load_async(model_to_import_path, "parent_ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_inherited_exp(self):
         await self.client.load_async(model_importing_path, "with_parent")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
     async def test_load_inherited_virtual_exp(self):
         await self.client.load_async(model_importing_path, "with_virt_parent")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
@@ -190,7 +196,7 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         ]
 
         await self.client.load_async(model_with_param_path, "ex", parameters=params)
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         experiment_id = gama_response["content"]
         self.sim_id.append(experiment_id)
@@ -198,28 +204,28 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         # check i
         self.future_command1 = Future()
         await self.client.expression_async(experiment_id, "i")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == 100
 
         # check f
         self.future_command1 = Future()
         await self.client.expression_async(experiment_id, "f")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == 10.34
 
         # check s
         self.future_command1 = Future()
         await self.client.expression_async(experiment_id, "s")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == "salut"
 
         # check color
         self.future_command1 = Future()
         await self.client.expression_async(experiment_id, "color")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == {'gaml_type': 'rgb', 'red': 255, 'green': 0, 'blue': 0, 'alpha': 255}
 
@@ -230,13 +236,13 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         connection is kept alive.
         """
         await self.client.load_async(model_long_init_path, "ex")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=60*2) # 2 min timeout as there's one minute of waiting
+        gama_response = await self.wait_for_future(self.future_command1, timeout=60*2) # 2 min timeout as there's one minute of waiting
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     async def test_load_fake_name_parameters(self):
         params = [{"type": "int", "value": 100, "name": "fake_param_name_does_not_exist"}]
         await self.client.load_async(model_with_param_path, "ex", parameters=params)
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         # It could return CommandExecutedSuccessfully (ignoring the param) or UnableToExecuteRequest
         self.assertIn(gama_response["type"], [MessageTypes.UnableToExecuteRequest.value, MessageTypes.CommandExecutedSuccessfully.value])
         if gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value:
@@ -245,14 +251,14 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
     async def test_load_fake_type_parameters(self):
         params = [{"type": "string", "value": "this is a string", "name": "i"}] # 'i' is an int
         await self.client.load_async(model_with_param_path, "ex", parameters=params)
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         self.assertIn(gama_response["type"], [MessageTypes.UnableToExecuteRequest.value, MessageTypes.CommandExecutedSuccessfully.value])
         if gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value:
             self.sim_id.append(gama_response["content"])
 
     async def test_load_empty_parameters(self):
         await self.client.load_async(model_with_param_path, "ex", parameters=[])
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
         self.sim_id.append(gama_response["content"])
 
@@ -260,7 +266,7 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         # 'j' is defined in global but not explicitly exposed as an experiment parameter
         params = [{"type": "int", "value": 42, "name": "j"}]
         await self.client.load_async(model_with_param_path, "ex", parameters=params)
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
         experiment_id = gama_response["content"]
         self.sim_id.append(experiment_id)
@@ -268,14 +274,14 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         # check if 'j' was actually set
         self.future_command1 = Future()
         await self.client.expression_async(experiment_id, "j")
-        expr_res = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        expr_res = await self.wait_for_future(self.future_command1)
         self.assertEqual(expr_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
         # It might be 42 if setting global variables works, or -2 if it's ignored
         self.assertIn(expr_res["content"], [42, -2])
 
     async def test_load_faulty_model(self):
         await self.client.load_async(faulty_model_path, "with_virt_parent")
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
         assert "content" in gama_response.keys()
         assert "exception" in gama_response["content"]
@@ -283,12 +289,12 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
 
     async def test_load_runtime_error(self):
         await self.client.load_async(model_init_error_path, "exp", runtime=True)
-        gama_response = await asyncio.wait_for(self.future_command1, timeout=DEFAULT_TIMEOUT)
+        gama_response = await self.wait_for_future(self.future_command1)
         print(gama_response)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
         assert False # For now GS is not sending an error message even though there should be an exception in the init block
-        error_message = await asyncio.wait_for(self.future_error, timeout=DEFAULT_TIMEOUT)
+        error_message = await self.wait_for_future(self.future_error)
         print(error_message)
         assert error_message["type"] == MessageTypes.SimulationError.value
         assert error_message["content"]["exception"].endswith('GamaRuntimeException')

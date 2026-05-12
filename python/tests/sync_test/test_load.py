@@ -14,6 +14,7 @@ from gaml_paths import (
     MODEL_FAULTY as faulty_model_path,
     MODEL_WITH_PARAMS as model_with_param_path,
     MODEL_INIT_ERROR as init_error_model_path,
+    MODEL_LONG_INIT as long_init_model_path,
 )
 
 url = "localhost"
@@ -228,6 +229,18 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
     async def test_load_runtime_error(self):
         gama_response = self.client.load(init_error_model_path, "exp", runtime=True)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+    async def test_load_timeout(self):
+        import asyncio
+        with self.assertRaises(asyncio.TimeoutError):
+            self.client.load(long_init_model_path, "ex", timeout=0.1)
+
+    async def test_load_default_timeout(self):
+        # Change default timeout to something small
+        self.client.default_timeout = 0.1
+        import asyncio
+        with self.assertRaises(asyncio.TimeoutError):
+            self.client.load(long_init_model_path, "ex")
 
         # Not sure how to make it work in GS currently, skipping the console assertion for now
         # gama_response = await self.future_console
