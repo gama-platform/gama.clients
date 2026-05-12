@@ -759,6 +759,126 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         """
         return self.event_loop.run_until_complete(self.describe_awaitable(path_to_model, experiments, species_names,
-                                                                         species_variables, species_actions, additional_data,
-                                                                         timeout))
+                                                                          species_variables, species_actions, additional_data,
+                                                                          timeout))
 
+    async def ask_awaitable(self, exp_id: str, action: str, args: Dict, agent: str, escaped: bool, socket_id: str = "",
+                            additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
+        """
+        Sends a command to call an action defined in agents in the experiment **exp_id**.
+
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param action: The action to call
+        :param args: The arguments of the action
+        :param agent: the agent from which to call the action
+        :param escaped: True if the expression is escaped
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :return: the answer to the command sent by gama-server
+        """
+        cmd = {
+            "type": CommandTypes.Ask.value,
+            "exp_id": exp_id,
+            "action": action,
+            "args": args,
+            "agent": agent,
+            "escaped": escaped
+        }
+        # adding optional parameters
+        if socket_id != "":
+            cmd["socket_id"] = socket_id
+        if additional_data:
+            cmd.update(additional_data)
+
+        return await self.execute_cmd_awaitable(cmd, timeout)
+
+    def ask(self, exp_id: str, action: str, args: Dict, agent: str, escaped: bool, socket_id: str = "",
+            additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
+        """
+        Sends a command to call an action defined in agents in the experiment **exp_id**.
+
+        :param exp_id: The id of the experiment on which the command applies
+            (sent by gama-server after the load command)
+        :param action: The action to call
+        :param args: The arguments of the action
+        :param agent: the agent from which to call the action
+        :param escaped: True if the expression is escaped
+        :param socket_id: The socket_id that is linked to the experiment, if empty gama will use current connection
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :return: the answer to the command sent by gama-server
+        """
+        return self.event_loop.run_until_complete(
+            self.ask_awaitable(exp_id, action, args, agent, escaped, socket_id, additional_data, timeout))
+
+    async def upload_awaitable(self, file_path: str, content: str, timeout: float = None) -> Dict[str, Any]:
+        """
+        Uploads a file to gama-server's file-system.
+
+        :param file_path: the path on gama-server file-system where the content is going to be saved
+        :param content: the content of the file to be uploaded
+        :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :return: the answer to the command sent by gama-server
+        """
+        cmd = {
+            "type": CommandTypes.Upload.value,
+            "file": file_path,
+            "content": content
+        }
+        return await self.execute_cmd_awaitable(cmd, timeout)
+
+    def upload(self, file_path: str, content: str, timeout: float = None) -> Dict[str, Any]:
+        """
+        Uploads a file to gama-server's file-system.
+
+        :param file_path: the path on gama-server file-system where the content is going to be saved
+        :param content: the content of the file to be uploaded
+        :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :return: the answer to the command sent by gama-server
+        """
+        return self.event_loop.run_until_complete(self.upload_awaitable(file_path, content, timeout))
+
+    async def download_awaitable(self, file_path: str, timeout: float = None) -> Dict[str, Any]:
+        """
+        Downloads a file from gama server file system.
+
+        :param file_path: the path of the file to download on gama-server's file system
+        :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :return: the answer to the command sent by gama-server
+        """
+        cmd = {
+            "type": CommandTypes.Download.value,
+            "file": file_path,
+        }
+        return await self.execute_cmd_awaitable(cmd, timeout)
+
+    def download(self, file_path: str, timeout: float = None) -> Dict[str, Any]:
+        """
+        Downloads a file from gama server file system.
+
+        :param file_path: the path of the file to download on gama-server's file system
+        :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :return: the answer to the command sent by gama-server
+        """
+        return self.event_loop.run_until_complete(self.download_awaitable(file_path, timeout))
+
+
+    def exit(self, additional_data: Dict = None, timeout: float = None) -> None:
+        """
+        Sends a command to exit the gama-server.
+
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        """
+        self.event_loop.run_until_complete(asyncio.wait_for(self.exit_async(additional_data), timeout))
+
+    def close_connection(self, close_code=1000, reason=""):
+        """
+        Closes the connection.
+        """
+        self.event_loop.run_until_complete(self.close_connection_async(close_code, reason))

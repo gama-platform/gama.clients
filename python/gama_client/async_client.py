@@ -210,6 +210,21 @@ class GamaAsyncClient:
         }
         await self.socket.send(json.dumps(cmd))
 
+    async def exit_async(self, additional_data: Dict = None):
+        """
+        Sends a command to exit the gama-server.
+
+        :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
+            be sent back with the command's answer. (for example an id for the client's internal use)
+        :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
+        """
+        cmd = {
+            "type": CommandTypes.Exit.value
+        }
+        if additional_data:
+            cmd.update(additional_data)
+        await self.socket.send(json.dumps(cmd))
+
     async def close_connection_async(self, close_code=1000, reason=""):
         """
         Closes the connection.
