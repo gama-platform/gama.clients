@@ -1,3 +1,4 @@
+from asyncio import Future
 import json
 import sys
 
@@ -9,13 +10,6 @@ from gama_client.message_types import MessageTypes
 
 
 class GamaAsyncClient:
-    # CLASS VARIABLES
-    event_loop: asyncio.AbstractEventLoop
-    socket: websockets.WebSocketClientProtocol
-    socket_id: str
-    url: str
-    port: int
-    message_handler: Callable[[Dict], Awaitable]
 
     def __init__(self, url: str, port: int, message_handler: Callable[[Dict], Any]):
         """
@@ -25,13 +19,13 @@ class GamaAsyncClient:
         :param port: An integer representing the port on which the server runs
         :param message_handler: A function that will be called every time a message is received from gama-server
         """
-        self.url = url
-        self.port = port
-        self.message_handler = message_handler
-        self.socket_id = ""
-        self.socket = None
-        self.event_loop = asyncio.get_running_loop()
-        self.connection_future = None
+        self.url: str = url
+        self.port: int = port
+        self.message_handler: Callable[[Dict], Awaitable] = message_handler
+        self.socket_id: str = ""
+        self.socket: websockets.WebSocketClientProtocol = None
+        self.event_loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
+        self.connection_future: Future[Any] = None
 
     async def connect_async(self, set_socket_id: bool = True, ping_interval: Any | float = 20,
                             ping_timeout: float = 20,

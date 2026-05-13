@@ -1,4 +1,3 @@
-from Documents.GitHub.gama.clients.python.gama_client.message_types import MessageTypes
 import asyncio
 import time
 import json
@@ -6,6 +5,7 @@ import os
 import sys
 from pathlib import Path
 from gama_client.sync_client import GamaSyncClient
+from gama_client.message_types import MessageTypes
 import json as json_parser
 
 async def async_command_answer_handler(message):
