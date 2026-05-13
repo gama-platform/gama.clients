@@ -1,3 +1,4 @@
+from typing import Optional
 from asyncio import Future
 import json
 import sys
@@ -425,7 +426,7 @@ class GamaAsyncClient:
 
         await self.socket.send(json.dumps(cmd))
 
-    async def ask_async(self, exp_id: str, action: str, args: Dict, agent: str, escaped: bool, socket_id: str = "",
+    async def ask_async(self, exp_id: str, action: str, args: Dict, agent: str, escaped: Optional[bool] = None,
                         additional_data: Dict = None):
         """
         Sends a command to call an action defined in agents in the experiment **exp_id**.
@@ -447,11 +448,9 @@ class GamaAsyncClient:
             "action": action,
             "args": args,
             "agent": agent,
-            "escaped": escaped
         }
-        # adding optional parameters
-        if socket_id != "":
-            cmd["socket_id"] = socket_id
+        if escaped is not None:
+            cmd["escaped"] = escaped
         if additional_data:
             cmd.update(additional_data)
 

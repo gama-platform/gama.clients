@@ -43,8 +43,6 @@ async def run_benchmark(iterations=1000, label="run"):
     for _ in range(iterations//10):
         client.step(exp_id, sync=True)
         client.expression(exp_id, "people collect ([\"name\"::each.name, \"age\"::each.age])")
-        client.expression(exp_id, "ask people { actions <- [\"aging\", \"playing\", \"eating\", \"sleeping\", \"fighting\", \"working\", \"learning\", \"reading\", \"writing\", \"coding\", \"sleeping\", \"eating\", \"playing\", \"fighting\", \"working\", \"learning\", \"reading\", \"writing\", \"coding\"];}")
-
     print(f"Starting benchmark with {iterations} iterations...")
     
     # We measure: 
@@ -55,7 +53,6 @@ async def run_benchmark(iterations=1000, label="run"):
     
     step_times = []
     expr_times = []
-    expr2_times = []
     
     start_total = time.perf_counter()
     
@@ -75,14 +72,7 @@ async def run_benchmark(iterations=1000, label="run"):
         # Verify we actually got data
         if not expr_res.get("type") == MessageTypes.CommandExecutedSuccessfully.value:
              print(f"Warning: couldn't get data at iteration {i}")
-        
-        t4 = time.perf_counter()
-        expr_res2 = client.expression(exp_id, "ask people { actions <- [\"aging\", \"playing\", \"eating\", \"sleeping\", \"fighting\", \"working\", \"learning\", \"reading\", \"writing\", \"coding\", \"sleeping\", \"eating\", \"playing\", \"fighting\", \"working\", \"learning\", \"reading\", \"writing\", \"coding\"];}")
-        t5 = time.perf_counter()
-        expr2_times.append(t5 - t4)
-        
-        if not expr_res2.get("type") == MessageTypes.CommandExecutedSuccessfully.value:
-             print(f"Warning: couldn't assign actions in iteration {i}")
+       
 
 
 
@@ -91,13 +81,11 @@ async def run_benchmark(iterations=1000, label="run"):
     total_duration = end_total - start_total
     avg_step = sum(step_times) / len(step_times)
     avg_expr = sum(expr_times) / len(expr_times)
-    avg_expr2 = sum(expr2_times) / len(expr2_times)
     
     print(f"\nBenchmark Finished!")
     print(f"Total duration: {total_duration:.4f}s")
     print(f"Avg Step time:  {avg_step*1000:.2f}ms")
     print(f"Avg Expr time:  {avg_expr*1000:.2f}ms (First payload parsing)")
-    print(f"Avg Expr2 time: {avg_expr2*1000:.2f}ms (Second payload parsing)")
     
     client.stop(exp_id)
     client.close_connection()
@@ -110,10 +98,8 @@ async def run_benchmark(iterations=1000, label="run"):
         "total_duration": total_duration,
         "avg_step_ms": avg_step * 1000,
         "avg_expr_ms": avg_expr * 1000,
-        "avg_expr2_ms": avg_expr2 * 1000,
         "step_times": step_times,
-        "expr_times": expr_times,
-        "expr2_times": expr2_times
+        "expr_times": expr_times
     }
     
     return results

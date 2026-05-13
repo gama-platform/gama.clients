@@ -741,7 +741,7 @@ class GamaSyncClient(GamaAsyncClient):
                                                                           species_variables, species_actions, additional_data,
                                                                           timeout))
 
-    async def ask_awaitable(self, exp_id: str, action: str, args: Dict, agent: str, escaped: bool, socket_id: str = "",
+    async def ask_awaitable(self, exp_id: str, action: str, args: Dict, agent: str, escaped: Optional[bool] = None, 
                             additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
         """
         Sends a command to call an action defined in agents in the experiment **exp_id**.
@@ -763,18 +763,16 @@ class GamaSyncClient(GamaAsyncClient):
             "exp_id": exp_id,
             "action": action,
             "args": args,
-            "agent": agent,
-            "escaped": escaped
+            "agent": agent
         }
-        # adding optional parameters
-        if socket_id != "":
-            cmd["socket_id"] = socket_id
+        if escaped is not None:
+            cmd["escaped"] = escaped
         if additional_data:
             cmd.update(additional_data)
 
         return await self.execute_cmd_awaitable(cmd, timeout)
 
-    def ask(self, exp_id: str, action: str, args: Dict, agent: str, escaped: bool, socket_id: str = "",
+    def ask(self, exp_id: str, action: str, args: Dict, agent: str, escaped: Optional[bool] = None,
             additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
         """
         Sends a command to call an action defined in agents in the experiment **exp_id**.
@@ -792,7 +790,7 @@ class GamaSyncClient(GamaAsyncClient):
         :return: the answer to the command sent by gama-server
         """
         return self.event_loop.run_until_complete(
-            self.ask_awaitable(exp_id, action, args, agent, escaped, socket_id, additional_data, timeout))
+            self.ask_awaitable(exp_id, action, args, agent, escaped, additional_data, timeout))
 
     async def upload_awaitable(self, file_path: str, content: str, timeout: float = None) -> Dict[str, Any]:
         """
