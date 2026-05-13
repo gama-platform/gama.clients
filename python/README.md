@@ -1,243 +1,224 @@
-**DISCLAIMER: The following documentation is only compatible with gama-client 1.2.2.**
+**DISCLAIMER: The following documentation is for gama-client 2.0.0 and above. This is a major release containing breaking changes compared to the 1.x versions.**
 
 # Gama client
 
-Gama-client is a Python module designed to facilitate interactions with the headless mode of the modeling and simulation platform known as [gama](https://gama-platform.org/). It is compatible with gama version 1.9.3. This wrapper handles the connection to gama-server and sends properly formatted requests. It is designed to accommodate the asynchronous nature of gama-server, enabling users to manage multiple simulations simultaneously. However, users are responsible for handling received messages, such as command confirmations, simulation outputs, and errors. We provide a functional example that demonstrates how to structure your code for sequential execution.
+Gama-client is a Python module designed to facilitate interactions with the headless mode of the modeling and simulation platform known as [GAMA](https://gama-platform.org/). It handles the connection to gama-server via WebSockets and sends properly formatted JSON requests.
 
-Starting from version 1.2.0 of the wrapper, a new class has been introduced to allow synchronous (blocking) calls to gama-server. It's important to note that using this feature may lead to issues in cases where errors originate from gama-server, as the code might indefinitely wait for a response that will never arrive.
+While the GAMA server operates asynchronously, `gama-client` provides multiple paradigms to interact with it, ranging from a simple synchronous (blocking) API to a fully asynchronous API for advanced parallelism.
 
 # Installation
-In your python environment, install the gama-client package with the command:
+In your Python environment, install the `gama-client` package with the following command:
 
+```bash
+pip install gama-client
 ```
-pip install gama-client==1.2.2
-```
 
-For advanced users, you can find the package on the [pypi website](https://pypi.org/project/gama-client/) and do it yourself instead of using the `pip` tool.
-
-You can check that everything went well by opening a python console and try the following line:
+You can verify the installation by opening a Python console and running:
 
 ```python
-from gama_client.async_client import GamaBaseClient
+from gama_client.sync_client import GamaSyncClient
 ```
 
-If you don't see any error message then `gama-client` has been installed correctly.
+If no errors appear, the installation was successful.
 
-
-# Using it
+# Usage
 
 ## Requirements
+To use `gama-client`, you must have an instance of [GAMA Headless Server](https://gama-platform.org/wiki/HeadlessServer) running (e.g., on `localhost:6868`).
 
-To use `gama-client` you first need to have an instance of [gama-server](https://gama-platform.org/wiki/next/HeadlessServer) open and the python package installed. 
-Then you can interact with gama-server in python using the `GamaBaseClient` or `GamaSyncClient` class.
+---
 
-## Available functions
-The wrapper supports all the commands described in the gama-server [documentation](https://gama-platform.org/wiki/next/HeadlessServer#available-commands).
+## 1. Quick Start: Synchronous Mode (Default & Recommended)
 
-## Quick overview
+The `GamaSyncClient` is the default and simplest way to interact with GAMA. It provides synchronous (blocking) methods for all commands, meaning your Python script will wait for GAMA to finish executing the command before proceeding to the next line. This is ideal for basic model manipulation and sequential scripts.
 
-### GamaBaseClient
-
-As previously mentioned, the `GamaBaseClient` class serves as the typical method for engaging with gama-server, and it operates in an asynchronous manner. Consequently, all messages from gama-server are delivered to a function, 
-which you must customize to respond according to your program's current state and the content of the received messages.
-
-Before doing anything you will have to create an instance of that class with the `url` and `port` of the running gama-server as well as the function that should be called when a message is received.
-for example to connect to a local gama-server running on port 6868 and printing received message:
+### Example:
 
 ```python
 import asyncio
-
-from gama_client.async_client import GamaBaseClient
-
-
-async def message_handler(message):
-    print("received message:", message)
+from gama_client.sync_client import GamaSyncClient
+from gama_client.message_types import MessageTypes
 
 
 async def main():
-    client = GamaBaseClient("localhost", 6868, message_handler)
-    await client.connect(False)
+    # 1. Initialize and connect the client
+    client = GamaSyncClient("localhost", 6868)
+    client.connect()
 
-    while True:
-        await asyncio.sleep(1)
+    # 2. Load a model
+    print("Loading model...")
+    response = client.load("path/to/your/model.gaml", "experiment_name")
+    
+    # Check if successful and get the experiment ID
+    if response["type"] == MessageTypes.CommandExecutedSuccessfully.value:
+        exp_id = response["content"]
+        print(f"Model loaded. Experiment ID: {exp_id}")
+    else:
+        print("Failed to load model:", response)
+        return
 
+    # 3. Run the simulation for 100 steps
+    print("Running 100 steps...")
+    client.step(exp_id, nb_step=100)
+
+    # 4. Evaluate an expression (e.g., get the current cycle)
+    cycle_response = client.expression(exp_id, "cycle")
+    print("Current cycle is:", cycle_response["content"])
+
+    # 5. Change a variable in your simulation
+    var_response = client.expression(exp_id, "my_variable <- 42;")
+    if var_response["type"] == MessageTypes.CommandExecutedSuccessfully.value:
+        print("Variable changed successfully")
+    else:
+        print("Failed to change variable: " + var_response["content"])
+
+    # 6. Clean up
+    client.stop(exp_id)
+    client.close_connection()
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-When running main, your python program should connect to gama-server and when the [ConnectionSuccessful](https://gama-platform.org/wiki/next/HeadlessServer#messages-types) message is sent back to python, the console should show this:
-```yaml
-received message: {'type': 'ConnectionSuccessful', 'content': '480777042'}
-```
-**Note:** make sure to define your `message_handler` as an **async** function, as it's what's expected by `GamaBaseClient`.
 
-As explained in the gama-server documentation [here](https://gama-platform.org/wiki/next/HeadlessServer#connection) and [there](https://gama-platform.org/wiki/next/HeadlessServer#connection-related-answers) you should then use the `content` value (here '480777042') as a **socket id** in the rest of your interactions with gama-server. 
-The class `GamaBaseClient` contains a variable `socket_id` that you can use to store the socket id of your client, or for more simplicity you can connect with:
-```python
-await client.connect(True)
-```
-or
-```python
-await client.connect()
-```
-And the client will take care of handling this first message and setting the `socket_id` by itself.
+---
 
-To explicitly disconnect from gama-server, simply use the `close_connection` function:
-```python
-await client.close_connection()
-```
-you can later reconnect with the same `client` object the same way you did the first time, with the `connect` function.
+## 2. Advanced: Asynchronous Execution
 
-### GamaSyncClient
+### Using Awaitable methods
+If your Python application is heavily based on `asyncio` and you do not want to block the main event loop while waiting for GAMA's responses, you can use the `_awaitable` suffix on any command from the `GamaSyncClient` (e.g., `client.load_awaitable(...)`). 
 
-Alternatively you can use the class `GamaSyncClient` to establish the connection. This is recommended for simple scripts as it makes the call of commands
-easier, but you may encounter some limitation in case of exceptions raised by gama-server for example.
-This class inherits from `GamaBaseClient` and so you can also use it to run async commands if you wish to.
+These methods return a coroutine that you must `await`. The major advantage is that you don't need to manually link the request to the response in a global handler (like in pure async mode) — the `await` returns the exact answer for that specific command. Meanwhile, your Python program can do other things in the background while GAMA is computing.
 
-The connection works like this:
 ```python
 import asyncio
 
+async def do_background_work():
+    print("Doing work while GAMA is loading...")
+    await asyncio.sleep(1)
+
+async def main():
+    client = GamaSyncClient("localhost", 6868)
+    client.connect()
+
+    # Launch a GAMA command and a background task concurrently
+    gama_task = asyncio.create_task(client.load_awaitable("model.gaml", "exp"))
+    other_task = asyncio.create_task(do_background_work())
+
+    # Wait for both
+    response, _ = await asyncio.gather(gama_task, other_task)
+    print("GAMA answered! Experiment ID:", response["content"])
+```
+
+### Pure Asynchronous (Fire-and-forget)
+If you want to manage many simulations simultaneously or send commands without pausing for responses, you should use the pure asynchronous paradigm. 
+
+Every command is available with an `_async` suffix (e.g., `load_async()`, `step_async()`). When called, the command is dispatched immediately, and your script moves to the next line. To catch the responses, simulation outputs, or errors, you must provide a `message_handler` function.
+
+**Did you know? You can mix modes!**
+The `GamaSyncClient` inherits all `_async` methods. This means you can comfortably mix blocking synchronous commands (like `load` to set up a model sequentially) with pure asynchronous commands (like `step_async` to run multiple simulations in parallel) using the same client. To do this, simply provide your handlers during the initialization of the `GamaSyncClient` as shown below.
+
+```python
+import asyncio
 from gama_client.sync_client import GamaSyncClient
-from typing import Dict
 
-async def async_command_answer_handler(message: Dict):
-    print("Here is the answer to an async command: ", message)
+async def async_command_answer_handler(message):
+    print("Answer to an _async command received:", message)
 
-
-async def gama_server_message_handler(message: Dict):
-    print("I just received a message from Gama-server and it's not an answer to a command!")
-    print("Here it is:", message)
+async def gama_server_message_handler(message):
+    print("General message (outputs, errors) received:", message)
 
 async def main():
     client = GamaSyncClient("localhost", 6868, async_command_answer_handler, gama_server_message_handler)
-    await client.connect(False)
+    client.connect()
 
-    while True:
-        await asyncio.sleep(1)
+    # Synchronous loading (easy and safe)
+    res = client.load("path/to/model.gaml", "exp")
+    
+    # Asynchronous step (fire and forget, answer goes to async_command_answer_handler)
+    await client.step_async(res["content"], nb_step=100)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+    # Keep program alive to receive the asynchronous messages
+    await asyncio.sleep(5)
+    client.close_connection()
 ```
 
-This time, you have to provide two message handlers, the first one will be used only for answers of asynchronous commands (the same as in `GamaBaseClient`), the second one will be used for all kind of messages that are not answers to commands (synchronous or not), like for example status bar updates, messages writen in the console, some exceptions etc..
+*(Note: If you only plan to use pure asynchronous commands and want absolute maximum performance, you can use the `GamaAsyncClient` class directly. It strips away the tracking overhead required by the `GamaSyncClient`.)*
 
-The `connect` function works exactly as the `GamaBaseClient` and all the remarks made previously hold for `GamaSyncClient`
+### Retrieving an `_async` command's answer
+Because all asynchronous responses go to the global `message_handler`, tracking which answer corresponds to which command can be difficult. 
 
-### Running commands
-Once connected you will want to run commands, the principle is pretty simple: all commands can be from run your `client` variable through functions. For example if you want to run the [load command](https://gama-platform.org/wiki/next/HeadlessServer#the-load-command) you just have to call the `load` function with the proper parameters.
-```python
-await client.load("path/to/gaml/file", "my_experiment_name")
-```
+To solve this, every `_async` command accepts an `additional_data` dictionary parameter. Any data you pass here will be echoed back by GAMA in the response. You can use this to pass unique IDs (like `uuid` or a counter) to route answers correctly in your handler.
 
+---
 
-If you are using a `GamaBaseClient`, the program will proceed once the command is dispatched to gama-server. However, it won't pause to await the response, whether it's a success, failure, or the result of an expression you requested for evaluation. You will need to manage the response within the `message_handler` function you established when creating your client.
+## Timeout Management
 
-With a client of type `GamaSyncClient`, you have access to those functions too plus synchronous ones. With synchronous functions the program will stop at each command call and wait for gama-server to answer, then the answer will be passed as the return of the command function. 
-Those functions are preceded by the word `sync`. For example the synchronous load functions is called this way:
-```python
-command_answer = await client.sync_load("path/to/gaml/file", "my_experiment_name")
-```
-and the variable `command_answer` will contain the result sent by gama-server containing the experiment id.
+By default, synchronous and awaitable commands have no timeout. To prevent your script from hanging indefinitely if the GAMA server encounters an error or takes too long, you can set a one in two different ways:
 
-### Message handling
-
-#### Filtering messages
-The messages sent back by gama-server all follow the json format and are converted into a python dictionary by the wrapper. Those messages all have a field called `type` that can help you discriminate between them. The complete list of types and what they correspond to is given in the [documentation](https://gama-platform.org/wiki/next/HeadlessServer#messages-types). And on the python's side you can use the enum `MessageTypes` to test the type of a received message. 
-Here is an example of a `message_handler` function that prints a personalised message when a command has been executed successfully:
-```python
-async def message_handler(message):
-    if "type" in message.keys() and message['type'] == MessageTypes.CommandExecutedSuccessfully.value:
-        print("congratulation, a command was executed successfully !")
-    else:
-        print("other kind of message", message)
-```
-**Notes:** 
- * If you use the `MessageTypes` enum, don't forget to use the `value` attribute to compare it to strings
- * As explained before, `message_handler` **must** be `async` even if you don't use `await` inside
- 
-#### Retrieving a command's answer
-
-If you run your client purely asynchronous and have multiple simulations running at the same time, you will encounter the problem of retrieving which message corresponds to which command/simulation.
-
-For the simulation outputs or errors, they simply include an `experiment_id` field that will tell you exactly to which experiment the message corresponds to.
-Answers to commands include a `command` field, containing the entirety of the command it responds to. 
-
-In every command function, there is an optional parameter called `additional_data`, you can use it to store metadata about your command, for example an id, and use it to find to which precise command does an answer responds to because those additional data will also be stored in the `command` field of the answer.
-
-For example here we run 3 identical load commands, and we want to have a special treatment for the second one only, so we give it a special id in the `additional_data` in order to find the corresponding answer in the `message-handler` function:
+- **`GamaSyncClient` Initialization**: You can define a `default_timeout` (in seconds) when instantiating the client. This will apply to all the synchronous and awaitable commands run by this client.
+- **Per-Command Timeout**: Every synchronous and awaitable method accepts a `timeout` parameter to override the default for that specific call.
 
 ```python
-import asyncio
-from typing import Dict
-
-from gama_client.async_client import GamaBaseClient
-
-load_command_secret_id = 123
-other_id = 1
-
-
-async def message_handler(message: Dict):
-    if "command" in message.keys() and "my_secret_id" in message['command'] and message['command'][
-        "my_secret_id"] == load_command_secret_id:
-        print("answer for the load command we wanted to retrieve received:", message)
-    else:
-        print("other kind of message", message)
-
-
-async def main():
-    client = GamaBaseClient("localhost", 6868, message_handler)
-    await client.connect()
-
-    gaml_file = "path/to/gaml/file"
-    expriment = "name of the experiment"
-    # this is not the command we want to retrieve
-    await client.load(gaml_file, expriment, additional_data={"my_secret_id": other_id})
-
-    # this is the command we want to retrieve the answer to
-    await client.load(gaml_file, expriment, additional_data={"my_secret_id": load_command_secret_id})
-
-    # this is not the command we want to retrieve
-    await client.load(gaml_file, expriment, additional_data={"my_secret_id": other_id})
-
-    while True:
-        await asyncio.sleep(1)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
+# Timeout after 60 seconds
+response = client.load("model.gaml", "exp", timeout=60.0) 
 ```
 
+If the timeout is reached, an `asyncio.TimeoutError` is raised.
 
-## Example code
-Some working examples are provided in the `examples` directory, you just have to change the values of the variables `server_url`, `server_port`, `gaml_file_path`, `exp_name` and `exp_parameters` to the one corresponding to your own gama-server and experiment to try it.
-The example `sequential_example.py` focuses on the use of `GamaBaseClient` while `sync_client_example.py` focuses on `GamaSyncClient`. 
- 
+---
+
+## Breaking Changes in 2.0.0
+
+Version 2.0.0 is a major overhaul of the API aimed at standardizing how commands are sent and awaited, and making the synchronous mode more robust.
+
+**Major API Changes:**
+1. **`GamaBaseClient` renamed to `GamaAsyncClient`**: The class providing the pure asynchronous (fire-and-forget) implementation has been renamed for clarity.
+2. **Method suffixing in `GamaAsyncClient`**: All command methods in the async client have been suffixed with `_async` (e.g., `load()` is now `load_async()`, `step()` is `step_async()`).
+3. **Synchronous methods are now the default names**: In `GamaSyncClient`, the clean method names (e.g., `load()`, `step()`) now refer to the fully synchronous, blocking versions. (Previously, these names were used for the async versions inherited from the base client).
+4. **`_awaitable` methods introduced**: `GamaSyncClient` now provides `_awaitable` versions for all commands (e.g., `load_awaitable()`) for users who want to await the server's response in an `async` loop without blocking the entire thread.
+
+**New Features & Fixes:**
+- **Timeouts**: All synchronous and awaitable commands now support a `timeout` parameter (and the client accepts a `default_timeout` upon initialization) to prevent the program from hanging indefinitely if GAMA Server fails to respond. This resolves major hanging issues encountered in previous versions.
+- **Full Parity**: Missing commands like `ask`, `upload`, `download`, and `exit` have been fully implemented across all three modes (`async`, `awaitable`, `sync`).
+- **Unified Test Suite**: Complete refactoring of the test suites, ensuring identical coverage and behavior validation for all three API modes.
+
+---
+
+## Example Code
+
+Working examples can be found in the `examples` directory of the repository. You simply need to adjust the variables (`server_url`, `gaml_file_path`, etc.) to match your local setup.
+
+- The `sync_examples` directory focuses on the recommended `GamaSyncClient`.
+- The `async_examples` directory demonstrates the pure `GamaAsyncClient` usage.
+
+---
+
 # To generate a new release (for contributors only)
-## Upload the new files to pypi
+
+## Using github action
+
+There is a github action: `.github/workflows/python-publish.yml` that automatically builds and uploads the new files to pypi. 
+
+## Manually the new files to pypi
 For reference: this documentation is based on this [tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/#generating-distribution-archives). Please check it out for more details about tools to install and/or context.
 
 * increment the version number in `pyproject.toml`
 * commit your changes to github
 * make sure you installed the required tools by running
-```
-python -m pip install --upgrade build
-```
-```
-python -m pip install --upgrade twine
+```bash
+python -m pip install --upgrade build twine
 ```
 * in the project's folder, to build the library, run
-```
+```bash
 python -m build
 ```
 * then, to upload the generated files, run
-```
+```bash
 python -m twine upload --repository pypi dist/*
 ```
 * on github, go to releases
 * click on create a new release
 * in tag, create a new tag with the new release number
 * add a description of the changes
-* in binaries, upload the two .whl files generated by the `build` command
+* in binaries, upload the two `.whl` and `.tar.gz` files generated by the `build` command
 * click on `publish release`
