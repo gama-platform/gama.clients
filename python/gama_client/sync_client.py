@@ -88,7 +88,9 @@ class GamaSyncClient(GamaAsyncClient):
             self.futures.pop(command_id, None)
 
 
-    async def connect_awaitable(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20, ping_timeout: float = 20, timeout: float = None) -> None:
+    async def connect_awaitable(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20,
+                                ping_timeout: float = 20, timeout: float = None,
+                                max_size: int | None = None) -> None:
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
@@ -102,14 +104,16 @@ class GamaSyncClient(GamaAsyncClient):
         :param ping_timeout: The time the client is waiting for an answer to the ping sent before declaring that the connection is lost (part of
             the keepalive loop)
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :param max_size: Maximum size of incoming messages in bytes. None for unlimited.
         :returns: Returns either once the listening loop starts if set_socket_id is False or when
             a socket_id is sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
-        return await asyncio.wait_for(self.connect_async(set_socket_id, ping_interval, ping_timeout), timeout=timeout)
+        return await asyncio.wait_for(self.connect_async(set_socket_id, ping_interval, ping_timeout, max_size), timeout=timeout)
 
     def connect(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20,
-                ping_timeout: float = 20, timeout: float = None) -> None:
+                ping_timeout: float = 20, timeout: float = None,
+                max_size: int | None = None) -> None:
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
@@ -123,11 +127,12 @@ class GamaSyncClient(GamaAsyncClient):
         :param ping_timeout: The time the client is waiting for an answer to the ping sent before declaring that the connection is lost (part of
             the keepalive loop)
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
+        :param max_size: Maximum size of incoming messages in bytes. None for unlimited.
         :returns: Returns either once the listening loop starts if set_socket_id is False or when
             a socket_id is sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
-        self.event_loop.run_until_complete(self.connect_awaitable(set_socket_id, ping_interval, ping_timeout, timeout))
+        self.event_loop.run_until_complete(self.connect_awaitable(set_socket_id, ping_interval, ping_timeout, timeout, max_size))
 
     async def load_awaitable(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                              dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",

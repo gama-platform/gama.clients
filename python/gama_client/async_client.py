@@ -34,7 +34,8 @@ class GamaAsyncClient:
         self.connection_future = None
 
     async def connect_async(self, set_socket_id: bool = True, ping_interval: Any | float = 20,
-                            ping_timeout: float = 20):
+                            ping_timeout: float = 20,
+                            max_size: int | None = None):
         """
         Tries to connect the client to gama-server using the url and port given at the initialization.
         Once the connection is done it runs **start_listening_loop** and sets **socket_id** if **set_socket_id**
@@ -48,13 +49,14 @@ class GamaAsyncClient:
         :param ping_timeout: The time
             the client is waiting for an answer to the ping sent before declaring that the connection is lost (part of
             the keepalive loop)
+        :param max_size: Maximum size of incoming messages in bytes. None for unlimited.
         :returns: Returns either once the listening loop starts if set_socket_id is False or when
             a socket_id is sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
         self.connection_future = self.event_loop.create_future()
         self.socket = await websockets.connect(f"ws://{self.url}:{self.port}", ping_interval=ping_interval,
-                                               ping_timeout=ping_timeout)
+                                               ping_timeout=ping_timeout, max_size=max_size)
         self.event_loop.create_task(self.start_listening_loop(set_socket_id))
         if set_socket_id:
             self.socket_id = await self.connection_future
