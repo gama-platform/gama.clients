@@ -109,6 +109,8 @@ class GamaSyncClient(GamaAsyncClient):
             a socket_id is sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
+        if timeout is None or timeout <= 0:
+            return await self.connect_async(set_socket_id, ping_interval, ping_timeout, max_size)
         return await asyncio.wait_for(self.connect_async(set_socket_id, ping_interval, ping_timeout, max_size), timeout=timeout)
 
     def connect(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20,
