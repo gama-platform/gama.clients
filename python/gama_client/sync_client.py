@@ -1,12 +1,13 @@
 import json
 import asyncio
 from asyncio import Future
+
+from itertools import count
 from typing import Dict, Callable, Awaitable, Any, List, Optional
 import nest_asyncio
 
 from gama_client.command_types import CommandTypes
 from gama_client.async_client import GamaAsyncClient
-import uuid
 
 # Mandatory to handle nested asyncio calls
 nest_asyncio.apply()
@@ -15,6 +16,7 @@ nest_asyncio.apply()
 class GamaSyncClient(GamaAsyncClient):
 
     # CLASS VARIABLES
+    _command_counter: count
 
     @staticmethod
     async def default_unregistered_command_handler(message: Dict):
@@ -55,6 +57,7 @@ class GamaSyncClient(GamaAsyncClient):
         """
         super().__init__(url, port, self.sync_message_handler)
         self.futures: Dict[str, Future] = {}
+        self._command_counter = count()
         self.other_message_handler = other_message_handler
         self.unregistered_command_handler = async_command_handler
         self.default_timeout = default_timeout
@@ -70,31 +73,19 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: the answer to the command sent by gama-server
         """
-        command_id: str = str(uuid.uuid1())
+        command_id = str(next(self._command_counter))
 
-        # we add an entry in the command to be able to find it back in the answer messages
         cmd["api_id"] = command_id
         self.futures[command_id] = self.event_loop.create_future()
-        
-        # actually send the command
-        await self.socket.send(json.dumps(cmd))
-        
-        # Use the provided timeout, or fall back to default_timeout
-        actual_timeout = timeout if timeout is not None else self.default_timeout
-
         try:
+            await self.socket.send(json.dumps(cmd))
+
+            actual_timeout = timeout if timeout is not None else self.default_timeout
+            if actual_timeout is None or actual_timeout <= 0:
+                return await self.futures[command_id]
             return await asyncio.wait_for(self.futures[command_id], timeout=actual_timeout)
-        except asyncio.TimeoutError:
-            # Clean up the future to prevent memory leaks
-            if command_id in self.futures:
-                del self.futures[command_id]
-            raise asyncio.TimeoutError(f"Command timed out after {actual_timeout} seconds")
-        except Exception as e:
-            print(e)
-            # Clean up the future on any exception
-            if command_id in self.futures:
-                del self.futures[command_id]
-            raise
+        finally:
+            self.futures.pop(command_id, None)
 
 
     async def connect_awaitable(self, set_socket_id: bool = True, ping_interval: Dict[Any, float] = 20, ping_timeout: float = 20, timeout: float = None) -> None:
