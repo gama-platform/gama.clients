@@ -39,7 +39,6 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
         self.client.connect()
         self.future_console = Future()
         self.sim_id = []
-        await sleep(0.5) # Just a test to see if asyncio is not just too busy
 
     async def test_step_sync_normal(self):
         gama_response = self.client.load(empty_model_path, "ex")
