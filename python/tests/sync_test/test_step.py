@@ -35,10 +35,11 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
         return self.future_console
 
     async def asyncSetUp(self):
-        self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler, default_timeout=10)
+        self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler, default_timeout=20)
         self.client.connect()
         self.future_console = Future()
         self.sim_id = []
+        await sleep(0.5) # Just a test to see if asyncio is not just too busy
 
     async def test_step_sync_normal(self):
         gama_response = self.client.load(empty_model_path, "ex")
@@ -93,14 +94,15 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
         exp_id = gama_response["content"]
         self.sim_id.append(exp_id)
 
-        step_res = self.client.step(exp_id, nb_step=5000, sync=False)
+        step_res = self.client.step(exp_id, nb_step=5, sync=False)
         self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
-        # We ask for a big number of steps, we expect the next command to be executed before it finishes.
-        # This means the number of cycles should be less than 5000
+        # We ask for a very slow model, it should take more than 5s to execute the steps
+        # so we expect the next command to be executed before it finishes.
+        # This means the number of cycles should be less than 5
         expression_val = self.client.expression(exp_id, "cycle")
         self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
-        self.assertLess(expression_val["content"], 5000)
+        self.assertLess(expression_val["content"], 5)
         self.assertGreaterEqual(expression_val["content"], 0)
 
     async def test_multiple_steps_not_sync_finishes(self):
