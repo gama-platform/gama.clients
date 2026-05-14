@@ -1,5 +1,5 @@
 import unittest
-from asyncio import Future
+from asyncio import Future, sleep
 from typing import Dict, Any, List
 
 from gama_client.sync_client import GamaSyncClient
@@ -49,7 +49,7 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
         step_res = self.client.step(exp_id, sync=True)
         self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
-        expression_val = self.client.expression("cycle")
+        expression_val = self.client.expression(exp_id, "cycle")
         self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
         self.assertEqual(expression_val["content"], 1)
 
@@ -61,6 +61,12 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
 
         step_res = self.client.step(exp_id, sync=False)
         self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+        # check that we actually did one step, waiting 2 seconds should be more than enough to see if the cycle increased
+        await sleep(2)
+        expression_val = self.client.expression(exp_id, "cycle")
+        self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.assertEqual(expression_val["content"], 1)
 
     async def test_step_sync_simulation_not_loaded(self):
         step_res = self.client.step("fake_id", sync=True)
@@ -78,7 +84,7 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
         step_res = self.client.step(exp_id, nb_step=5, sync=True)
         self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
-        expression_val = self.client.expression("cycle")
+        expression_val = self.client.expression(exp_id, "cycle")
         self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
         self.assertEqual(expression_val["content"], 5)
 
@@ -92,10 +98,25 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
 
         # We ask for a big number of steps, we expect the next command to be executed before it finishes.
         # This means the number of cycles should be less than 5000
-        expression_val = self.client.expression("cycle")
+        expression_val = self.client.expression(exp_id, "cycle")
         self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
         self.assertLess(expression_val["content"], 5000)
         self.assertGreaterEqual(expression_val["content"], 0)
+
+    async def test_multiple_steps_not_sync_finishes(self):
+        gama_response = self.client.load(empty_model_path, "ex")
+        exp_id = gama_response["content"]
+        self.sim_id.append(exp_id)
+
+        step_res = self.client.step(exp_id, nb_step=5, sync=False)
+        self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+        # wait for the simulation to finish
+        await sleep(2)
+        expression_val = self.client.expression(exp_id, "cycle")
+        self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.assertEqual(expression_val["content"], 5)
+
 
     async def test_step_sync_runtime_error(self):
         gama_response = self.client.load(runtime_error_model_path, "exp", runtime=True)
@@ -193,7 +214,14 @@ class TestStep(unittest.IsolatedAsyncioTestCase):
 
         self.client.step(exp_id, sync=True)
         step_res = self.client.step_back(exp_id, sync=True)
+
+        # Checking that server executed the query
         self.assertEqual(step_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+        # Checking that the step back worked
+        expression_val = self.client.expression(exp_id, "cycle")
+        self.assertEqual(expression_val["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.assertEqual(expression_val["content"], 0)
 
     async def test_step_back_not_sync_normal(self):
         gama_response = self.client.load(empty_model_path, "ex")

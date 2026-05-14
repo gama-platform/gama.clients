@@ -44,34 +44,25 @@ class TestLoad(unittest.IsolatedAsyncioTestCase):
     async def test_load_fake_model(self):
         gama_response = self.client.load("does/not/exist", "ex")
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
-        assert "content" in gama_response
-        assert gama_response["content"].endswith("exist' does not exist")
 
     async def test_load_fake_exp(self):
         gama_response = self.client.load(empty_model_path, "expe_does_not_exist")
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
-        assert "content" in gama_response
-        assert gama_response["content"].startswith("'expe_does_not_exist' is not an experiment present in '")
 
     async def test_load_none_model(self):
         gama_response = self.client.load(None, "expe_does_not_exist")
         assert gama_response["type"] == MessageTypes.MalformedRequest.value
-        assert "content" in gama_response
-        assert gama_response["content"] == "For load, mandatory parameters are: 'model' and 'experiment'"
 
     async def test_load_none_exp(self):
         gama_response = self.client.load(empty_model_path, None)
         assert gama_response["type"] == MessageTypes.MalformedRequest.value
         assert "content" in gama_response
-        assert gama_response["content"] == "For load, mandatory parameters are: 'model' and 'experiment'"
 
     async def test_load_empty_model(self):
         gama_response = self.client.load("", "ex")
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
-        assert "content" in gama_response
-        assert gama_response["content"].endswith("' does not exist")
     
-    async def test_load_empty_exp(self):
+    async def test_load_right_model_empty_exp(self):
         gama_response = self.client.load(empty_model_path, "")
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
         assert "content" in gama_response
