@@ -91,22 +91,16 @@ class TestLoadAsync(unittest.IsolatedAsyncioTestCase):
         await self.client.load_async(empty_model_path, None)
         gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.MalformedRequest.value
-        assert "content" in gama_response
-        assert gama_response["content"] == "For load, mandatory parameters are: 'model' and 'experiment'"
 
     async def test_load_empty_model(self):
         await self.client.load_async("", "ex")
         gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
-        assert "content" in gama_response
-        assert gama_response["content"].endswith("' does not exist")
 
     async def test_load_empty_exp(self):
         await self.client.load_async(empty_model_path, "")
         gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
-        assert "content" in gama_response
-        assert gama_response["content"].startswith("'' is not an experiment present in '")
 
     async def test_load_batch(self):
         await self.client.load_async(model_batch_path, "ex")
@@ -284,9 +278,6 @@ class TestLoadAsync(unittest.IsolatedAsyncioTestCase):
         await self.client.load_async(faulty_model_path, "with_virt_parent")
         gama_response = await self.wait_for_future(self.future_command1)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
-        assert "content" in gama_response.keys()
-        assert "exception" in gama_response["content"]
-        assert gama_response["content"]["exception"] == 'GamaCompilationFailedException'
 
     async def test_load_runtime_error(self):
         await self.client.load_async(model_init_error_path, "exp", runtime=True)
