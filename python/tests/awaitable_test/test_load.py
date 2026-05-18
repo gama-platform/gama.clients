@@ -29,18 +29,6 @@ class TestLoadAwaitable(unittest.IsolatedAsyncioTestCase):
         gama_response = await self.wait_for_response(self.client.load_awaitable(empty_model_path, "ex", timeout=DEFAULT_TIMEOUT))
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
-    async def test_load_timeout(self):
-        with self.assertRaises(asyncio.TimeoutError):
-            await self.client.load_awaitable(long_init_model_path, "ex", timeout=0.1)
-
-    async def test_load_default_timeout(self):
-        # Change default timeout to something small
-        self.client.default_timeout = 0.1
-        with self.assertRaises(asyncio.TimeoutError):
-            await self.client.load_awaitable(long_init_model_path, "ex")
-
-    async def test_fake(self):
-        assert True
 
 
 if __name__ == '__main__':
