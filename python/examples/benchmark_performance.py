@@ -119,16 +119,76 @@ def save_results(results, filename="benchmark_results.json"):
         json.dump(all_data, f, indent=2)
     print(f"Results saved to {filename}")
 
+def _percentile(xs, p):
+    xs = sorted(xs)
+    if not xs:
+        return 0.0
+    k = int(len(xs) * p / 100)
+    return xs[min(k, len(xs) - 1)]
+
+
+def _summarize_run(times_ms):
+    """Compute median + p95 + trimmed mean (excluding top 1%) on a list of times in ms."""
+    import statistics
+    if not times_ms:
+        return {}
+    trimmed = sorted(times_ms)[: max(1, int(len(times_ms) * 0.99))]
+    return {
+        "median": statistics.median(times_ms),
+        "p95": _percentile(times_ms, 95),
+        "p99": _percentile(times_ms, 99),
+        "trimmed_mean": statistics.mean(trimmed),
+        "mean": statistics.mean(times_ms),
+        "stdev": statistics.stdev(times_ms) if len(times_ms) > 1 else 0.0,
+    }
+
+
+def _print_aggregate(label, runs):
+    """Compare N runs of the same label using their medians (stable across runs)."""
+    import statistics
+    step_medians = [r["step_summary"]["median"] for r in runs]
+    expr_medians = [r["expr_summary"]["median"] for r in runs]
+    print(f"\n=== Aggregate over {len(runs)} runs of '{label}' ===")
+    print(f"Step median (ms): min={min(step_medians):.3f} max={max(step_medians):.3f} "
+          f"mean={statistics.mean(step_medians):.3f} "
+          f"stdev={statistics.stdev(step_medians) if len(step_medians) > 1 else 0:.3f}")
+    print(f"Expr median (ms): min={min(expr_medians):.3f} max={max(expr_medians):.3f} "
+          f"mean={statistics.mean(expr_medians):.3f} "
+          f"stdev={statistics.stdev(expr_medians) if len(expr_medians) > 1 else 0:.3f}")
+
+
 async def main():
     label = sys.argv[1] if len(sys.argv) > 1 else "baseline"
     iterations = int(sys.argv[2]) if len(sys.argv) > 2 else 10000
-    
+    n_runs = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+
     print(f"=== GAMA Client Performance Benchmark ===")
     print(f"Label: {label}")
     print(f"Version: {get_version()}")
-    
-    results = await run_benchmark(iterations, label)
-    save_results(results)
+    print(f"Runs: {n_runs} x {iterations} iterations")
+
+    all_runs = []
+    for run_idx in range(n_runs):
+        if n_runs > 1:
+            print(f"\n--- Run {run_idx + 1}/{n_runs} ---")
+        results = await run_benchmark(iterations, label)
+        # Compute richer stats for each run
+        step_ms = [t * 1000 for t in results["step_times"]]
+        expr_ms = [t * 1000 for t in results["expr_times"]]
+        results["step_summary"] = _summarize_run(step_ms)
+        results["expr_summary"] = _summarize_run(expr_ms)
+        print(f"  step  median={results['step_summary']['median']:.3f}ms  "
+              f"p95={results['step_summary']['p95']:.3f}ms  "
+              f"trimmed_mean={results['step_summary']['trimmed_mean']:.3f}ms")
+        print(f"  expr  median={results['expr_summary']['median']:.3f}ms  "
+              f"p95={results['expr_summary']['p95']:.3f}ms  "
+              f"trimmed_mean={results['expr_summary']['trimmed_mean']:.3f}ms")
+        save_results(results)
+        all_runs.append(results)
+
+    if n_runs > 1:
+        _print_aggregate(label, all_runs)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
