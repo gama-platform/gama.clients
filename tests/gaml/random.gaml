@@ -1,13 +1,13 @@
 model random
 
 global{
-    int val;
+    float val;
     reflex r {
-        val <- rnd();
+        val <- rnd(0.0,1.0);
     }
 
 }
 
 experiment ex {
-    parameter "Seed" var:seed;
+    parameter "Seed" var:seed <- 0.0;
 }
