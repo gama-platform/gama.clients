@@ -25,7 +25,7 @@ class TestValidateAwaitable(unittest.IsolatedAsyncioTestCase):
             self.fail(f"Timeout reached: command did not respond within {timeout} seconds")
 
     async def test_validate(self):
-        val_res = await self.wait_for_response(self.client.validate_awaitable(empty_model_path))
+        val_res = await self.wait_for_response(self.client.validate_awaitable("\n".join(open(empty_model_path).readlines()), True, False))
         self.assertEqual(val_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def asyncTearDown(self):
