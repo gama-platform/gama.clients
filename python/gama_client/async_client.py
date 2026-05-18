@@ -52,13 +52,13 @@ class GamaAsyncClient:
         self.connection_future = self.event_loop.create_future()
         self.socket = await websockets.connect(f"ws://{self.url}:{self.port}", ping_interval=ping_interval,
                                                ping_timeout=ping_timeout, max_size=max_size)
-        self.event_loop.create_task(self.start_listening_loop(set_socket_id))
+        self.event_loop.create_task(self.start_listening_connection(set_socket_id))
         if set_socket_id:
             self.socket_id = await self.connection_future
 
-    async def start_listening_loop(self, handle_connection_message: bool):
+    async def start_listening_connection(self, handle_connection_message: bool):
         """
-        Internal method. It starts an infinite listening loop that will transmit gama-server's messages to the
+        Internal method. It starts a listening loop that will transmit gama-server's messages to the
         message_handler function.
 
         :param handle_connection_message: If set to true, the function checks for messages of type ConnectionSuccessful
@@ -66,25 +66,52 @@ class GamaAsyncClient:
             socket_id
         :return: Never returns
         """
+
+        if handle_connection_message:
+            try:
+                mess = await self.socket.recv()
+                try:
+                    js = json.loads(mess)
+                    if  "type" in js \
+                        and "content" in js \
+                        and js["type"] == MessageTypes.ConnectionSuccessful.value:
+                        self.connection_future.set_result(js["content"])
+                    else:
+                        pass # TODO: This is an error
+                except Exception as js_ex:
+                    print("Unable to unpack gama-server messages as a json. Error:", js_ex, "Message received:", mess)
+            except Exception as sock_ex:
+                if self.socket.open:
+                    print("Error while waiting for a message from gama-server. Exiting", sock_ex)
+                    sys.exit(-1) # TODO: should not crash the whole program
+
+        # once we got the first message we start the normal loop
+        await self.start_listening_loop()
+
+
+    async def start_listening_loop(self):
+        """
+        Internal method. It starts an infinite listening loop that will transmit gama-server's messages to the
+        message_handler function.
+
+        :return: Never returns
+        """
         while self.socket.open:
             try:
                 mess = await self.socket.recv()
                 try:
                     js = json.loads(mess)
-                    if handle_connection_message \
-                            and "type" in js \
-                            and "content" in js \
-                            and js["type"] == MessageTypes.ConnectionSuccessful.value:
-
-                        self.connection_future.set_result(js["content"])
-                    else:
-                        await self.message_handler(js)
+                    await self.message_handler(js)
                 except Exception as js_ex:
                     print("Unable to unpack gama-server messages as a json. Error:", js_ex, "Message received:", mess)
             except Exception as sock_ex:
                 if self.socket.open:
                     print("Error while waiting for a message from gama-server. Exiting", sock_ex)
                     sys.exit(-1)
+
+        # we free the connection future at the end just in case, to not lock the client
+        if not self.connection_future.done():
+            self.connection_future.cancel()
 
     async def load_async(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                          dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
