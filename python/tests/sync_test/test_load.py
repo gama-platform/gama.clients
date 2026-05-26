@@ -250,22 +250,37 @@ class TestLoad(unittest.TestCase):
         assert "exception" in gama_response["content"]
         assert gama_response["content"]["exception"] == 'GamaCompilationFailedException'
 
-    def test_load_runtime_error(self):
+    def test_load_runtime_error_in_runtime_messages(self):
+        
+        self._reset_console_future()  # resetting the future for console messages
+        
         gama_response = self.client.load(init_error_model_path, "exp", runtime=True)
-        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        print(gama_response)
+        console_message = self.loop.run_until_complete(asyncio.wait_for(self.future_console, timeout=5))
+        assert console_message["type"] == MessageTypes.SimulationError.value
+
+    def test_load_runtime_error(self):
+                
+        gama_response = self.client.load(init_error_model_path, "exp", runtime=False)
+        # For now we return UnableToExecuteRequest when there's a runtime error during the init
+        # The message in runtime console is a runtime error, but the answer of the command is not
+        # This is because of technical constraints but may change later to be aligned with the message 
+        # in the runtime console and the return of step commands when there's a runtime error during the step 
+        assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value 
+
 
     def test_load_timeout(self):
         self.client.default_timeout = None  # disable default timeout to test the timeout parameter of load
         with self.assertRaises(asyncio.TimeoutError):
-            self.client.load(long_init_model_path, "ex", timeout=1)
+            self.client.load(long_init_model_path, "ex", timeout=10)
 
     def test_load_default_timeout(self):
         # Change default timeout to something small
         old_timeout = self.client.default_timeout
-        self.client.default_timeout = 1
+        self.client.default_timeout = 10
         try:
             with self.assertRaises(asyncio.TimeoutError):
-                self.client.load(long_init_model_path, "ex")
+                self.client.load(long_init_model_path, "ex", timeout=None)  # should use the default timeout of 10 seconds
         finally:
             self.client.default_timeout = old_timeout
 
