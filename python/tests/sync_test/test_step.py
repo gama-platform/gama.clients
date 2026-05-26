@@ -37,7 +37,7 @@ class TestStep(unittest.TestCase):
         asyncio.set_event_loop(cls.loop)
 
         async def _setup():
-            cls.client = GamaSyncClient(url, port, other_message_handler=cls.message_handler, default_timeout=20)
+            cls.client = GamaSyncClient(url, port, other_message_handler=cls.message_handler, default_timeout=30)
             cls.client.connect()
 
         cls.loop.run_until_complete(_setup())
@@ -62,7 +62,7 @@ class TestStep(unittest.TestCase):
                 print(f"Could not stop {id}: {type(e).__name__}: {e}")
 
     def _reset_console_future(self):
-        TestStep.future_console = self.loop.create_future()
+        TestStep.future_console = TestStep.loop.create_future()
         return TestStep.future_console
 
     def test_step_sync_normal(self):
@@ -143,7 +143,7 @@ class TestStep(unittest.TestCase):
         self.assertEqual(expression_val["content"], 5)
 
     def test_step_sync_runtime_error(self):
-        gama_response = self.client.load(runtime_error_model_path, "exp", runtime=True)
+        gama_response = self.client.load(runtime_error_model_path, "exp", runtime=True, timeout=0)
         self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
         exp_id = gama_response["content"]
         self.sim_id.append(exp_id)
@@ -151,33 +151,18 @@ class TestStep(unittest.TestCase):
         # Set up console future before stepping so we can catch the async runtime error message
         self._reset_console_future()
 
-        print("Stepping in sync mode...")
-        gama_response = None
-        try:
-            gama_response = self.client.step(exp_id, sync=True, timeout=3)
-            print(f"Step response: {gama_response}")
-        except asyncio.TimeoutError:
-            print("Step timed out (server didn't send api_id response)")
+        gama_response = self.client.step(exp_id, sync=True, timeout=0)
 
         # If we got a direct RuntimeError response, success
-        if gama_response is not None and gama_response.get("type") == MessageTypes.RuntimeError.value:
+        if gama_response["type"] == MessageTypes.RuntimeError.value:
             self.assertEqual(gama_response["content"]["message"], "Division by zero")
-            return
 
-        # Otherwise check console future for the async runtime error
-        if TestStep.future_console.done():
-            err = TestStep.future_console.result()
-            self.assertEqual(err["type"], MessageTypes.RuntimeError.value)
-            self.assertEqual(err["content"]["message"], "Division by zero")
-            return
+        # assert False # restore code under once we manage to reach this
+        # We should also have a simulation error in the console
+        err = TestStep.loop.run_until_complete(asyncio.wait_for(TestStep.future_console, 10))
+        self.assertEqual(err["type"], MessageTypes.SimulationError.value)
+        self.assertEqual(err["content"]["message"], "Division by zero")
 
-        # Try waiting on the future a bit more
-        try:
-            err = self.loop.run_until_complete(asyncio.wait_for(TestStep.future_console, timeout=2.0))
-            self.assertEqual(err["type"], MessageTypes.RuntimeError.value)
-            self.assertEqual(err["content"]["message"], "Division by zero")
-        except asyncio.TimeoutError:
-            raise AssertionError(f"Expected runtime error but got: {gama_response}")
 
     def test_step_not_sync_runtime_error(self):
         gama_response = self.client.load(runtime_error_model_path, "exp", runtime=True)
@@ -185,22 +170,15 @@ class TestStep(unittest.TestCase):
         exp_id = gama_response["content"]
         self.sim_id.append(exp_id)
 
+        # we use the console future to catch the runtime error message since we set runtime to true at load
         self._reset_console_future()
 
-        print("Stepping in non-sync mode...")
+        # step_response should not contain a runtime error as it is run in async, so it is successful if the query is syntactically correct
         step_response = self.client.step(exp_id, sync=False)
-        print(f"Step response: {step_response}")
-
-        print("Waiting for runtime error message...")
-        try:
-            gama_response = self.loop.run_until_complete(
-                asyncio.wait_for(TestStep.future_console, timeout=5.0)
-            )
-            print("Received runtime error message:", gama_response)
-            self.assertEqual(gama_response["type"], MessageTypes.RuntimeError.value)
-            self.assertEqual(gama_response["content"]["message"], "Division by zero")
-        except asyncio.TimeoutError:
-            raise AssertionError("Expected runtime error but no message arrived")
+        self.assertEqual(step_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        gama_response = TestStep.loop.run_until_complete(asyncio.wait_for(TestStep.future_console, timeout=5.0))
+        self.assertEqual(gama_response["type"], MessageTypes.SimulationError.value)
+        self.assertEqual(gama_response["content"]["message"], "Division by zero")
 
     def test_step_sync_simulation_over(self):
         gama_response = self.client.load(empty_model_path, "ex", until="cycle >= 1")

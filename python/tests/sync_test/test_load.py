@@ -255,13 +255,14 @@ class TestLoad(unittest.TestCase):
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
     def test_load_timeout(self):
+        self.client.default_timeout = None  # disable default timeout to test the timeout parameter of load
         with self.assertRaises(asyncio.TimeoutError):
-            self.client.load(long_init_model_path, "ex", timeout=0.1)
+            self.client.load(long_init_model_path, "ex", timeout=1)
 
     def test_load_default_timeout(self):
         # Change default timeout to something small
         old_timeout = self.client.default_timeout
-        self.client.default_timeout = 0.1
+        self.client.default_timeout = 1
         try:
             with self.assertRaises(asyncio.TimeoutError):
                 self.client.load(long_init_model_path, "ex")

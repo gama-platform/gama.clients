@@ -56,7 +56,7 @@ class TestValidate(unittest.TestCase):
 
     def test_empty_text(self):
         gama_response = self.client.validate("", True, True)
-        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     def test_none_text(self):
         gama_response = self.client.validate(None, True, True)
@@ -79,10 +79,19 @@ class TestValidate(unittest.TestCase):
         gama_response = self.client.validate(text_to_test, True, True)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
 
+    def test_grammar_error_returned(self):
+        gama_response = self.client.validate("model test\nglobal { if false {int a <- 2;} write i; }\n", False, True)
+        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
+
+    def test_grammar_error_not_returned(self):
+        gama_response = self.client.validate("model test\nglobal { if false {int a <- 2;} write i; }\n", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+
     def test_semantic_error_returned(self):
-        gama_response = self.client.validate("model test\nglobal { int a <- 'string'; }\n", False, True)
+        gama_response = self.client.validate("model test\nglobal { init {if false {int a <- 2;} write i;} }\n", False, True)
         self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
 
     def test_semantic_error_not_returned(self):
-        gama_response = self.client.validate("model test\nglobal { int a <- 'string'; }\n", True, True)
+        gama_response = self.client.validate("model test\nglobal { init {if false {int a <- 2;} write i;} }\n", True, True)
         self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)

@@ -7,21 +7,22 @@ from typing import Dict, Any, List, Optional
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
 
-
-empty_model_path = str(Path(__file__).parents[1] / "gaml/empty.gaml")
-model_batch_path = str(Path(__file__).parents[1] / "gaml/empty_batch.gaml")
-model_test_path = str(Path(__file__).parents[1] / "gaml/empty_test.gaml")
-model_console_path = str(Path(__file__).parents[1] / "gaml/console_message.gaml")
-model_to_import_path = str(Path(__file__).parents[1] / "gaml/to_import.gaml")
-model_importing_path = str(Path(__file__).parents[1] / "gaml/importing.gaml")
-faulty_model_path = str(Path(__file__).parents[1] / "gaml/faulty.gaml")
-model_with_param_path = str(Path(__file__).parents[1] / "gaml/experiment_with_params.gaml")
-init_error_model_path = str(Path(__file__).parents[1] / "gaml/init_error.gaml")
-long_init_model_path = str(Path(__file__).parents[1] / "gaml/long_init.gaml")
+from gaml_paths import (
+MODEL_EMPTY as empty_model_path ,
+MODEL_BATCH as model_batch_path,
+MODEL_TEST as model_test_path,
+MODEL_CONSOLE as model_console_path,
+MODEL_TO_IMPORT as model_to_import_path,
+MODEL_IMPORTING as model_importing_path,
+MODEL_FAULTY as faulty_model_path,
+MODEL_WITH_PARAMS as model_with_param_path,
+MODEL_INIT_ERROR as init_error_model_path,
+MODEL_LONG_INIT as long_init_model_path
+)
 
 url = "localhost"
 port = 6868
-default_timeout = 28.0
+default_timeout = 10.0
 
 
 class TestSyncClientCore(unittest.TestCase):
@@ -110,14 +111,17 @@ class TestSyncClientCore(unittest.TestCase):
             exception = True
         assert exception, "Expected a TimeoutError but did not get one"
 
+
     def test_load_with_default_timeout_reached(self):
         """
         Test loading a model that will hang for longer than the default timeout defined in the client.
         """
         exception = False
         try:
-            # This should timeout since the model does not exist
             gama_response = self.client.load(long_init_model_path, "ex")
+            gama_response = self.client.reload(exp_id=gama_response["content"], parameters=[{"type": "float", "name": "seed", "value": 42}]) # we use reload because long_init may have been cached by gama-server from previous tests
+            print(self.client.default_timeout)
+            print("Received response: {}".format(gama_response))
             self.fail("Expected TimeoutError but got response: {}".format(gama_response))
         except asyncio.TimeoutError:
             # Expected behavior, test passes

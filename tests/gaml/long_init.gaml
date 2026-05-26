@@ -6,7 +6,7 @@ global {
     	float start <- gama.machine_time;
     	float planned_duration <- 71; // planned waiting duration in seconds
         //write "waiting";
-        if gama.platform contains "win32"{
+        if upper_case(gama.platform) contains "WIN"{
 	        let l <- command("ping -n " + (planned_duration+1) + " 127.0.0.1 >nul ");
         }
         else{
