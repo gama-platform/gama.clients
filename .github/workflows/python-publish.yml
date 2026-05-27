@@ -12,7 +12,7 @@ on:
   workflow_dispatch: # For manual trigger
     inputs:
       BUMP_VERSION_NUMBER:
-        description: "Version number to bump to (if empty, publish with git number)"
+        description: "Version number to bump to, e.g. 2.0.1 (leading 'v' is stripped; empty = publish current pyproject version)"
         required: false
         default: ""
         type: string
@@ -24,9 +24,10 @@ jobs:
     # Required for PyPI Trusted Publishing (OIDC). Without id-token: write,
     # pypa/gh-action-pypi-publish cannot retrieve the OIDC token and fails with
     # "ACTIONS_ID_TOKEN_REQUEST_TOKEN environment variable was unset".
+    # contents: write is needed for git push (version bump) and gh release create.
     permissions:
       id-token: write
-      contents: write  # needed by the "Bump package version" step below (git push)
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -35,11 +36,24 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Bump package version
+      - name: Normalize version input
+        if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
+        id: version
+        run: |
+          raw='${{ inputs.BUMP_VERSION_NUMBER }}'
+          # Strip leading 'v' if present — pyproject expects a PEP 440 version
+          # (no 'v' prefix), while git tags / release titles conventionally use one.
+          clean="${raw#v}"
+          echo "clean=$clean"   >> "$GITHUB_OUTPUT"
+          echo "tag=v$clean"    >> "$GITHUB_OUTPUT"
+          echo "Resolved: pyproject version='$clean', release tag='v$clean'"
+
+      - name: Bump pyproject.toml version
         if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
         working-directory: ./python
-        run: sed -i "s/^version =.*/version = \"${{ inputs.BUMP_VERSION_NUMBER }}\"/g" ./pyproject.toml
-
+        run: |
+          sed -i "s/^version =.*/version = \"${{ steps.version.outputs.clean }}\"/g" ./pyproject.toml
+          grep '^version' ./pyproject.toml
 
       - name: Build release distributions
         working-directory: ./python
@@ -52,7 +66,7 @@ jobs:
         with:
           packages-dir: ${{ github.workspace }}/python/dist/
 
-      - name: Bump package version
+      - name: Commit version bump
         if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
         working-directory: ./python
         run: |
@@ -60,7 +74,23 @@ jobs:
           git config --global user.name "GAMA Bot"
           git remote set-url origin https://gama-bot:$BOT_TOKEN@github.com/gama-platform/gama.clients.git
           git add ./pyproject.toml
-          git commit -m "Bump package version"
+          git commit -m "Bump python package version to ${{ steps.version.outputs.clean }}"
           git push
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
+      - name: Create GitHub release with built binaries
+        if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
+        working-directory: ./python
+        env:
+          # Using BOT_TOKEN to stay consistent with the commit step above (handles
+          # potential branch/tag protection rules). GITHUB_TOKEN with contents:write
+          # would also work in most cases.
+          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          tag="${{ steps.version.outputs.tag }}"
+          gh release create "$tag" \
+            --target main \
+            --title "Python wrapper $tag" \
+            --notes "Python wrapper $tag — published to PyPI as \`gama_client==${{ steps.version.outputs.clean }}\`." \
+            dist/*
