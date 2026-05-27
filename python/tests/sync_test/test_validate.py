@@ -4,17 +4,7 @@ from typing import List
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
-from gaml_paths import (
-    MODEL_EMPTY as empty_model_path,
-    MODEL_BATCH as empty_model_batch_path,
-    MODEL_TEST as empty_model_test_path,
-    MODEL_CONSOLE as empty_model_console_path,
-    MODEL_TO_IMPORT as empty_model_to_import_path,
-    MODEL_IMPORTING as empty_model_importing_path,
-    MODEL_FAULTY as faulty_model_path,
-    MODEL_WITH_PARAMS as model_with_param_path,
-    MODEL_RUNTIME_ERROR as runtime_error_model_path,
-)
+
 
 url = "localhost"
 port = 6868
@@ -79,19 +69,26 @@ class TestValidate(unittest.TestCase):
         gama_response = self.client.validate(text_to_test, True, True)
         assert gama_response["type"] == MessageTypes.UnableToExecuteRequest.value
 
-    def test_grammar_error_returned(self):
-        gama_response = self.client.validate("model test\nglobal { if false {int a <- 2;} write i; }\n", False, True)
+    def test_using_undeclared_variable_syntax_only(self):
+        gama_response = self.client.validate("model test\nglobal { init {write i;} }\n", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+    def test_using_undeclared_variable_failing(self):
+        gama_response = self.client.validate("model test\nglobal { init {write i;} }\n", False, True)
         self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
 
-    def test_grammar_error_not_returned(self):
+    def test_using_out_of_scope_variable_failing(self):
+        gama_response = self.client.validate("model test\nglobal { init{ if false {int a <- 2;} write a;} }\n", False, True)
+        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
+
+    def test_using_out_of_scope_variable_syntax_only(self):
+        gama_response = self.client.validate("model test\nglobal { init{ if false {int a <- 2;} write a;} }\n", True, True)
+        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+
+    def test_write_code_outside_block_semantic_check(self):
+        gama_response = self.client.validate("model test\nglobal { if false {int a <- 2;} }\n", False, True)
+        self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
+
+    def test_write_code_outside_block_syntax_only(self):
         gama_response = self.client.validate("model test\nglobal { if false {int a <- 2;} write i; }\n", True, True)
-        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
-
-
-    def test_semantic_error_returned(self):
-        gama_response = self.client.validate("model test\nglobal { init {if false {int a <- 2;} write i;} }\n", False, True)
         self.assertEqual(gama_response["type"], MessageTypes.UnableToExecuteRequest.value)
-
-    def test_semantic_error_not_returned(self):
-        gama_response = self.client.validate("model test\nglobal { init {if false {int a <- 2;} write i;} }\n", True, True)
-        self.assertEqual(gama_response["type"], MessageTypes.CommandExecutedSuccessfully.value)
