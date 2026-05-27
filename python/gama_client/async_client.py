@@ -77,13 +77,18 @@ class GamaAsyncClient:
                         and js["type"] == MessageTypes.ConnectionSuccessful.value:
                         self.connection_future.set_result(js["content"])
                     else:
-                        pass # TODO: This is an error
+                        print("First message received from gama-server is not a connection message. Message received:", js, "Exiting")
+                        self.connection_future.set_result(-1)
+                        return
                 except Exception as js_ex:
                     print("Unable to unpack gama-server messages as a json. Error:", js_ex, "Message received:", mess)
+                    self.connection_future.set_result(-1)
+                    return
             except Exception as sock_ex:
                 if self.socket.open:
                     print("Error while waiting for a message from gama-server. Exiting", sock_ex)
-                    sys.exit(-1) # TODO: should not crash the whole program
+                    self.connection_future.set_result(-1)
+                    return
 
         # once we got the first message we start the normal loop
         await self.start_listening_loop()
@@ -106,8 +111,8 @@ class GamaAsyncClient:
                     print("Unable to unpack gama-server messages as a json. Error:", js_ex, "Message received:", mess)
             except Exception as sock_ex:
                 if self.socket.open:
-                    print("Error while waiting for a message from gama-server. Exiting", sock_ex)
-                    sys.exit(-1)
+                    print("Error while waiting for a message from gama-server. Exiting the listening loop", sock_ex)
+                    self.socket.close()
 
         # we free the connection future at the end just in case, to not lock the client
         if not self.connection_future.done():
