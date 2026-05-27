@@ -21,6 +21,13 @@ jobs:
   release-build:
     runs-on: ubuntu-latest
 
+    # Required for PyPI Trusted Publishing (OIDC). Without id-token: write,
+    # pypa/gh-action-pypi-publish cannot retrieve the OIDC token and fails with
+    # "ACTIONS_ID_TOKEN_REQUEST_TOKEN environment variable was unset".
+    permissions:
+      id-token: write
+      contents: write  # needed by the "Bump package version" step below (git push)
+
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +38,7 @@ jobs:
       - name: Bump package version
         if: "${{ inputs.BUMP_VERSION_NUMBER != '' }}"
         working-directory: ./python
-        run: sed "s/^version =.*/version = \"${{ inputs.BUMP_VERSION_NUMBER }}\"/g" ./pyproject.toml
+        run: sed -i "s/^version =.*/version = \"${{ inputs.BUMP_VERSION_NUMBER }}\"/g" ./pyproject.toml
 
 
       - name: Build release distributions
