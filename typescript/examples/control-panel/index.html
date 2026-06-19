@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>GAMA Control Panel — gama-client example</title>
+
+	<!--
+		Import map: resolves the library by name to the published npm package via the
+		esm.sh CDN. esm.sh bundles its dependencies (e.g. @logtape/logtape) automatically,
+		so there is nothing to install or build — just open this page over http(s).
+	-->
+	<script type="importmap">
+	{
+		"imports": {
+			"@gama-platform/gama-client": "https://esm.sh/@gama-platform/gama-client@2.0.1"
+		}
+	}
+	</script>
+
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #1e1e2e;
+			--panel: #27293d;
+			--accent: #ff5722;
+			--text: #e4e4e7;
+			--muted: #9ca3af;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font: 14px/1.5 'Segoe UI', system-ui, sans-serif;
+			background: var(--bg);
+			color: var(--text);
+			display: flex;
+			min-height: 100vh;
+		}
+
+		.panel {
+			width: 420px;
+			flex: 0 0 420px;
+			padding: 20px;
+			background: var(--panel);
+			overflow-y: auto;
+		}
+
+		.log {
+			flex: 1;
+			padding: 20px;
+			margin: 0;
+			font-family: ui-monospace, 'Cascadia Code', monospace;
+			font-size: 12px;
+			white-space: pre-wrap;
+			word-break: break-word;
+			overflow-y: auto;
+		}
+
+		h1 {
+			font-size: 18px;
+			margin: 0 0 4px;
+		}
+
+		.sub {
+			color: var(--muted);
+			margin: 0 0 16px;
+			font-size: 12px;
+		}
+
+		label {
+			display: block;
+			margin: 10px 0 3px;
+			font-size: 12px;
+			color: var(--muted);
+		}
+
+		input,
+		textarea {
+			width: 100%;
+			padding: 7px 9px;
+			border-radius: 6px;
+			border: 1px solid #3b3d54;
+			background: #1b1c2b;
+			color: var(--text);
+			font-family: inherit;
+		}
+
+		textarea {
+			font-family: ui-monospace, monospace;
+			font-size: 12px;
+			resize: vertical;
+		}
+
+		.row {
+			display: flex;
+			gap: 8px;
+		}
+
+		.row>div {
+			flex: 1;
+		}
+
+		.buttons {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 16px;
+		}
+
+		button {
+			flex: 1 1 auto;
+			min-width: 72px;
+			padding: 9px 12px;
+			border: 0;
+			border-radius: 6px;
+			background: #3b3d54;
+			color: var(--text);
+			cursor: pointer;
+			font-weight: 600;
+		}
+
+		button:hover:not(:disabled) {
+			background: #4b4d68;
+		}
+
+		button.primary {
+			background: var(--accent);
+			color: #fff;
+		}
+
+		button:disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+		}
+
+		.status {
+			margin-top: 14px;
+			padding: 8px 10px;
+			border-radius: 6px;
+			background: #1b1c2b;
+			font-size: 12px;
+		}
+
+		.dot {
+			display: inline-block;
+			width: 9px;
+			height: 9px;
+			border-radius: 50%;
+			background: #ef4444;
+			margin-right: 6px;
+			vertical-align: middle;
+		}
+
+		.dot.on {
+			background: #22c55e;
+		}
+
+		.log-line {
+			padding: 2px 0;
+			border-bottom: 1px solid #2c2e44;
+		}
+
+		.log-line.sent {
+			color: #60a5fa;
+		}
+
+		.log-line.recv {
+			color: #a3e635;
+		}
+
+		.log-line.err {
+			color: #f87171;
+		}
+
+		.log-line.info {
+			color: var(--muted);
+		}
+	</style>
+</head>
+
+<body>
+	<div class="panel">
+		<h1>GAMA Control Panel</h1>
+		<p class="sub">Drives a GAMA experiment through <code>@gama-platform/gama-client</code>.</p>
+
+		<div class="row">
+			<div>
+				<label for="host">Host</label>
+				<input id="host" value="localhost" />
+			</div>
+			<div>
+				<label for="port">Port</label>
+				<input id="port" value="1000" />
+			</div>
+		</div>
+
+		<label for="model">Model path (absolute, on the GAMA server)</label>
+		<input id="model"
+			value="/Users/hqn88/git/gama/msi.gama.models/models/Tutorials/Road Traffic/models/Model 05.gaml" />
+
+		<label for="exp">Experiment name</label>
+		<input id="exp" value="road_traffic" />
+
+		<label for="params">Parameters (JSON array)</label>
+		<textarea id="params" rows="4">[
+  { "name": "Number of people agents", "value": 111, "type": "int" },
+  { "name": "Value of destruction when a people agent takes a road", "value": 0.2, "type": "float" }
+]</textarea>
+
+		<label for="until">End condition (GAML, optional)</label>
+		<input id="until" value="cycle>=15" />
+
+		<label for="expr">Expression to evaluate</label>
+		<input id="expr" value="cycle" />
+
+		<div class="buttons">
+			<button id="btn-connect" class="primary">Connect</button>
+			<button id="btn-load" disabled>Load</button>
+			<button id="btn-play" disabled>Play</button>
+			<button id="btn-pause" disabled>Pause</button>
+			<button id="btn-step" disabled>Step</button>
+			<button id="btn-reload" disabled>Reload</button>
+			<button id="btn-eval" disabled>Eval</button>
+			<button id="btn-stop" disabled>Stop</button>
+			<button id="btn-disconnect" disabled>Disconnect</button>
+		</div>
+
+		<div class="status">
+			<span id="dot" class="dot"></span><span id="state">Disconnected</span>
+		</div>
+	</div>
+
+	<div id="log" class="log"></div>
+
+	<script type="module">
+		import GamaClient from "@gama-platform/gama-client";
+
+		const $ = (id) => document.getElementById(id);
+		const logEl = $("log");
+
+		function log(msg, kind = "info") {
+			const line = document.createElement("div");
+			line.className = `log-line ${kind}`;
+			const time = new Date().toLocaleTimeString();
+			line.textContent =
+				typeof msg === "string" ? `[${time}] ${msg}` : `[${time}] ${JSON.stringify(msg)}`;
+			logEl.appendChild(line);
+			logEl.scrollTop = logEl.scrollHeight;
+		}
+
+		/** @type {GamaClient | null} */
+		let client = null;
+
+		const controlButtons = [
+			"load", "play", "pause", "step", "reload", "eval", "stop", "disconnect",
+		];
+		function setConnected(on) {
+			$("dot").classList.toggle("on", on);
+			$("state").textContent = on ? "Connected" : "Disconnected";
+			$("btn-connect").disabled = on;
+			for (const id of controlButtons) $(`btn-${id}`).disabled = !on;
+		}
+
+		function parseParams() {
+			const raw = $("params").value.trim();
+			if (!raw) return undefined;
+			try {
+				return JSON.parse(raw);
+			} catch (e) {
+				log(`Invalid parameters JSON: ${e.message}`, "err");
+				throw e;
+			}
+		}
+
+		/** Wrap an async handler so errors land in the log instead of the console. */
+		function guard(fn) {
+			return async () => {
+				try {
+					await fn();
+				} catch (e) {
+					log(e.message ?? String(e), "err");
+				}
+			};
+		}
+
+		$("btn-connect").onclick = guard(async () => {
+			const host = $("host").value.trim();
+			const port = Number($("port").value.trim());
+			client = new GamaClient(port, host);
+			log(`Connecting to ws://${host}:${port} ...`);
+			await client.connectGama();
+
+			// Single listener mirroring every server message into the log.
+			client.onMessage((data) => {
+				const kind = /error|Malformed|Unable/i.test(data.type) ? "err" : "recv";
+				log(`◀ ${data.type}${data.content ? ": " + data.content : ""}`, kind);
+			});
+
+			setConnected(true);
+			log("Connected.", "recv");
+		});
+
+		$("btn-load").onclick = guard(async () => {
+			const params = parseParams();
+			const until = $("until").value.trim();
+			log(`▶ load ${$("exp").value}`, "sent");
+			await client.loadExperiment(
+				$("model").value,
+				$("exp").value,
+				/* console */ true,
+				/* status  */ true,
+				/* dialog  */ false,
+				/* runtime */ true,
+				params,
+				until || undefined,
+			);
+			log(`Loaded — experiment id ${client.getExperimentId()}`, "recv");
+		});
+
+		$("btn-play").onclick = guard(async () => {
+			log("▶ play", "sent");
+			await client.play();
+		});
+
+		$("btn-pause").onclick = guard(async () => {
+			log("▶ pause", "sent");
+			await client.pause();
+		});
+
+		$("btn-step").onclick = guard(async () => {
+			log("▶ step", "sent");
+			await client.step();
+		});
+
+		$("btn-reload").onclick = guard(async () => {
+			const params = parseParams();
+			const until = $("until").value.trim();
+			log("▶ reload", "sent");
+			await client.reload(undefined, params, until || undefined);
+		});
+
+		$("btn-eval").onclick = guard(async () => {
+			const expr = $("expr").value;
+			log(`▶ expression: ${expr}`, "sent");
+			const result = await client.expression(expr);
+			log(`= ${result.content}`, "recv");
+		});
+
+		$("btn-stop").onclick = guard(async () => {
+			log("▶ stop", "sent");
+			await client.stop();
+		});
+
+		$("btn-disconnect").onclick = guard(async () => {
+			await client.closeConnection();
+			client = null;
+			setConnected(false);
+			log("Disconnected.");
+		});
+
+		log("Ready. Make sure a GAMA server is running, then press Connect.");
+	</script>
+</body>
+
+</html>

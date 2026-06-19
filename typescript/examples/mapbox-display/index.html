@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>GAMA Mapbox Display — gama-client example</title>
+
+	<!--
+		Import map: resolves the library by name to the published npm package via the
+		esm.sh CDN. esm.sh bundles its dependencies (e.g. @logtape/logtape) automatically,
+		so there is nothing to install or build — just open this page over http(s).
+	-->
+	<script type="importmap">
+	{
+		"imports": {
+			"@gama-platform/gama-client": "https://esm.sh/@gama-platform/gama-client@2.0.1"
+		}
+	}
+	</script>
+
+	<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet" />
+	<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
+
+	<style>
+		body {
+			margin: 0;
+			font: 14px/1.5 'Segoe UI', system-ui, sans-serif;
+		}
+
+		#map {
+			position: absolute;
+			inset: 0;
+		}
+
+		#hud {
+			position: absolute;
+			top: 12px;
+			left: 12px;
+			z-index: 2;
+			background: rgba(20, 20, 30, 0.85);
+			color: #e4e4e7;
+			padding: 14px 16px;
+			border-radius: 8px;
+			width: 280px;
+		}
+
+		#hud h1 {
+			font-size: 15px;
+			margin: 0 0 10px;
+		}
+
+		#hud button {
+			width: 100%;
+			padding: 9px;
+			margin-top: 8px;
+			border: 0;
+			border-radius: 6px;
+			background: #ff5722;
+			color: #fff;
+			font-weight: 600;
+			cursor: pointer;
+		}
+
+		#hud button:disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+		}
+
+		#hud label {
+			display: block;
+			margin-top: 8px;
+			font-size: 12px;
+			color: #9ca3af;
+		}
+
+		#hud input {
+			width: 100%;
+			margin-top: 4px;
+			padding: 7px 8px;
+			border-radius: 6px;
+			border: 1px solid #3b3d54;
+			background: #1b1c2b;
+			color: #e4e4e7;
+			font-size: 12px;
+			box-sizing: border-box;
+		}
+
+		#gama-state {
+			margin-top: 10px;
+			font-size: 12px;
+		}
+
+		#gama-state b {
+			color: #ff5722;
+		}
+
+		#status {
+			margin-top: 10px;
+			font-size: 12px;
+			color: #9ca3af;
+			max-height: 120px;
+			overflow-y: auto;
+		}
+
+		.loader {
+			position: absolute;
+			inset: 0;
+			z-index: 3;
+			display: none;
+			align-items: center;
+			justify-content: center;
+			background: rgba(0, 0, 0, 0.35);
+			color: #fff;
+			font-size: 18px;
+		}
+
+		.loader.on {
+			display: flex;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="map"></div>
+	<div id="loader" class="loader">Loading simulation…</div>
+
+	<div id="hud">
+		<h1>GAMA → Mapbox</h1>
+		<label for="mapbox-token">Mapbox access token</label>
+		<input id="mapbox-token" type="text" spellcheck="false"
+			placeholder="pk.…" />
+		<label for="model-path">Model path (on the GAMA server)</label>
+		<input id="model-path" type="text" spellcheck="false"
+			placeholder="…/SaReine/models/Plan_des_pistes.gaml" />
+		<button id="btn-start">Start simulation</button>
+		<button id="btn-stop" disabled>Stop</button>
+		<div id="gama-state">GAMA: <b>—</b></div>
+		<div id="status">Idle.</div>
+	</div>
+
+	<script type="module">
+		import GamaClient from "@gama-platform/gama-client";
+
+		// --- Configuration (matches the original Plan_des_pistes demo) ---------------
+		const HOST = "localhost";
+		const PORT = 6868;
+		const MODEL_PATH =
+			"Documents/Github/agrignard/SaReine/SaReine/models/Plan_des_pistes.gaml";
+		const EXPERIMENT = "demo";
+		const CRS = "EPSG:4326";
+
+		// Species rendered on the map and the attribute carried in their GeoJSON.
+		const AGENTS = { species: "people", attribute: "objective" };
+		const BUILDINGS = { species: "building", attribute: "type" };
+
+		// Mapbox needs an access token (https://account.mapbox.com/access-tokens/).
+		// It is read from the input field at start time, never hardcoded here.
+
+		// Building extrusion height range (metres), assigned randomly per feature.
+		const BUILDING_MIN_HEIGHT = 8;
+		const BUILDING_MAX_HEIGHT = 60;
+
+		const $ = (id) => document.getElementById(id);
+		const setStatus = (msg) => {
+			$("status").textContent = msg;
+			console.log("[status]", msg);
+		};
+		const setGamaState = (state) => {
+			$("gama-state").innerHTML = `GAMA: <b>${state}</b>`;
+		};
+		const loader = (on) => $("loader").classList.toggle("on", on);
+
+		// Prefill the model-path field with the SaReine default; editable in the UI.
+		$("model-path").value = MODEL_PATH;
+
+		// Restore a previously entered Mapbox token (kept only in this browser).
+		const TOKEN_KEY = "gama-mapbox-token";
+		$("mapbox-token").value = localStorage.getItem(TOKEN_KEY) ?? "";
+
+		const EMPTY_GEOJSON = { type: "FeatureCollection", features: [] };
+
+		/** Give every building feature a random "height" property for 3D extrusion. */
+		function withRandomHeights(geojson) {
+			for (const feature of geojson.features ?? []) {
+				feature.properties = feature.properties ?? {};
+				feature.properties.height =
+					BUILDING_MIN_HEIGHT +
+					Math.random() * (BUILDING_MAX_HEIGHT - BUILDING_MIN_HEIGHT);
+			}
+			return geojson;
+		}
+
+		// The map is created lazily on first Start, once a Mapbox token is available
+		// (mapboxgl.Map throws if no token is set). Resolves when the style has loaded.
+		let map = null;
+		function initMap(token) {
+			mapboxgl.accessToken = token;
+			map = new mapboxgl.Map({
+				container: "map",
+				style: "mapbox://styles/mapbox/satellite-v9",
+				center: [-7.991405559068491, 31.62418156481035],
+				zoom: 13,
+				pitch: 45,
+				bearing: -17.6,
+				antialias: true,
+			});
+
+			return new Promise((resolve, reject) => {
+				map.on("error", (e) => reject(e?.error ?? new Error("Mapbox failed to load")));
+				map.on("load", () => {
+					setupLayers();
+					resolve();
+				});
+			});
+		}
+
+		function setupLayers() {
+			map.addSource(BUILDINGS.species, { type: "geojson", data: EMPTY_GEOJSON });
+			map.addSource(AGENTS.species, { type: "geojson", data: EMPTY_GEOJSON });
+
+			map.addLayer({
+				id: "buildings-fill",
+				type: "fill-extrusion",
+				source: BUILDINGS.species,
+				paint: {
+					"fill-extrusion-color": [
+						"match", ["get", BUILDINGS.attribute],
+						"commerce", "green",
+						"gare", "red", "Musee", "red",
+						"habitat", "blue", "culte", "blue", "Industrial", "blue",
+						"gray",
+					],
+					// Height comes from the per-feature "height" property we inject on load.
+					"fill-extrusion-height": ["get", "height"],
+					"fill-extrusion-base": 0,
+					"fill-extrusion-opacity": 0.85,
+				},
+			});
+			map.addLayer({
+				id: "agents-circle",
+				type: "circle",
+				source: AGENTS.species,
+				paint: { "circle-radius": 5, "circle-color": "red" },
+			});
+
+			map.setFog({ range: [-0.5, 5], color: "white", "horizon-blend": 0.2 });
+
+			// Atmospheric sky over the horizon (visible thanks to the 45° pitch).
+			map.addLayer({
+				id: "sky",
+				type: "sky",
+				paint: {
+					"sky-type": "atmosphere",
+					"sky-atmosphere-color": "rgba(85, 151, 210, 0.5)",
+				},
+			});
+
+			// 3D terrain: raster-DEM source + slight exaggeration for relief.
+			map.addSource("mapbox-dem", {
+				type: "raster-dem",
+				url: "mapbox://mapbox.terrain-rgb",
+				tileSize: 512,
+				maxzoom: 14,
+			});
+			map.setTerrain({ source: "mapbox-dem", exaggeration: 1.0 });
+		}
+
+		/** @type {GamaClient | null} */
+		let client = null;
+		let running = false;
+
+		/** Evaluate a GAML expression and return its parsed GeoJSON content. */
+		async function fetchGeoJSON(species, attribute) {
+			const res = await client.expression(
+				`to_geojson(${species},"${CRS}",["${attribute}"])`,
+			);
+			return typeof res.content === "string" ? JSON.parse(res.content) : res.content;
+		}
+
+		/**
+		 * Render loop. Unlike the original 1ms setInterval flood, each frame awaits the
+		 * previous expression before requesting the next — natural backpressure, no
+		 * overlapping requests, and it stops cleanly when `running` flips to false.
+		 */
+		async function renderLoop() {
+			while (running) {
+				try {
+					map.getSource(AGENTS.species).setData(await fetchGeoJSON(AGENTS.species, AGENTS.attribute));
+				} catch (e) {
+					setStatus(`Render error: ${e.message}`);
+				}
+				await new Promise((r) => requestAnimationFrame(r));
+			}
+		}
+
+		async function centerOnWorld() {
+			// GAMA returns the transformed point's content either as a structured object
+			// ({x, y, z}) or as a string ("{lon,lat,z}", "POINT (lon lat)", …). Handle both.
+			const res = await client.expression(`CRS_transform(world.location,"${CRS}")`);
+			const c = res.content;
+			console.log("[centerOnWorld] raw content:", c);
+
+			let lon, lat;
+			if (c && typeof c === "object" && Number.isFinite(+c.x) && Number.isFinite(+c.y)) {
+				[lon, lat] = [+c.x, +c.y];
+			} else {
+				const text = typeof c === "string" ? c : JSON.stringify(c);
+				const nums = text.match(/-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?/g);
+				if (!nums || nums.length < 2) {
+					throw new Error(`couldn't read world centre from ${JSON.stringify(c)}`);
+				}
+				[lon, lat] = [parseFloat(nums[0]), parseFloat(nums[1])];
+			}
+			map.flyTo({ center: [lon, lat], zoom: 15, duration: 0, essential: true });
+		}
+
+		$("btn-start").onclick = async () => {
+			const token = $("mapbox-token").value.trim();
+			if (!token) {
+				setStatus("Please enter a Mapbox access token first.");
+				$("mapbox-token").focus();
+				return;
+			}
+
+			$("btn-start").disabled = true;
+			loader(true);
+			try {
+				// Create the map on first start, once we have a token.
+				if (!map) {
+					localStorage.setItem(TOKEN_KEY, token);
+					setStatus("Loading map …");
+					await initMap(token);
+				}
+
+				const modelPath = $("model-path").value.trim() || MODEL_PATH;
+				client = new GamaClient(PORT, HOST);
+				setStatus(`Connecting to ws://${HOST}:${PORT} …`);
+				await client.connectGama();
+
+				// Track GAMA's real experiment status. SimulationStatus carries the live
+				// state (RUNNING / PAUSED / NONE); SimulationEnded means the run finished.
+				client.onMessage((data) => {
+					if (data.type === "SimulationStatus" && data.content) {
+						setGamaState(data.content);
+						if (data.content === "NONE") running = false;
+					} else if (data.type === "SimulationEnded") {
+						setGamaState("ENDED");
+						running = false;
+						$("btn-stop").disabled = true;
+						$("btn-start").disabled = false;
+						setStatus("Simulation ended.");
+					}
+				});
+
+				setStatus("Loading experiment …");
+				await client.loadExperiment(modelPath, EXPERIMENT, false, true, false, true);
+
+				setStatus("Centering map …");
+				// Non-fatal: if centring fails, keep going so agents still render.
+				try {
+					await centerOnWorld();
+				} catch (e) {
+					console.warn("Centering failed, keeping current view:", e);
+					setStatus(`Could not centre map (${e.message}); continuing.`);
+				}
+
+				// Buildings are static — fetch them once and give each a random height.
+				setStatus("Loading buildings …");
+				map.getSource(BUILDINGS.species).setData(
+					withRandomHeights(await fetchGeoJSON(BUILDINGS.species, BUILDINGS.attribute)),
+				);
+
+				setStatus("Running.");
+				await client.play();
+
+				running = true;
+				$("btn-stop").disabled = false;
+				renderLoop();
+			} catch (e) {
+				setStatus(`Error: ${e.message ?? e}`);
+				$("btn-start").disabled = false;
+			} finally {
+				loader(false);
+			}
+		};
+
+		$("btn-stop").onclick = async () => {
+			running = false;
+			$("btn-stop").disabled = true;
+			try {
+				await client?.stop();
+				await client?.closeConnection();
+			} catch (e) {
+				setStatus(`Stop error: ${e.message}`);
+			}
+			client = null;
+			map.getSource(AGENTS.species).setData(EMPTY_GEOJSON);
+			setGamaState("—");
+			setStatus("Stopped.");
+			$("btn-start").disabled = false;
+		};
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>gama-client examples</title>
+	<style>
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 24px;
+			font: 16px/1.6 'Segoe UI', system-ui, sans-serif;
+			background: #1e1e2e;
+			color: #e4e4e7;
+		}
+
+		h1 {
+			margin: 0;
+		}
+
+		p {
+			color: #9ca3af;
+			max-width: 460px;
+			text-align: center;
+			margin: 0;
+		}
+
+		.cards {
+			display: flex;
+			gap: 20px;
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+
+		a.card {
+			display: block;
+			width: 240px;
+			padding: 22px;
+			border-radius: 12px;
+			background: #27293d;
+			color: inherit;
+			text-decoration: none;
+			border: 1px solid #3b3d54;
+			transition: transform .12s, border-color .12s;
+		}
+
+		a.card:hover {
+			transform: translateY(-3px);
+			border-color: #ff5722;
+		}
+
+		a.card h2 {
+			margin: 0 0 6px;
+			font-size: 17px;
+		}
+
+		a.card span {
+			color: #9ca3af;
+			font-size: 13px;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>gama-client examples</h1>
+	<p>Browser demos for <code>@gama-platform/gama-client</code>. They need a running GAMA
+		server (JSON WebSocket API, default port 1000).</p>
+	<div class="cards">
+		<a class="card" href="./control-panel/index.html">
+			<h2>Control panel</h2>
+			<span>Connect, load, play, step, pause, reload, evaluate expressions — with a live message log.</span>
+		</a>
+		<a class="card" href="./mapbox-display/index.html">
+			<h2>Mapbox display</h2>
+			<span>Render GAMA agents live on a Mapbox map via <code>to_geojson</code>.</span>
+		</a>
+	</div>
+</body>
+
+</html>
