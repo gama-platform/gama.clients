@@ -8,6 +8,10 @@ on:
 
 jobs:
   unit-test:
+    strategy:
+      matrix:
+        gamaPrelease: [true, false]
+
     runs-on: ubuntu-latest
     if: github.actor != 'gama-bot'
 
@@ -17,7 +21,7 @@ jobs:
       - name: Prepare GAMA to start in headless
         run: |
           sudo apt install -y jq curl wget
-          wget -q $(curl -s "https://api.github.com/repos/gama-platform/gama/releases?per_page=1" | jq '.[] | select(.prerelease == true) | .assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url' | tr -d \") -O "gama-alpha.zip"
+          wget -q $(curl -s "https://api.github.com/repos/gama-platform/gama/releases" | jq '.[] | select(.prerelease == ${{ matrix.gamaPrelease }}) | .assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url' | tr -d \") -O "gama-alpha.zip"
           unzip -q gama-alpha.zip && rm gama-alpha.zip
           bash ./headless/gama-headless.sh -socket 6868 &
           echo "GAMA_HOME=$(pwd)" >> $GITHUB_ENV
