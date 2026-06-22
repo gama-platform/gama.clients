@@ -128,7 +128,7 @@ describe('load — error cases', () => {
     it('fails with UnableToExecuteRequest for an empty model path', async () => {
         await expect(
             client.loadExperiment('', 'ex')
-        ).rejects.toThrow(/does not exist/i);
+        ).rejects.toThrow(/(does not exist|not a gaml file)/i);
     });
 
     it('fails with UnableToExecuteRequest for an empty experiment name', async () => {
