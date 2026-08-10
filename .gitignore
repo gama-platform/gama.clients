@@ -39,3 +39,4 @@ javascript/Docker/server/server.log
 javascript/Docker/server/server.error
 javascript/Docker/client/package-lock.json
 javascript/Docker/server/package-lock.json  
+/.idea

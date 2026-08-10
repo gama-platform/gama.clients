@@ -87,7 +87,7 @@ if __name__ == "__main__":
 ### Using Awaitable methods
 If your Python application is heavily based on `asyncio` and you do not want to block the main event loop while waiting for GAMA's responses, you can use the `_awaitable` suffix on any command from the `GamaSyncClient` (e.g., `client.load_awaitable(...)`). 
 
-These methods return a coroutine that you must `await`. The major advantage is that you don't need to manually link the request to the response in a global handler (like in pure async mode) — the `await` returns the exact answer for that specific command. Meanwhile, your Python program can do other things in the background while GAMA is computing.
+These methods return a coroutine that you must `await`. The major advantage is that you don't need to manually link the request to the response in a global handler (like in pure async mode), the `await` returns the exact answer for that specific command. Meanwhile, your Python program can do other things in the background while GAMA is computing.
 
 ```python
 import asyncio
@@ -190,6 +190,45 @@ Working examples can be found in the `examples` directory of the repository. You
 
 - The `sync_examples` directory focuses on the recommended `GamaSyncClient`.
 - The `async_examples` directory demonstrates the pure `GamaAsyncClient` usage.
+
+---
+
+# Running the tests (for contributors)
+
+The test suite is under `tests/` and is driven by `pytest`. All tests require a live gama-server reachable on `localhost:6868`, start it first, for example with:
+
+```bash
+./gama-headless.sh -socket 6868
+```
+
+Then, from the `python/` directory:
+
+```bash
+pip install -e . pytest
+python -m pytest tests/
+```
+
+Common invocations:
+
+```bash
+# Run one subsuite
+python -m pytest tests/sync_test/
+python -m pytest tests/async_test/
+python -m pytest tests/awaitable_test/
+python -m pytest tests/functional_tests/
+
+# Run a single file or a single test
+python -m pytest tests/sync_test/test_step.py
+python -m pytest tests/sync_test/test_step.py::test_sync_step
+
+# Filter by keyword, with verbose output
+python -m pytest tests/ -k step -v
+
+# Show print() output from tests (useful while debugging)
+python -m pytest tests/ -s
+```
+
+CI runs the same command against a freshly downloaded gama-server pre-release; see `.github/workflows/python-unit-test.yml` if you want to reproduce the CI environment locally.
 
 ---
 

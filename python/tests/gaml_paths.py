@@ -5,6 +5,7 @@ from pathlib import Path
 GAML_DIR = Path(__file__).parents[2] / "tests" / "gaml"
 
 MODEL_EMPTY         = str(GAML_DIR / "empty.gaml")
+MODEL_EMPTY_NO_RECORD = str(GAML_DIR / "empty_no_record.gaml")
 MODEL_BATCH         = str(GAML_DIR / "empty_batch.gaml")
 MODEL_TEST          = str(GAML_DIR / "empty_test.gaml")
 MODEL_SIMPLE        = str(GAML_DIR / "simple.gaml")
