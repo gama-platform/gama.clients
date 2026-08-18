@@ -5,9 +5,9 @@
 
 # testing
 /coverage
+/SaReine
 
 # production
-/javascript/build
 */.cert
 .env
 
@@ -23,20 +23,4 @@ yarn-debug.log*
 *.zip
 *.pem
 .vscode
-
-javascript/Docker/client/build
-javascript/Docker/client/node_modules
-javascript/Docker/client/.DS_Store
-javascript/Docker/client/.env.local
-javascript/Docker/client/.env.development.local
-javascript/Docker/client/.env.test.local
-javascript/Docker/client/.env.production.local 
- 
-javascript/Docker/server/.env
-javascript/Docker/server/node_modules
-javascript/Docker/server/client/node_modules
-javascript/Docker/server/server.log 
-javascript/Docker/server/server.error
-javascript/Docker/client/package-lock.json
-javascript/Docker/server/package-lock.json  
-/.idea
+.idea
