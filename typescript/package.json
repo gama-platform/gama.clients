@@ -8,9 +8,9 @@
     "types": "./dist/gama_client.d.ts",
     "exports": {
         ".": {
+            "types": "./dist/gama_client.d.ts",
             "import": "./dist/gama_client.js",
-            "require": "./dist/gama_client.cjs",
-            "types": "./dist/gama_client.d.ts"
+            "require": "./dist/gama_client.cjs"
         }
     },
     "files": [
@@ -34,7 +34,19 @@
         "typescript": "^5.8.3"
     },
     "scripts": {
-        "build": "tsup src/gama_client.ts --format esm,cjs --dts --out-dir dist",
-        "test": "node --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles"
-    }
+        "build": "tsup",
+        "typecheck": "tsc --noEmit",
+        "test": "node --experimental-vm-modules node_modules/.bin/jest",
+        "test:debug": "node --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles --runInBand"
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/gama-platform/gama.clients.git",
+        "directory": "typescript"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "sideEffects": false
 }
