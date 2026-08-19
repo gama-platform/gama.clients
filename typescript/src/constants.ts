@@ -72,6 +72,26 @@ export const AGENT_REFERENCE_PATTERN = /^[A-Za-z_]\w*\[\d+\](\.[A-Za-z_]\w*\[\d+
  *  command happens to be waiting next. */
 export const CLIENT_COMMAND_ID = "client_command_id";
 
+/** Every command type gama-server accepts. Mirrors Python's CommandTypes enum, and keeps
+ *  the wire spelling in one place: `stepBack` in particular is easy to mistype, and the
+ *  client method that sends it is spelled differently again. */
+export const CommandTypes = {
+    Exit:       "exit",
+    Load:       "load",
+    Play:       "play",
+    Pause:      "pause",
+    Step:       "step",
+    StepBack:   "stepBack",
+    Reload:     "reload",
+    Stop:       "stop",
+    Expression: "expression",
+    Download:   "download",
+    Upload:     "upload",
+    Validate:   "validate",
+    Describe:   "describe",
+    Ask:        "ask",
+} as const;
+
 /** All message types that can be received from gama-server. Mirrors Python's MessageTypes enum. */
 export const MessageTypes = {
     ConnectionSuccessful:       "ConnectionSuccessful",

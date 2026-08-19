@@ -1,5 +1,5 @@
 import type { GamaState, GamaMessage, GamaParameter, ExperimentState } from "./constants.ts";
-import { CLIENT_COMMAND_ID, DEFAULT_HOST, DEFAULT_PORT, MessageTypes, TIMEOUTS, WS_READY_STATE } from "./constants.ts";
+import { CLIENT_COMMAND_ID, CommandTypes, DEFAULT_HOST, DEFAULT_PORT, MessageTypes, TIMEOUTS, WS_READY_STATE } from "./constants.ts";
 import {
     answersCommand, buildPayload, errorContentToString, isAgentReference,
     isErrorMessage, normaliseAskArgs, parseMessage,
@@ -243,7 +243,7 @@ export default class GamaClient {
         const open = this.getReadyState() === WS_READY_STATE.OPEN;
         if (open && this.getExperimentId() !== "" && this.getExperimentState() !== "NONE") {
             try {
-                this.sendPayload({ "type": "stop", "exp_id": this.getExperimentId() });
+                this.sendPayload({ "type": CommandTypes.Stop, "exp_id": this.getExperimentId() });
             } catch (error) {
                 logger.warn("disposeSync couldn't send the stop command:{error}", { error });
             }
@@ -424,12 +424,22 @@ export default class GamaClient {
     }
 
 
+    /**
+     * Blocks while the experiment is still initialising, so a command is not sent before
+     * it can be served. No-op once the experiment is ready.
+     */
+    private async awaitPausedIfNotReady(): Promise<void> {
+        if (this.getExperimentState() !== "NOTREADY") return;
+        logger.warn("The experiment is not yet ready:{state}", { state: this.getExperimentState() })
+        await this.listenFor(MessageTypes.SimulationStatus, "content", "PAUSED");
+    }
+
     async readyCheck(): Promise<boolean> {
         if (this.getExperimentState() === "PAUSED" || this.getExperimentState() === "RUNNING") {
             return true;
         }
         try {
-            return await this.listenFor("SimulationStatus", "content", "PAUSED");
+            return await this.listenFor(MessageTypes.SimulationStatus, "content", "PAUSED");
         } catch {
             // Experiment may not enter PAUSED state (e.g. batch experiments) — that's acceptable
             logger.warn("readyCheck timed out waiting for PAUSED state; experiment may not support it");
@@ -463,17 +473,15 @@ export default class GamaClient {
         until?: string
     ): Promise<void> {
         this.socketCheck()
-        const payload: Record<string, unknown> = {
-            "type": "load",
+        const payload = buildPayload({
+            "type": CommandTypes.Load,
             "model": model_path,
             "experiment": experiment,
-        }
-        if (console !== undefined) payload["console"] = console;
-        if (status !== undefined) payload["status"] = status;
-        if (dialog !== undefined) payload["dialog"] = dialog;
-        if (runtime !== undefined) payload["runtime"] = runtime;
-        if (parameters && parameters.length > 0) payload["parameters"] = parameters;
-        if (until && until !== '') payload["until"] = until;
+        }, {
+            console, status, dialog, runtime,
+            parameters: parameters && parameters.length > 0 ? parameters : undefined,
+            until: until ? until : undefined,
+        });
 
         const commandId = this.sendPayload(payload);
         this.setModelPath(model_path);
@@ -497,19 +505,18 @@ export default class GamaClient {
      * @param sync boolean used if an end condition was specified when loading a simulation. the command will return only the SimulationEnded message if true, and both a response and a SimulationEnded message if false
      * when starting the experiment
      */
-    async play(exp_id?: string, sync?: boolean) {
+    async play(exp_id?: string, sync?: boolean): Promise<GamaMessage | undefined> {
         this.socketCheck()
         if (this.getExperimentState() === "NOTREADY") {
             logger.warn("Simulation not ready yet, waiting for PAUSED simulationstatus")
-            await this.listenFor("SimulationStatus", "content", "PAUSED")
+            await this.awaitPausedIfNotReady()
         }
         else if (this.getExperimentState() === 'PAUSED') {
 
-            const payload = {
-                "type": "play",
+            const payload = buildPayload({
+                "type": CommandTypes.Play,
                 "exp_id": this.getId(exp_id),
-                ...(sync && { "sync": sync })
-            }
+            }, { sync: sync ? sync : undefined });
             return await this.sendCommand(payload)
         }
         else if (this.getExperimentState() === "RUNNING") {
@@ -521,10 +528,10 @@ export default class GamaClient {
      * Pauses the experiment specified.
      * @param exp_id optionnal parameter, will default to last used experiment
      */
-    async pause(exp_id?: string) {
+    async pause(exp_id?: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
-            "type": "pause",
+            "type": CommandTypes.Pause,
             "exp_id": this.getId(exp_id)
         }
         this.pauseRequested = true;
@@ -535,17 +542,16 @@ export default class GamaClient {
         }
     }
 
-    async reload(exp_id?: string, parameters?: GamaParameter[], until?: string) {
+    async reload(exp_id?: string, parameters?: GamaParameter[], until?: string): Promise<GamaMessage> {
         this.socketCheck()
-        if (this.getExperimentState() === "NOTREADY") {
-            await this.listenFor("SimulationStatus", "content", "PAUSED")
-        }
-        const payload: Record<string, unknown> = {
-            "type": "reload",
+        await this.awaitPausedIfNotReady()
+        const payload = buildPayload({
+            "type": CommandTypes.Reload,
             "exp_id": this.getId(exp_id),
-        }
-        if (parameters && parameters.length > 0) payload["parameters"] = parameters;
-        if (until && until !== '') payload["until"] = until;
+        }, {
+            parameters: parameters && parameters.length > 0 ? parameters : undefined,
+            until: until ? until : undefined,
+        });
 
         return await this.sendCommand(payload)
     }
@@ -561,21 +567,14 @@ export default class GamaClient {
      * @param sync If true gama-server waits for steps to finish before sending a success message. Defaults to false.
      * @param exp_id Experiment id. Defaults to last used experiment.
      */
-    async step(nb_step: number = 1, sync: boolean = false, exp_id?: string) {
+    async step(nb_step: number = 1, sync: boolean = false, exp_id?: string): Promise<GamaMessage> {
         this.socketCheck()
-        if (this.getExperimentState() === "NOTREADY") {
-            logger.warn("The experiment is not yet ready:{state}", { state: this.getExperimentState() })
-            await this.listenFor("SimulationStatus", "content", "PAUSED")
-        }
-        const exp_id_payload = exp_id ? exp_id : this.getExperimentId();
-        if (exp_id_payload === "") throw new Error("no experience_id specified, and no experiment in the jsongamastate")
-
-        const payload: Record<string, unknown> = {
-            "type": "step",
-            "exp_id": exp_id_payload,
+        await this.awaitPausedIfNotReady()
+        const payload = buildPayload({
+            "type": CommandTypes.Step,
+            "exp_id": this.getId(exp_id),
             "sync": sync,
-        }
-        if (nb_step > 1) payload["nb_step"] = nb_step;
+        }, { nb_step: nb_step > 1 ? nb_step : undefined });
 
         return await this.sendCommand(payload)
     }
@@ -589,30 +588,37 @@ export default class GamaClient {
      * @param nb_step  the number of steps you want to simulate. if none is specified, it will default to one step
      */
 
-    async stepback(nb_step: number = 1, sync?: boolean, exp_id?: string) {
+    async stepBack(nb_step: number = 1, sync?: boolean, exp_id?: string): Promise<GamaMessage> {
         this.socketCheck()
-        const payload: Record<string, unknown> = {
-            "type": "stepBack",
+        const payload = buildPayload({
+            "type": CommandTypes.StepBack,
             "exp_id": this.getId(exp_id),
-        }
-        if (sync !== undefined) payload["sync"] = sync;
-        if (nb_step > 1) payload["nb_step"] = nb_step;
+        }, { sync, nb_step: nb_step > 1 ? nb_step : undefined });
 
         return await this.sendCommand(payload)
     }
 
 
     /**
+     * @deprecated Use {@link stepBack}, which matches the wire command and the python
+     * client's `step_back`. This spelling is kept so existing callers keep working and
+     * will be removed in the next major.
+     */
+    async stepback(nb_step: number = 1, sync?: boolean, exp_id?: string): Promise<GamaMessage> {
+        return await this.stepBack(nb_step, sync, exp_id);
+    }
+
+    /**
      * stops the specified experiment or the current experiment if not specified
      * @param exp_id optionnal parameter, leave empty to use the last used exp_id
      */
-    async stop(exp_id?: string) {
+    async stop(exp_id?: string): Promise<GamaMessage | undefined> {
         this.socketCheck()
         if (this.getExperimentState() !== "NONE") {
             this.pauseRequested = true;
             try {
                 const payload = {
-                    "type": "stop",
+                    "type": CommandTypes.Stop,
                     "exp_id": this.getId(exp_id)
                 }
                 const response = await this.sendCommand(payload)
@@ -668,9 +674,9 @@ export default class GamaClient {
      * Kills the gama server. Closes the websocket connection and shuts down the gama instance.
      * No response is sent back by the server.
      */
-    async exit() {
+    async exit(): Promise<void> {
         this.socketCheck()
-        const payload = { "type": "exit" }
+        const payload = { "type": CommandTypes.Exit }
         this.sendPayload(payload)
     }
 
@@ -683,7 +689,7 @@ export default class GamaClient {
     async expression(expr: string, exp_id?: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
-            "type": "expression",
+            "type": CommandTypes.Expression,
             "exp_id": this.getId(exp_id),
             "expr": expr
         }
@@ -698,7 +704,7 @@ export default class GamaClient {
     async download(file_path: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
-            "type": "download",
+            "type": CommandTypes.Download,
             "file": file_path
         }
         return await this.sendCommand(payload)
@@ -712,7 +718,7 @@ export default class GamaClient {
     async upload(file_path: string, content: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
-            "type": "upload",
+            "type": CommandTypes.Upload,
             "file": file_path,
             "content": content
         }
@@ -752,7 +758,7 @@ export default class GamaClient {
         // gama-server falls back to the experiment agent only when 'agent' is absent:
         // an empty string is still parsed as a reference and crashes the server.
         const payload = buildPayload({
-            "type": "ask",
+            "type": CommandTypes.Ask,
             "exp_id": this.getId(exp_id),
             "action": action,
             "args": normaliseAskArgs(args),
@@ -771,7 +777,7 @@ export default class GamaClient {
     async validate(expr: string, syntax: boolean = false, escaped: boolean = false): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
-            "type": "validate",
+            "type": CommandTypes.Validate,
             "expr": expr,
             "syntax": syntax,
             "escaped": escaped
@@ -796,7 +802,7 @@ export default class GamaClient {
     ): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
-            "type": "describe",
+            "type": CommandTypes.Describe,
             "model": model_path,
             "experiments": experimentsNames,
             "speciesNames": speciesNames,
