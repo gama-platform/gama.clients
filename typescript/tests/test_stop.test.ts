@@ -10,7 +10,7 @@
  * stop, whatever the last status said.
  */
 import GamaClient from '../src/gama_client.ts';
-import { GAMA_PORT, GAMA_HOST, MODEL_COMPLETE, MODEL_SLOW } from './helpers.ts';
+import { GAMA_PORT, GAMA_HOST, MODEL_COMPLETE, MODEL_SLOW, MODEL_RUNTIME_ERROR } from './helpers.ts';
 
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -61,5 +61,44 @@ describe('stop() timing (#29)', () => {
         expect(client.getExperimentState()).toBe('NONE');
         // and the experiment is genuinely gone, not merely reported as stopped
         await expect(client.expression('cycle')).rejects.toThrow(/Unable to find the experiment/);
+    });
+});
+
+// ─── #30 — telling a crash apart from a deliberate pause ─────────────────────
+
+describe('interrupted experiments (#30)', () => {
+    it('flags an experiment that stopped running on its own', async () => {
+        // A runtime error moves the experiment from RUNNING to PAUSED and, on the versions
+        // tested, gama-server sends no error message at all — even with runtime: true. The
+        // client can only tell by remembering that nobody asked for the pause.
+        await client.loadExperiment(MODEL_RUNTIME_ERROR, 'exp', undefined, undefined, undefined, true);
+        expect(client.wasInterrupted()).toBe(false);
+        await client.play();
+        await wait(3000);
+
+        expect(client.getExperimentState()).toBe('PAUSED');
+        expect(client.wasInterrupted()).toBe(true);
+    });
+
+    it('does not flag an experiment the client paused itself', async () => {
+        await client.loadExperiment(MODEL_COMPLETE, 'expe');
+        await client.play();
+        await wait(1500);
+        await client.pause();
+        await wait(1500);
+
+        expect(client.getExperimentState()).toBe('PAUSED');
+        expect(client.wasInterrupted()).toBe(false);
+    });
+
+    it('clears the flag when a new experiment is loaded', async () => {
+        await client.loadExperiment(MODEL_RUNTIME_ERROR, 'exp', undefined, undefined, undefined, true);
+        await client.play();
+        await wait(3000);
+        expect(client.wasInterrupted()).toBe(true);
+
+        await client.stop();
+        await client.loadExperiment(MODEL_COMPLETE, 'expe');
+        expect(client.wasInterrupted()).toBe(false);
     });
 });

@@ -67,3 +67,15 @@ window.addEventListener("beforeunload", () => client.disposeSync());
 
 Use `await client.stop()` followed by `await client.closeConnection()` anywhere you can
 actually await them — `disposeSync` returns without any confirmation from the server.
+
+### Detecting an interrupted run
+
+A runtime error moves an experiment from `RUNNING` to `PAUSED` without any error message,
+so it looks exactly like a deliberate pause. `wasInterrupted()` tells them apart by
+remembering whether the pause was asked for:
+
+```ts
+if (client.getExperimentState() === "PAUSED" && client.wasInterrupted()) {
+    // the simulation stopped on its own
+}
+```

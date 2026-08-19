@@ -14,6 +14,8 @@ export default class GamaClient {
     private host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
     private gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used               
     private nextCommandId: number = 0;                 // counter behind the id tagged onto every outgoing command, used to match answers back
+    private pauseRequested: boolean = false;           // true while a pause/stop asked by this client is in flight, to tell it apart from a pause caused by a runtime error
+    private interrupted: boolean = false;              // set when the experiment left RUNNING without this client asking for it
 
     /**
      * 
@@ -81,6 +83,21 @@ export default class GamaClient {
 
     public getSocket(): WebSocket{
         return this.gama_socket;
+    }
+
+    /**
+     * Whether the experiment left the RUNNING state without this client asking for it,
+     * which is what happens when a runtime error interrupts the simulation.
+     *
+     * gama-server reports such an interruption as an ordinary switch to "PAUSED" and, on
+     * the versions tested, sends no error message even with `runtime: true`, so a paused
+     * experiment and a crashed one look identical on the wire. This flag tells them apart
+     * by remembering whether the pause was asked for. It is cleared by `loadExperiment`
+     * and by `stop`. See issue #30.
+     * @returns true if the experiment stopped running on its own
+     */
+    public wasInterrupted(): boolean {
+        return this.interrupted;
     }
 
     //? SETTERS --------------------------------------------------------------------------------------------------------------------------------------
@@ -293,6 +310,10 @@ export default class GamaClient {
                             logger.warn("Received non-JSON message, skipping simulationStatus update");
                             return;
                         }
+                        if ((GAMA_ERROR_MESSAGES as string[]).includes(message.type)) {
+                            // Keep the last error visible even when nobody was awaiting a command.
+                            this.setContentError(typeof message.content === 'string' ? message.content : JSON.stringify(message.content ?? ''));
+                        }
                         if (message.type === 'SimulationStatus') {
                             // gama-server broadcasts status changes to *every* open connection, not
                             // only the one owning the experiment, and the exp_id they carry is a
@@ -306,7 +327,16 @@ export default class GamaClient {
                                 return;
                             }
                             if (message.content) {
-                                this.setExperimentState(message.content as ExperimentState);
+                                const previous = this.getExperimentState();
+                                const next = message.content as ExperimentState;
+                                // A run that leaves RUNNING on its own was interrupted by the
+                                // simulation itself (a runtime error, typically), as opposed to one
+                                // this client paused or stopped. See issue #30.
+                                if (previous === "RUNNING" && next === "PAUSED" && !this.pauseRequested) {
+                                    logger.warn("the experiment left RUNNING without the client asking for it")
+                                    this.interrupted = true;
+                                }
+                                this.setExperimentState(next);
                             }
                         }
                         logger.info("JsonGamaState:{state}", { state: this.getExperimentName() })
@@ -492,6 +522,8 @@ export default class GamaClient {
                 ? loadResponse.content
                 : experiment
         );
+        this.interrupted = false;
+        this.pauseRequested = false;
         await this.readyCheck()
     }
 
@@ -532,7 +564,12 @@ export default class GamaClient {
             "type": "pause",
             "exp_id": this.getId(exp_id)
         }
-        return await this.sendCommand(payload)
+        this.pauseRequested = true;
+        try {
+            return await this.sendCommand(payload)
+        } finally {
+            this.pauseRequested = false;
+        }
     }
 
     async reload(exp_id?: string, parameters?: GamaParameter[], until?: string) {
@@ -609,6 +646,7 @@ export default class GamaClient {
     async stop(exp_id?: string) {
         this.socketCheck()
         if (this.getExperimentState() !== "NONE") {
+            this.pauseRequested = true;
             try {
                 const payload = {
                     "type": "stop",
@@ -621,11 +659,14 @@ export default class GamaClient {
                 // afterwards get "Unable to find the experiment or simulation". The server
                 // has acknowledged the stop here, so NONE is the truthful state whatever the
                 // last status said, which also makes stop() end on the same state every
-                // time. See issue #28.
+                // time. See issues #28 and #29.
                 this.setExperimentState("NONE");
+                this.interrupted = false;
                 return response;
             } catch (error) {
                 throw new Error(`couldn't stop the experiment:${error}`);
+            } finally {
+                this.pauseRequested = false;
             }
         } else {
             logger.warn(`couldn't stop the experiment, no experiment running`)
