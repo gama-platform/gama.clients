@@ -4,24 +4,11 @@
  * Python tests that are `assert False` are represented as test.todo().
  * Implemented tests cover the runtime-error scenarios Python has implemented.
  */
-import GamaClient from '../src/gama_client.ts';
-import { GAMA_PORT, GAMA_HOST, MODEL_RUNTIME_ERROR } from './helpers.ts';
+import { MODEL_RUNTIME_ERROR } from './helpers.ts';
+import { useClient } from './fixtures.ts';
 
-let client: GamaClient;
-const loadedIds: string[] = [];
+const ctx = useClient();
 
-beforeEach(async () => {
-    client = new GamaClient(GAMA_PORT, GAMA_HOST);
-    await client.connectGama();
-    loadedIds.length = 0;
-});
-
-afterEach(async () => {
-    for (const id of loadedIds) {
-        try { await client.stop(id); } catch { /* ignore */ }
-    }
-    await client.closeConnection();
-});
 
 // ─── Runtime error in a reflex ────────────────────────────────────────────────
 // Python's implementation of these tests is complex and partially uncertain
@@ -30,9 +17,8 @@ afterEach(async () => {
 // leave the detailed error-content assertions as todos.
 
 it('loads runtime_error model with runtime=true successfully', async () => {
-    await client.loadExperiment(MODEL_RUNTIME_ERROR, 'exp', undefined, undefined, undefined, true);
-    loadedIds.push(client.getExperimentId());
-    expect(client.getExperimentState()).toBe('PAUSED');
+    await ctx.load(MODEL_RUNTIME_ERROR, 'exp', { runtime: true });
+    expect(ctx.client.getExperimentState()).toBe('PAUSED');
 });
 
 // ─── STEP — not yet implemented in Python ─────────────────────────────────────

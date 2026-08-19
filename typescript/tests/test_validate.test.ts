@@ -3,20 +3,11 @@
  *
  * Python tests that are `assert False` are represented as test.todo().
  */
-import GamaClient from '../src/gama_client.ts';
-import { GAMA_PORT, GAMA_HOST } from './helpers.ts';
+
+const ctx = useClient();
+
 import { MessageTypes } from '../src/constants.ts';
-
-let client: GamaClient;
-
-beforeEach(async () => {
-    client = new GamaClient(GAMA_PORT, GAMA_HOST);
-    await client.connectGama();
-});
-
-afterEach(async () => {
-    await client.closeConnection();
-});
+import { useClient } from './fixtures.ts';
 
 // ─── Implemented (mirrors Python's implemented test) ──────────────────────────
 
@@ -57,12 +48,12 @@ it('validate code with a syntax error in the model returns UnableToExecuteReques
     ].join('\n');
 
     // syntax=true, escaped=true as in Python
-    await expect(client.validate(code, true, true)).rejects.toThrow();
+    await expect(ctx.client.validate(code, true, true)).rejects.toThrow();
 });
 
 it('validate well-formed GAML expression returns success', async () => {
     const code = 'model MinimalModel\n\nexperiment ex;\n';
-    const resp = await client.validate(code, false, false);
+    const resp = await ctx.client.validate(code, false, false);
     expect(resp.type).toBe(MessageTypes.CommandExecutedSuccessfully);
 });
 

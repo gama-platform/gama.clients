@@ -13,51 +13,43 @@
  */
 import GamaClient from '../src/gama_client.ts';
 import { GAMA_PORT, GAMA_HOST, MODEL_EMPTY, MODEL_COMPLETE } from './helpers.ts';
-
-const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+import { useClient, wait } from './fixtures.ts';
 
 // ─── #27 — every command gets its own answer ─────────────────────────────────
 
 describe('answer correlation (#27)', () => {
-    let client: GamaClient;
+    const ctx = useClient();
 
     beforeEach(async () => {
-        client = new GamaClient(GAMA_PORT, GAMA_HOST);
-        await client.connectGama();
-        await client.loadExperiment(MODEL_EMPTY, 'ex');
-    });
-
-    afterEach(async () => {
-        try { await client.stop(); } catch { /* ignore */ }
-        await client.closeConnection();
+        await ctx.load(MODEL_EMPTY, 'ex');
     });
 
     it('ignores an answer left behind by an abandoned command', async () => {
         // Fire a command without awaiting it: this is what a timed-out command leaves on
         // the wire. Without correlation the next command consumes this answer instead of
         // its own, and every later command stays one answer behind for good.
-        (client as unknown as { sendPayload(p: Record<string, unknown>): string })
-            .sendPayload({ type: 'expression', exp_id: client.getExperimentId(), expr: '111' });
+        (ctx.client as unknown as { sendPayload(p: Record<string, unknown>): string })
+            .sendPayload({ type: 'expression', exp_id: ctx.client.getExperimentId(), expr: '111' });
 
-        expect((await client.expression('222')).content).toBe(222);
-        expect((await client.expression('333')).content).toBe(333);
+        expect((await ctx.client.expression('222')).content).toBe(222);
+        expect((await ctx.client.expression('333')).content).toBe(333);
     });
 
     it('stays usable after a command has timed out', async () => {
-        const c = client as unknown as {
+        const c = ctx.client as unknown as {
             sendPayload(p: Record<string, unknown>): string;
             success(m: string, t?: number, id?: string): Promise<unknown>;
         };
         // Leave an answer on the wire that no caller will take...
-        c.sendPayload({ type: 'expression', exp_id: client.getExperimentId(), expr: '42' });
+        c.sendPayload({ type: 'expression', exp_id: ctx.client.getExperimentId(), expr: '42' });
         // ...and put the client through a real timeout: this model never ends, so
         // SimulationEnded never comes and the wait can only expire.
         await expect(c.success('SimulationEnded', 500)).rejects.toThrow(/Timed out/);
         await wait(800);
 
         // The reported symptom was that every command after a timeout failed too.
-        expect((await client.expression('7*6')).content).toBe(42);
-        await expect(client.stop()).resolves.toBeDefined();
+        expect((await ctx.client.expression('7*6')).content).toBe(42);
+        await expect(ctx.client.stop()).resolves.toBeDefined();
     });
 });
 

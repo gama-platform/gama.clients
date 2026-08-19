@@ -9,25 +9,16 @@
  * a number for an arithmetic expression, an array for a list-returning one, a nested
  * object for `describe`), so callers narrow it themselves.
  */
-import GamaClient from '../src/gama_client.ts';
 import { MessageTypes } from '../src/constants.ts';
-import { GAMA_PORT, GAMA_HOST, MODEL_EMPTY } from './helpers.ts';
+import { useClient } from './fixtures.ts';
+import { MODEL_EMPTY } from './helpers.ts';
 
-let client: GamaClient;
+const ctx = useClient();
 
-beforeEach(async () => {
-    client = new GamaClient(GAMA_PORT, GAMA_HOST);
-    await client.connectGama();
-});
-
-afterEach(async () => {
-    try { await client.stop(); } catch { /* ignore */ }
-    await client.closeConnection();
-});
 
 it('expression() answers with type, content and the echoed command', async () => {
-    await client.loadExperiment(MODEL_EMPTY, 'ex');
-    const response = await client.expression('1+1');
+    await ctx.client.loadExperiment(MODEL_EMPTY, 'ex');
+    const response = await ctx.client.expression('1+1');
 
     expect(response.type).toBe(MessageTypes.CommandExecutedSuccessfully);
     expect(response.content).toBe(2);
@@ -36,13 +27,13 @@ it('expression() answers with type, content and the echoed command', async () =>
 
 it('expression() keeps the content’s own shape', async () => {
     // The issue's example: a list-returning expression answers with an array, not a string.
-    await client.loadExperiment(MODEL_EMPTY, 'ex');
-    const response = await client.expression('["road", "building", "people"]');
+    await ctx.client.loadExperiment(MODEL_EMPTY, 'ex');
+    const response = await ctx.client.expression('["road", "building", "people"]');
     expect(response.content).toEqual(['road', 'building', 'people']);
 });
 
 it('describe() answers with a structured content, not a string', async () => {
-    const response = await client.describe(MODEL_EMPTY);
+    const response = await ctx.client.describe(MODEL_EMPTY);
 
     expect(response.type).toBe(MessageTypes.CommandExecutedSuccessfully);
     // This is the crux of the issue: the value is an object, so declaring it a string
