@@ -43,8 +43,18 @@ export interface JsonPlayerAsk {
     type: string;
     action: string;
     args: string;   // JsonConvert.SerializeObject(Dictionary<string, string>)
-    agent: string;
+    agent?: string;
 }
+
+/**
+ * gama-server identifies agents with an `AgentReference`, not with a species or
+ * variable name. A reference is a dot-separated path of `species[index]` segments,
+ * starting at the simulation: `simulation[0]`, `simulation[0].people[42]`, ...
+ * Anything else (`world`, `people`, `""`, ...) makes the server throw an
+ * ArrayIndexOutOfBoundsException instead of reporting a proper error, so the
+ * client checks the format before sending the command.
+ */
+export const AGENT_REFERENCE_PATTERN = /^[A-Za-z_]\w*\[\d+\](\.[A-Za-z_]\w*\[\d+\])*$/;
 
 /** Key added to every outgoing command so its answer can be matched back to it.
  *  gama-server echoes unknown fields verbatim inside `command`, which is what makes

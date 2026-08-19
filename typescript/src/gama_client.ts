@@ -1,5 +1,5 @@
 import type { GamaState, GamaMessage, GamaParameter, ExperimentState } from "./constants.ts";
-import { CLIENT_COMMAND_ID, GAMA_ERROR_MESSAGES, MessageTypes, WS_READY_STATE } from "./constants.ts";
+import { AGENT_REFERENCE_PATTERN, CLIENT_COMMAND_ID, GAMA_ERROR_MESSAGES, MessageTypes, WS_READY_STATE } from "./constants.ts";
 import { getLogger } from '@logtape/logtape';
 
 const logger = getLogger(["GAMA-library", "GAMA-client"])
@@ -663,28 +663,71 @@ export default class GamaClient {
     }
 
     /**
+     * Normalises the `args` parameter of {@link ask} into the JSON object string
+     * gama-server expects. The server reads `args` as a raw string and parses it
+     * itself, so an object is stringified here and a string is checked to be a
+     * JSON object: a JSON array such as `"[]"` silently produces no argument at
+     * all, and anything else makes the server fail with an unhelpful error.
+     * @param args arguments of the action, as an object or as a JSON object string
+     * @returns the arguments as a JSON object string
+     */
+    private static normaliseAskArgs(args: string | Record<string, unknown>): string {
+        if (typeof args !== "string") return JSON.stringify(args);
+
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(args);
+        } catch {
+            throw new Error(`ask(): 'args' must be a JSON object (for example "{}"), received the non-JSON string ${JSON.stringify(args)}`);
+        }
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error(`ask(): 'args' must be a JSON object (for example "{}"), received ${JSON.stringify(args)}`);
+        }
+        return args;
+    }
+
+    /**
      * used to run execute an action defined in an agent in an experiment.
-     * @param action gaml code to be run from an agent
-     * @param args arguments of the action
-     * @param agent what agent this code applies to
+     *
+     * Note: gama-server does not send the action's return value back, the answer's
+     * content is always empty. To read a value out of the simulation, use
+     * {@link expression} instead.
+     * @param action name of the action to call
+     * @param args arguments of the action, either an object or a JSON object string. Defaults to no argument
+     * @param agent optional reference of the agent the action is called on, as `species[index]` segments
+     *              separated by dots, starting at the simulation: `simulation[0]`, `simulation[0].people[42]`, ...
+     *              This is *not* a species or variable name, so `"world"` is invalid. Omitting it makes gama-server
+     *              target the *experiment* agent, which does not hold the actions declared in `global`: pass
+     *              `"simulation[0]"` to call those
      * @param escaped optional parameter, if true will escape the action and args before sending them to gama
      * @param exp_id optionnal parameter to specify the experiment. if none is given it will instead default to the last used experiment
      * @returns a stringified response containing the result of the execution of the command
      */
-    async ask(action: string, args: string, agent: string, escaped: boolean = false, exp_id?: string): Promise<GamaMessage> {
+    async ask(
+        action: string,
+        args: string | Record<string, unknown> = {},
+        agent?: string,
+        escaped: boolean = false,
+        exp_id?: string
+    ): Promise<GamaMessage> {
         this.socketCheck()
-        const payload = {
+
+        if (agent !== undefined && !AGENT_REFERENCE_PATTERN.test(agent)) {
+            throw new Error(`ask(): '${agent}' is not a valid agent reference. Expected \`species[index]\` segments separated by dots and starting at the simulation, for instance "simulation[0]" for an action declared in \`global\`, or "simulation[0].people[42]" for one declared in a species.`);
+        }
+
+        const payload: Record<string, unknown> = {
             "type": "ask",
             "exp_id": this.getId(exp_id),
             "action": action,
-            "args": args,
-            "agent": agent,
+            "args": GamaClient.normaliseAskArgs(args),
             "escaped": escaped
         }
+        // gama-server falls back to the experiment agent only when 'agent' is absent:
+        // an empty string is still parsed as a reference and crashes the server.
+        if (agent !== undefined) payload["agent"] = agent;
+
         return await this.sendCommand(payload);
-
-
-
     }
     /**
      * Compiles the code given in parameter and returns a message if any errors are detected.
