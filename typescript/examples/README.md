@@ -21,7 +21,7 @@ They replace the old hand-written demos in `js_static/` with the modern library:
 
 > Want to test a local, unpublished build of the library instead of the npm version?
 > Run `npm run build` in `typescript/` and change the import map in each `index.html` to
-> point `@gama-platform/gama-client` at `../../dist/gama_client.js` (and add a
+> point `@gama-platform/gama-client` at `../../dist/index.js` (and add a
 > `"@logtape/logtape": "https://esm.sh/@logtape/logtape@2"` entry so its dependency resolves).
 
 ## Running
