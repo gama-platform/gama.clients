@@ -9,8 +9,14 @@ export type ExperimentState = "NONE" | "RUNNING" | "PAUSED" | "NOTREADY";
 
 export interface GamaMessage {
     type: string;
-    content?: string;
+    /** Answers carry the command's result here. Its shape follows the command:
+     *  a string for `load`, a number for `expression("1+1")`, an array for a list-returning
+     *  expression, a nested object for `describe`, ... hence `unknown` rather than `string`. */
+    content?: unknown;
     exp_id?: string;
+    /** gama-server echoes the command that produced this answer, custom fields included.
+     *  Absent on unsolicited notifications such as SimulationStatus. */
+    command?: Record<string, unknown>;
     [key: string]: unknown;
 }
 

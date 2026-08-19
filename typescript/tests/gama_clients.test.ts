@@ -3,7 +3,7 @@
  * Cover: connection, play/pause/stop/step lifecycle using the shared empty model.
  */
 import GamaClient from '../src/gama_client.ts';
-import { GAMA_PORT, GAMA_HOST, MODEL_EMPTY, asMsg } from './helpers.ts';
+import { GAMA_PORT, GAMA_HOST, MODEL_EMPTY } from './helpers.ts';
 
 let client: GamaClient;
 
@@ -112,14 +112,14 @@ describe('step', () => {
     it('returns CommandExecutedSuccessfully for a single step', async () => {
         await client.loadExperiment(MODEL_EMPTY, 'ex');
         const resp = await client.step();
-        const msg = asMsg(resp);
+        const msg = resp;
         expect(msg.type).toBe('CommandExecutedSuccessfully');
     });
 
     it('handles nb_step > 1 correctly', async () => {
         await client.loadExperiment(MODEL_EMPTY, 'ex');
         const resp = await client.step(16, true);
-        const msg = asMsg(resp);
+        const msg = resp;
         expect(msg.type).toBe('CommandExecutedSuccessfully');
     });
 });
@@ -130,7 +130,7 @@ describe('reload', () => {
     it('returns CommandExecutedSuccessfully', async () => {
         await client.loadExperiment(MODEL_EMPTY, 'ex');
         const resp = await client.reload();
-        const msg = asMsg(resp);
+        const msg = resp;
         expect(msg.type).toBe('CommandExecutedSuccessfully');
     });
 });

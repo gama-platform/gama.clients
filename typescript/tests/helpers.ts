@@ -1,5 +1,4 @@
 import path from 'path';
-import type { GamaMessage } from '../src/constants.ts';
 
 /**
  * Absolute path to the shared GAML test models.
@@ -20,11 +19,3 @@ export const MODEL_RUNTIME_ERROR = path.join(GAML_DIR, 'runtime_error.gaml');
 
 export const GAMA_PORT = parseInt(process.env.GAMA_PORT ?? '6868');
 export const GAMA_HOST = process.env.GAMA_HOST ?? 'localhost';
-
-/**
- * success() resolves with a GamaMessage object even though it is typed as string.
- * This helper casts it so tests can inspect type and content.
- */
-export function asMsg(response: string): GamaMessage {
-    return response as unknown as GamaMessage;
-}

@@ -4,7 +4,7 @@
  * Python tests that are `assert False` are represented as test.todo().
  */
 import GamaClient from '../src/gama_client.ts';
-import { GAMA_PORT, GAMA_HOST, asMsg } from './helpers.ts';
+import { GAMA_PORT, GAMA_HOST } from './helpers.ts';
 import { MessageTypes } from '../src/constants.ts';
 
 let client: GamaClient;
@@ -62,7 +62,7 @@ it('validate code with a syntax error in the model returns UnableToExecuteReques
 
 it('validate well-formed GAML expression returns success', async () => {
     const code = 'model MinimalModel\n\nexperiment ex;\n';
-    const resp = asMsg(await client.validate(code, false, false));
+    const resp = await client.validate(code, false, false);
     expect(resp.type).toBe(MessageTypes.CommandExecutedSuccessfully);
 });
 

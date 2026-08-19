@@ -282,7 +282,7 @@ export default class GamaClient {
  * and throws an error if it's of any type specified in the GAMA_ERROR_MESSAGES specified in the constants file
  * @returns returns a promise containing the response's message's content
  */
-    async success(successMessage: string, timeoutMs: number = 30000): Promise<string> {
+    async success(successMessage: string, timeoutMs: number = 30000): Promise<GamaMessage> {
         return new Promise((resolve, reject) => {
             const cleanup = () => {
                 clearTimeout(timer);
@@ -304,10 +304,10 @@ export default class GamaClient {
                 const type = message.type;
                 if (type === successMessage) {
                     cleanup();
-                    resolve(message as unknown as string);
+                    resolve(message);
                 } else if ((GAMA_ERROR_MESSAGES as string[]).includes(type)) {
                     cleanup();
-                    this.setContentError(message.content ?? '');
+                    this.setContentError(typeof message.content === 'string' ? message.content : JSON.stringify(message.content ?? ''));
                     reject(new Error(`Couldn't execute command on the Gama Server. ${type}: ${JSON.stringify(message.content)}`));
                 }
             };
@@ -415,10 +415,9 @@ export default class GamaClient {
         this.setExperimentName(experiment);
         // Extract the server-assigned experiment ID from the load response
         const loadResponse = await this.success(MessageTypes.CommandExecutedSuccessfully);
-        const responseMsg = loadResponse as unknown as GamaMessage;
         this.setExperimentId(
-            (responseMsg.content && typeof responseMsg.content === 'string')
-                ? responseMsg.content
+            (loadResponse.content && typeof loadResponse.content === 'string')
+                ? loadResponse.content
                 : experiment
         );
         await this.readyCheck()
@@ -599,7 +598,7 @@ export default class GamaClient {
      * @param exp_id Optional experiment id, defaults to last used experiment
      * @returns The result of the evaluation
      */
-    async expression(expr: string, exp_id?: string): Promise<string> {
+    async expression(expr: string, exp_id?: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
             "type": "expression",
@@ -615,7 +614,7 @@ export default class GamaClient {
      * @param file_path Path of the file to download on the server's file system
      * @returns The file content as a string
      */
-    async download(file_path: string): Promise<string> {
+    async download(file_path: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
             "type": "download",
@@ -630,7 +629,7 @@ export default class GamaClient {
      * @param file_path Destination path on the server's file system
      * @param content The content of the file to upload
      */
-    async upload(file_path: string, content: string): Promise<string> {
+    async upload(file_path: string, content: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
             "type": "upload",
@@ -650,7 +649,7 @@ export default class GamaClient {
      * @param exp_id optionnal parameter to specify the experiment. if none is given it will instead default to the last used experiment
      * @returns a stringified response containing the result of the execution of the command
      */
-    async ask(action: string, args: string, agent: string, escaped: boolean = false, exp_id?: string): Promise<string> {
+    async ask(action: string, args: string, agent: string, escaped: boolean = false, exp_id?: string): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
             "type": "ask",
@@ -673,7 +672,7 @@ export default class GamaClient {
      * @param escaped optionnal boolean, dictates if the expression is escaped or not
      * @returns stringified json containing errors in the code if any
      */
-    async validate(expr: string, syntax: boolean = false, escaped: boolean = false): Promise<string> {
+    async validate(expr: string, syntax: boolean = false, escaped: boolean = false): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
             "type": "validate",
@@ -699,7 +698,7 @@ export default class GamaClient {
         speciesNames: boolean = true,
         speciesVariables: boolean = true,
         speciesActions: boolean = true
-    ): Promise<string> {
+    ): Promise<GamaMessage> {
         this.socketCheck()
         const payload = {
             "type": "describe",

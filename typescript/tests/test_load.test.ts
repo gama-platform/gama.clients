@@ -12,7 +12,6 @@ import {
     MODEL_EMPTY, MODEL_BATCH, MODEL_TEST, MODEL_CONSOLE,
     MODEL_TO_IMPORT, MODEL_IMPORTING, MODEL_FAULTY,
     MODEL_WITH_PARAMS, MODEL_INIT_ERROR,
-    asMsg,
 } from './helpers.ts';
 
 let client: GamaClient;
