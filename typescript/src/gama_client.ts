@@ -614,7 +614,16 @@ export default class GamaClient {
                     "type": "stop",
                     "exp_id": this.getId(exp_id)
                 }
-                return await this.sendCommand(payload)
+                const response = await this.sendCommand(payload)
+                // Stopping a RUNNING experiment makes gama-server emit a trailing
+                // SimulationStatus of "PAUSED" after the "NONE", which leaves the client
+                // reporting PAUSED for an experiment that is actually gone — commands sent
+                // afterwards get "Unable to find the experiment or simulation". The server
+                // has acknowledged the stop here, so NONE is the truthful state whatever the
+                // last status said, which also makes stop() end on the same state every
+                // time. See issue #28.
+                this.setExperimentState("NONE");
+                return response;
             } catch (error) {
                 throw new Error(`couldn't stop the experiment:${error}`);
             }
