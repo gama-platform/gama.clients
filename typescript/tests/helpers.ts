@@ -18,6 +18,7 @@ export const MODEL_INIT_ERROR    = path.join(GAML_DIR, 'init_error.gaml');
 export const MODEL_RUNTIME_ERROR = path.join(GAML_DIR, 'runtime_error.gaml');
 export const MODEL_ACTIONS       = path.join(GAML_DIR, 'actions.gaml');
 export const MODEL_COMPLETE      = path.join(GAML_DIR, 'complete.gaml');
+export const MODEL_SLOW          = path.join(GAML_DIR, 'slow.gaml');
 
 export const GAMA_PORT = parseInt(process.env.GAMA_PORT ?? '6868');
 export const GAMA_HOST = process.env.GAMA_HOST ?? 'localhost';
