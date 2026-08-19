@@ -7,6 +7,23 @@ export const WS_READY_STATE = {
 
 export type ExperimentState = "NONE" | "RUNNING" | "PAUSED" | "NOTREADY";
 
+/** Where a client connects when the constructor is not told otherwise. */
+export const DEFAULT_PORT = 1000;
+export const DEFAULT_HOST = "localhost";
+
+/** How long each kind of wait is given, in milliseconds.
+ *  These are the values the client has always used, gathered rather than retuned:
+ *  `answer` covers model compilation on `load`, so shortening it changes which models
+ *  load successfully. */
+export const TIMEOUTS = {
+    /** waiting for the answer to a command */
+    answer: 30_000,
+    /** waiting for a particular frame, such as a status change */
+    listen: 15_000,
+    /** waiting for the socket to close */
+    close:  15_000,
+} as const;
+
 export interface GamaMessage {
     type: string;
     /** Answers carry the command's result here. Its shape follows the command:
@@ -83,6 +100,4 @@ export const GAMA_ERROR_MESSAGES = [
     MessageTypes.GamaServerError,
     MessageTypes.MalformedRequest,
     MessageTypes.UnableToExecuteRequest,
-]
-
-
+] as const;

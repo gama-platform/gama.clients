@@ -1,5 +1,10 @@
 import type { GamaState, GamaMessage, GamaParameter, ExperimentState } from "./constants.ts";
-import { AGENT_REFERENCE_PATTERN, CLIENT_COMMAND_ID, GAMA_ERROR_MESSAGES, MessageTypes, WS_READY_STATE } from "./constants.ts";
+import { CLIENT_COMMAND_ID, DEFAULT_HOST, DEFAULT_PORT, MessageTypes, TIMEOUTS, WS_READY_STATE } from "./constants.ts";
+import {
+    answersCommand, buildPayload, errorContentToString, isAgentReference,
+    isErrorMessage, normaliseAskArgs, parseMessage,
+} from "./messages.ts";
+import { awaitMessage, isUsable, openSocket, waitForClose } from "./socket.ts";
 import { getLogger } from '@logtape/logtape';
 
 const logger = getLogger(["GAMA-library", "GAMA-client"])
@@ -10,8 +15,8 @@ const logger = getLogger(["GAMA-library", "GAMA-client"])
 export default class GamaClient {
 
     private jsonGamaState: GamaState;                  // json object detailing the state of the gama server, including: if connected, experiment details, errors from the server, and loading status
-    private port: number = 1000;                       //default port number pointing to the gama server. can be redefined when using the constructor
-    private host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
+    private port: number;                              // port of the gama server, see DEFAULT_PORT
+    private host: string;                              // host of the gama server, see DEFAULT_HOST
     private gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used               
     private nextCommandId: number = 0;                 // counter behind the id tagged onto every outgoing command, used to match answers back
     private pauseRequested: boolean = false;           // true while a pause/stop asked by this client is in flight, to tell it apart from a pause caused by a runtime error
@@ -34,8 +39,8 @@ export default class GamaClient {
             experiment_id: "",
             experiment_name: ""
         };
-        this.port = port || 1000;
-        this.host = host || "localhost";
+        this.port = port || DEFAULT_PORT;
+        this.host = host || DEFAULT_HOST;
 
     }
 
@@ -143,7 +148,7 @@ export default class GamaClient {
         } else if (!this.jsonGamaState.connected) {
             throw new Error("Gama is not connected")
         }
-        else if (!(this.getReadyState() === WS_READY_STATE.OPEN || this.getReadyState() === WS_READY_STATE.CONNECTING)) {
+        else if (!isUsable(this.getReadyState())) {
             throw new Error("socket not in the OPEN state")
         } else {
             logger.trace("Websocket is connected and open")
@@ -212,22 +217,8 @@ export default class GamaClient {
             return;
         }
 
-        if (this.getReadyState() === WS_READY_STATE.OPEN || this.getReadyState() === WS_READY_STATE.CONNECTING) {
-            await new Promise<void>((resolve, reject) => {
-                const timer = setTimeout(() => {
-                    this.gama_socket.removeEventListener('close', internalListener);
-                    reject(new Error("Websocket timed out"))
-                }, 15000)
-
-                const internalListener = () => {
-                    clearTimeout(timer);
-                    this.gama_socket.removeEventListener('close', internalListener);
-                    resolve();
-                }
-                this.gama_socket.addEventListener('close', internalListener)
-                this.gama_socket.close();
-            })
-
+        if (isUsable(this.getReadyState())) {
+            await waitForClose(this.gama_socket, TIMEOUTS.close);
             if (callback) callback();
         }
     }
@@ -268,6 +259,49 @@ export default class GamaClient {
     }
 
     /**
+     * Keeps the tracked state in step with what the server reports.
+     *
+     * Runs on every frame, independently of whichever command may be awaiting an answer.
+     * @param event the frame received
+     */
+    private handleStatusMessage(event: MessageEvent): void {
+        const message = parseMessage(event.data);
+        if (message === undefined) {
+            logger.warn("Received non-JSON message, skipping simulationStatus update");
+            return;
+        }
+        if (isErrorMessage(message.type)) {
+            // Keep the last error visible even when nobody was awaiting a command.
+            this.setContentError(errorContentToString(message.content));
+        }
+        if (message.type !== MessageTypes.SimulationStatus) return;
+
+        // gama-server broadcasts status changes to *every* open connection, not only the
+        // one owning the experiment, and the exp_id they carry is a per-socket index
+        // rather than the id `load` returned. Adopting them blindly makes a freshly
+        // opened client believe it owns an experiment that belongs to another session —
+        // the browser-reload race of issue #24. So they are only tracked once this client
+        // has loaded something itself, and the experiment id is never taken from them.
+        if (this.getExperimentId() === "") {
+            logger.debug("ignoring a SimulationStatus received before this client loaded an experiment")
+            return;
+        }
+        if (!message.content) return;
+
+        const previous = this.getExperimentState();
+        const next = message.content as ExperimentState;
+        // A run that leaves RUNNING on its own was interrupted by the simulation itself
+        // (a runtime error, typically), as opposed to one this client paused or stopped.
+        // See issue #30.
+        if (previous === "RUNNING" && next === "PAUSED" && !this.pauseRequested) {
+            logger.warn("the experiment left RUNNING without the client asking for it")
+            this.interrupted = true;
+        }
+        this.setExperimentState(next);
+        logger.info("JsonGamaState:{state}", { state: this.getExperimentName() })
+    }
+
+    /**
     * Connects the websocket client with gama server and manage the messages received
     * this function is asynchronous, it needs to be called with await. This is because
     * other functions need the websocket to be created and in the state "OPEN" to start
@@ -275,149 +309,90 @@ export default class GamaClient {
     * @returns WebSocket properly initialised at the end of the asynchronous execution
     */
     async connectGama(): Promise<void> {
-        // Use native WebSocket in browsers, fall back to 'ws' package in Node.js
-        const WS: typeof WebSocket = typeof globalThis.WebSocket !== 'undefined'
-            ? globalThis.WebSocket
-            : (await import('ws')).default as unknown as typeof WebSocket;
+        if (this.gama_socket && isUsable(this.getReadyState())) {
+            this.setConnected(true)
+            logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.getReadyState() });
+            return; // Prevent multiple connection attempts
+        }
+
+        try {
+            this.gama_socket = await this.createSocket(`ws://${this.host}:${this.port}`);
+        } catch (e) {
+            const err = e as Error;
+            logger.error("Synchronous error when creating the websocket:{error}", { error: err.message })
+            throw e;
+        }
 
         return new Promise((resolve, reject) => {
-            if (this.gama_socket && (this.getReadyState() === WS_READY_STATE.OPEN || this.getReadyState() === WS_READY_STATE.CONNECTING)) {
+            this.gama_socket.onopen = () => {
                 this.setConnected(true)
-                logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.getReadyState() });
-                return resolve(); // Prevent multiple connection attempts
-            }
-            try {
-                this.gama_socket = new WS(`ws://${this.host}:${this.port}`);
-                this.gama_socket.onopen = () => {
-                    this.setConnected(true)
-                    logger.info("created new connection to {host}:{port}", { host: this.host, port: this.port })
+                logger.info("created new connection to {host}:{port}", { host: this.host, port: this.port })
 
-                    this.gama_socket.onclose = () => {
-                        this.setConnected(false)
-                        this.setExperimentState("NONE")
-                        logger.info("successfully closed the websocket.")
-
-                    }
-                    /**
-                     * function that creates a listener that updates the simulation status contained in the jsongamastate
-                     * it listens for messages of type SimulationStatus, then updates using the content of the message
-                     * @param event
-                     */
-                    const simulationStatus = (event: MessageEvent) => {
-                        let message: GamaMessage;
-                        try {
-                            message = JSON.parse(event.data as string);
-                        } catch {
-                            logger.warn("Received non-JSON message, skipping simulationStatus update");
-                            return;
-                        }
-                        if ((GAMA_ERROR_MESSAGES as string[]).includes(message.type)) {
-                            // Keep the last error visible even when nobody was awaiting a command.
-                            this.setContentError(typeof message.content === 'string' ? message.content : JSON.stringify(message.content ?? ''));
-                        }
-                        if (message.type === 'SimulationStatus') {
-                            // gama-server broadcasts status changes to *every* open connection, not
-                            // only the one owning the experiment, and the exp_id they carry is a
-                            // per-socket index rather than the id `load` returned. Adopting them
-                            // blindly makes a freshly opened client believe it owns an experiment
-                            // that belongs to another session — the browser-reload race of issue #24.
-                            // So they are only tracked once this client has loaded something itself,
-                            // and the experiment id is never taken from them.
-                            if (this.getExperimentId() === "") {
-                                logger.debug("ignoring a SimulationStatus received before this client loaded an experiment")
-                                return;
-                            }
-                            if (message.content) {
-                                const previous = this.getExperimentState();
-                                const next = message.content as ExperimentState;
-                                // A run that leaves RUNNING on its own was interrupted by the
-                                // simulation itself (a runtime error, typically), as opposed to one
-                                // this client paused or stopped. See issue #30.
-                                if (previous === "RUNNING" && next === "PAUSED" && !this.pauseRequested) {
-                                    logger.warn("the experiment left RUNNING without the client asking for it")
-                                    this.interrupted = true;
-                                }
-                                this.setExperimentState(next);
-                            }
-                        }
-                        logger.info("JsonGamaState:{state}", { state: this.getExperimentName() })
-                    }
-                    this.gama_socket.addEventListener('message', simulationStatus)
-                    return resolve();
+                this.gama_socket.onclose = () => {
+                    this.setConnected(false)
+                    this.setExperimentState("NONE")
+                    logger.info("successfully closed the websocket.")
                 }
-                this.gama_socket.onerror = (error) => {
-                    this.setConnected(false);
-                    // error.error.code is Node.js-specific (ws library); not available in browsers
-                    const nodeCode = (error as unknown as { error?: { code?: string } }).error?.code;
-                    if (nodeCode === 'ECONNREFUSED') {
-                        logger.trace(`full stack trace for Error CONNREFUSED {error}`, { error });
-                        logger.error("The platform can't connect to GAMA at address {host}:{port}", { host: this.host, port: this.port });
-                        reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port} with error code ECONNREFUSED`))
-                    } else {
-                        logger.error(`An error happened within the Gama Server WebSocket\n{error}`, { error });
-                        reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port}`))
-                    }
+                this.gama_socket.addEventListener('message', (event: MessageEvent) => this.handleStatusMessage(event))
+
+                return resolve();
+            }
+            this.gama_socket.onerror = (error) => {
+                this.setConnected(false);
+                // error.error.code is Node.js-specific (ws library); not available in browsers
+                const nodeCode = (error as unknown as { error?: { code?: string } }).error?.code;
+                if (nodeCode === 'ECONNREFUSED') {
+                    logger.trace(`full stack trace for Error CONNREFUSED {error}`, { error });
+                    logger.error("The platform can't connect to GAMA at address {host}:{port}", { host: this.host, port: this.port });
+                    reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port} with error code ECONNREFUSED`))
+                } else {
+                    logger.error(`An error happened within the Gama Server WebSocket\n{error}`, { error });
+                    reject(new Error(`Failed to connect to GAMA at ${this.host}:${this.port}`))
                 }
             }
-            catch (e) {
-                const err = e as Error;
-                logger.error("Synchronous error when creating the websocket:{error}", { error: err.message })
-                reject(e)
-
-            }
-
         })
     }
+
+    /**
+     * Creates the underlying websocket. Overridable so a test can drive the client
+     * without a server; not part of the supported API.
+     * @param url the address to connect to
+     * @returns the socket, not yet open
+     */
+    protected async createSocket(url: string): Promise<WebSocket> {
+        return await openSocket(url);
+    }
+
     /**
  * This function is used to watch on messages stream and look for a response to the command initiated.
  * it resolves if the message received is of the same type specified in the parameter
  * and throws an error if it's of any type specified in the GAMA_ERROR_MESSAGES specified in the constants file
  * @returns returns a promise containing the response's message's content
  */
-    async success(successMessage: string, timeoutMs: number = 30000, commandId?: string): Promise<GamaMessage> {
-        return new Promise((resolve, reject) => {
-            const cleanup = () => {
-                clearTimeout(timer);
-                this.gama_socket.removeEventListener('message', onMessage);
-            };
-
-            const timer = setTimeout(() => {
-                cleanup();
-                reject(new Error(`Timed out waiting for '${successMessage}' from GAMA server`));
-            }, timeoutMs);
-
-            const onMessage = (event: MessageEvent) => {
-                let message: GamaMessage;
-                try {
-                    message = JSON.parse(event.data as string);
-                } catch {
-                    return; // ignore non-JSON frames
+    async success(successMessage: string, timeoutMs: number = TIMEOUTS.answer, commandId?: string): Promise<GamaMessage> {
+        return awaitMessage<GamaMessage>(
+            this.gama_socket,
+            (event) => {
+                const message = parseMessage(event.data);
+                if (message === undefined) return undefined;          // not JSON, ignore
+                if (!answersCommand(message, commandId)) {
+                    logger.debug("ignoring an answer meant for another command")
+                    return undefined;
                 }
-                // gama-server echoes the command it answers, so an answer that carries a
-                // *different* id belongs to another command: a late one whose caller has
-                // already timed out, or one of the extra frames the server sometimes emits
-                // alongside an error. Consuming those is what leaves the client unable to
-                // send anything afterwards. Answers with no echo at all (notifications,
-                // unparseable commands) keep the historical type-only matching.
-                const echoedId = message.command?.[CLIENT_COMMAND_ID];
-                if (commandId !== undefined && echoedId !== undefined && echoedId !== commandId) {
-                    logger.debug("ignoring an answer meant for another command:{echoedId}", { echoedId });
-                    return;
+                if (message.type === successMessage) return { done: true, value: message };
+                if (isErrorMessage(message.type)) {
+                    this.setContentError(errorContentToString(message.content));
+                    return {
+                        done: false,
+                        error: new Error(`Couldn't execute command on the Gama Server. ${message.type}: ${JSON.stringify(message.content)}`),
+                    };
                 }
-                const type = message.type;
-                if (type === successMessage) {
-                    cleanup();
-                    resolve(message);
-                } else if ((GAMA_ERROR_MESSAGES as string[]).includes(type)) {
-                    cleanup();
-                    this.setContentError(typeof message.content === 'string' ? message.content : JSON.stringify(message.content ?? ''));
-                    reject(new Error(`Couldn't execute command on the Gama Server. ${type}: ${JSON.stringify(message.content)}`));
-                }
-            };
-            this.gama_socket.addEventListener('message', onMessage);
-        });
+                return undefined;                                      // somebody else's frame
+            },
+            timeoutMs,
+            () => new Error(`Timed out waiting for '${successMessage}' from GAMA server`),
+        );
     }
-
 
     /**
      * function used to check for a specific message on the websocket.
@@ -432,32 +407,20 @@ export default class GamaClient {
         if (!this.gama_socket) {
             throw new Error("couldn't find an active gama socket when creating a listener:")
         }
-
-        return new Promise((resolve, reject) => {
-            const listener = (event: MessageEvent) => {
-                let message: GamaMessage;
-                try {
-                    message = JSON.parse(event.data as string);
-                } catch {
-                    return; // ignore non-JSON frames
+        return awaitMessage<boolean>(
+            this.gama_socket,
+            (event) => {
+                const message = parseMessage(event.data);
+                if (message === undefined) return undefined;
+                logger.debug("message:  {message}", { message })
+                if (message.type === messageType && message[field] === expectedValue) {
+                    return { done: true, value: true };
                 }
-                logger.debug("message:  {message}", { message: message })
-                const type = message.type;
-                if (type === messageType && message[field] === expectedValue) {
-                    clearTimeout(timer);
-                    this.gama_socket.removeEventListener('message', listener);
-                    resolve(true);
-                }
-            }
-
-            const timer = setTimeout(() => {
-                this.gama_socket.removeEventListener('message', listener);
-                reject(new Error("Websocket timed out"))
-            }, 15000)
-
-            this.gama_socket.addEventListener('message', listener)
-            logger.debug("added an event listener to the gama_socket")
-        })
+                return undefined;
+            },
+            TIMEOUTS.listen,
+            () => new Error("Websocket timed out"),
+        );
     }
 
 
@@ -690,12 +653,12 @@ export default class GamaClient {
         }
 
         this.gama_socket.addEventListener('message', (event: MessageEvent) => {
-            try {
-                const parsed = JSON.parse(event.data as string);
-                callback(parsed);
-            } catch (err) {
+            const parsed = parseMessage(event.data);
+            if (parsed === undefined) {
                 logger.warn('Received non-JSON message:{data}', { data: event.data });
+                return;
             }
+            callback(parsed);
         });
     }
 
@@ -757,30 +720,6 @@ export default class GamaClient {
     }
 
     /**
-     * Normalises the `args` parameter of {@link ask} into the JSON object string
-     * gama-server expects. The server reads `args` as a raw string and parses it
-     * itself, so an object is stringified here and a string is checked to be a
-     * JSON object: a JSON array such as `"[]"` silently produces no argument at
-     * all, and anything else makes the server fail with an unhelpful error.
-     * @param args arguments of the action, as an object or as a JSON object string
-     * @returns the arguments as a JSON object string
-     */
-    private static normaliseAskArgs(args: string | Record<string, unknown>): string {
-        if (typeof args !== "string") return JSON.stringify(args);
-
-        let parsed: unknown;
-        try {
-            parsed = JSON.parse(args);
-        } catch {
-            throw new Error(`ask(): 'args' must be a JSON object (for example "{}"), received the non-JSON string ${JSON.stringify(args)}`);
-        }
-        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-            throw new Error(`ask(): 'args' must be a JSON object (for example "{}"), received ${JSON.stringify(args)}`);
-        }
-        return args;
-    }
-
-    /**
      * used to run execute an action defined in an agent in an experiment.
      *
      * Note: gama-server does not send the action's return value back, the answer's
@@ -806,20 +745,19 @@ export default class GamaClient {
     ): Promise<GamaMessage> {
         this.socketCheck()
 
-        if (agent !== undefined && !AGENT_REFERENCE_PATTERN.test(agent)) {
+        if (agent !== undefined && !isAgentReference(agent)) {
             throw new Error(`ask(): '${agent}' is not a valid agent reference. Expected \`species[index]\` segments separated by dots and starting at the simulation, for instance "simulation[0]" for an action declared in \`global\`, or "simulation[0].people[42]" for one declared in a species.`);
         }
 
-        const payload: Record<string, unknown> = {
+        // gama-server falls back to the experiment agent only when 'agent' is absent:
+        // an empty string is still parsed as a reference and crashes the server.
+        const payload = buildPayload({
             "type": "ask",
             "exp_id": this.getId(exp_id),
             "action": action,
-            "args": GamaClient.normaliseAskArgs(args),
+            "args": normaliseAskArgs(args),
             "escaped": escaped
-        }
-        // gama-server falls back to the experiment agent only when 'agent' is absent:
-        // an empty string is still parsed as a reference and crashes the server.
-        if (agent !== undefined) payload["agent"] = agent;
+        }, { agent });
 
         return await this.sendCommand(payload);
     }
