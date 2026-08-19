@@ -49,6 +49,11 @@ export default class GamaClient {
         return this.jsonGamaState.experiment_state;
     }
 
+    /**
+     * @deprecated Always returns false: nothing ever sets `loading`, and it has never been
+     * maintained. Kept only so the public surface does not change; slated for removal in
+     * the next major.
+     */
     public isLoading(): boolean {
         return this.jsonGamaState.loading;
     }
@@ -108,10 +113,6 @@ export default class GamaClient {
 
     private setExperimentState(state: ExperimentState) {
         this.jsonGamaState.experiment_state = state;
-    }
-
-    private setLoading(loading: boolean) {
-        this.jsonGamaState.loading = loading;
     }
 
     private setContentError(content_error: string) {
@@ -280,7 +281,7 @@ export default class GamaClient {
             : (await import('ws')).default as unknown as typeof WebSocket;
 
         return new Promise((resolve, reject) => {
-            if (this.gama_socket && (this.getReadyState() === 1 /* OPEN */ || this.getReadyState() === 0 /* CONNECTING */)) {
+            if (this.gama_socket && (this.getReadyState() === WS_READY_STATE.OPEN || this.getReadyState() === WS_READY_STATE.CONNECTING)) {
                 this.setConnected(true)
                 logger.info("Already connected or connecting. Skipping. status:{status}", { status: this.getReadyState() });
                 return resolve(); // Prevent multiple connection attempts
@@ -427,7 +428,6 @@ export default class GamaClient {
      * @returns a resolved promise containing a boolean
      */
 
-    //Voir pour retourner le message au lieu de juste retourner un booléen ?
     async listenFor(messageType: string, field: string, expectedValue: unknown): Promise<boolean> {
         if (!this.gama_socket) {
             throw new Error("couldn't find an active gama socket when creating a listener:")

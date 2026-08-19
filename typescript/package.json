@@ -18,20 +18,19 @@
     ],
     "dependencies": {
         "@logtape/logtape": "^2.0.4",
-        "path": "^0.12.7",
-        "react": "^18.3.1",
         "ws": "^8.17.1"
     },
     "devDependencies": {
         "@babel/preset-typescript": "^7.27.1",
         "@tsconfig/node20": "^20.1.5",
         "@types/jest": "^29.5.14",
+        "@types/node": "^20.19.0",
         "@types/ws": "^8.18.1",
         "jest": "^29.7.0",
         "ts-jest": "^29.3.3",
         "ts-node": "^10.9.2",
-        "tsx": "^4.19.4",
         "tsup": "^8.4.0",
+        "tsx": "^4.19.4",
         "typescript": "^5.8.3"
     },
     "scripts": {

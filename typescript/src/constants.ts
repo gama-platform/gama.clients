@@ -39,13 +39,6 @@ export interface GamaParameter {
     name: string;
 }
 
-export interface JsonPlayerAsk {
-    type: string;
-    action: string;
-    args: string;   // JsonConvert.SerializeObject(Dictionary<string, string>)
-    agent?: string;
-}
-
 /**
  * gama-server identifies agents with an `AgentReference`, not with a species or
  * variable name. A reference is a dot-separated path of `species[index]` segments,
