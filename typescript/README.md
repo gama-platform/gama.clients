@@ -79,3 +79,10 @@ if (client.getExperimentState() === "PAUSED" && client.wasInterrupted()) {
     // the simulation stopped on its own
 }
 ```
+
+## To generate a new release (for contributors only)
+
+Releases are published by the
+[`npm-publish.yml`](../.github/workflows/npm-publish.yml) workflow, triggered manually
+from the Actions tab. It takes an optional version bump, builds the package and publishes
+it to both npm and GitHub Packages, then commits the bumped `package.json`.
