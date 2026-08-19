@@ -46,6 +46,12 @@ export interface JsonPlayerAsk {
     agent: string;
 }
 
+/** Key added to every outgoing command so its answer can be matched back to it.
+ *  gama-server echoes unknown fields verbatim inside `command`, which is what makes
+ *  this work; without it a late or duplicated answer is picked up by whichever
+ *  command happens to be waiting next. */
+export const CLIENT_COMMAND_ID = "client_command_id";
+
 /** All message types that can be received from gama-server. Mirrors Python's MessageTypes enum. */
 export const MessageTypes = {
     ConnectionSuccessful:       "ConnectionSuccessful",

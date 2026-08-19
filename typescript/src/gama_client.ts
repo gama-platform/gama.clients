@@ -1,5 +1,5 @@
 import type { GamaState, GamaMessage, GamaParameter, ExperimentState } from "./constants.ts";
-import { GAMA_ERROR_MESSAGES, MessageTypes, WS_READY_STATE } from "./constants.ts";
+import { CLIENT_COMMAND_ID, GAMA_ERROR_MESSAGES, MessageTypes, WS_READY_STATE } from "./constants.ts";
 import { getLogger } from '@logtape/logtape';
 
 const logger = getLogger(["GAMA-library", "GAMA-client"])
@@ -13,6 +13,7 @@ export default class GamaClient {
     private port: number = 1000;                       //default port number pointing to the gama server. can be redefined when using the constructor
     private host: string = "localhost";                // default host pointing to the gama server. can be redefined when using the constructor
     private gama_socket!: WebSocket;                   //websocket of the client. needs to be initialized by using the asynchronous connectGama() to be used               
+    private nextCommandId: number = 0;                 // counter behind the id tagged onto every outgoing command, used to match answers back
 
     /**
      * 
@@ -137,13 +138,32 @@ export default class GamaClient {
      * @param payload json payload to be sent
      */
 
-    private sendPayload(payload: Record<string, unknown>) {
+    private sendPayload(payload: Record<string, unknown>): string {
+        const commandId = `ts-client-${++this.nextCommandId}`;
+        const tagged = { ...payload, [CLIENT_COMMAND_ID]: commandId };
         try {
-            this.gama_socket.send(JSON.stringify(payload))
-            logger.debug("sent message to websocket:{payload}", { payload })
+            this.gama_socket.send(JSON.stringify(tagged))
+            logger.debug("sent message to websocket:{payload}", { payload: tagged })
         } catch (error) {
             throw new Error(`couldn't send the message to the websocket:${error}`);
         }
+        return commandId;
+    }
+
+    /**
+     * internal function pairing a command with the wait for *its own* answer.
+     * @param payload the command to send
+     * @param successMessage the message type that means the command succeeded
+     * @param timeoutMs how long to wait before giving up
+     * @returns the answer sent by gama-server
+     */
+    private async sendCommand(
+        payload: Record<string, unknown>,
+        successMessage: string = MessageTypes.CommandExecutedSuccessfully,
+        timeoutMs?: number
+    ): Promise<GamaMessage> {
+        const commandId = this.sendPayload(payload);
+        return await this.success(successMessage, timeoutMs, commandId);
     }
     /**
      * internal function that returns the string of an experiment to run
@@ -282,7 +302,7 @@ export default class GamaClient {
  * and throws an error if it's of any type specified in the GAMA_ERROR_MESSAGES specified in the constants file
  * @returns returns a promise containing the response's message's content
  */
-    async success(successMessage: string, timeoutMs: number = 30000): Promise<GamaMessage> {
+    async success(successMessage: string, timeoutMs: number = 30000, commandId?: string): Promise<GamaMessage> {
         return new Promise((resolve, reject) => {
             const cleanup = () => {
                 clearTimeout(timer);
@@ -300,6 +320,17 @@ export default class GamaClient {
                     message = JSON.parse(event.data as string);
                 } catch {
                     return; // ignore non-JSON frames
+                }
+                // gama-server echoes the command it answers, so an answer that carries a
+                // *different* id belongs to another command: a late one whose caller has
+                // already timed out, or one of the extra frames the server sometimes emits
+                // alongside an error. Consuming those is what leaves the client unable to
+                // send anything afterwards. Answers with no echo at all (notifications,
+                // unparseable commands) keep the historical type-only matching.
+                const echoedId = message.command?.[CLIENT_COMMAND_ID];
+                if (commandId !== undefined && echoedId !== undefined && echoedId !== commandId) {
+                    logger.debug("ignoring an answer meant for another command:{echoedId}", { echoedId });
+                    return;
                 }
                 const type = message.type;
                 if (type === successMessage) {
@@ -410,11 +441,11 @@ export default class GamaClient {
         if (parameters && parameters.length > 0) payload["parameters"] = parameters;
         if (until && until !== '') payload["until"] = until;
 
-        this.sendPayload(payload)
+        const commandId = this.sendPayload(payload);
         this.setModelPath(model_path);
         this.setExperimentName(experiment);
         // Extract the server-assigned experiment ID from the load response
-        const loadResponse = await this.success(MessageTypes.CommandExecutedSuccessfully);
+        const loadResponse = await this.success(MessageTypes.CommandExecutedSuccessfully, undefined, commandId);
         this.setExperimentId(
             (loadResponse.content && typeof loadResponse.content === 'string')
                 ? loadResponse.content
@@ -443,8 +474,7 @@ export default class GamaClient {
                 "exp_id": this.getId(exp_id),
                 ...(sync && { "sync": sync })
             }
-            this.sendPayload(payload)
-            return await this.success(MessageTypes.CommandExecutedSuccessfully)
+            return await this.sendCommand(payload)
         }
         else if (this.getExperimentState() === "RUNNING") {
             logger.warn("cannot unpause a running simulation")
@@ -461,8 +491,7 @@ export default class GamaClient {
             "type": "pause",
             "exp_id": this.getId(exp_id)
         }
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 
     async reload(exp_id?: string, parameters?: GamaParameter[], until?: string) {
@@ -477,8 +506,7 @@ export default class GamaClient {
         if (parameters && parameters.length > 0) payload["parameters"] = parameters;
         if (until && until !== '') payload["until"] = until;
 
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 
 
@@ -508,8 +536,7 @@ export default class GamaClient {
         }
         if (nb_step > 1) payload["nb_step"] = nb_step;
 
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 
 
@@ -530,8 +557,7 @@ export default class GamaClient {
         if (sync !== undefined) payload["sync"] = sync;
         if (nb_step > 1) payload["nb_step"] = nb_step;
 
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 
 
@@ -547,8 +573,7 @@ export default class GamaClient {
                     "type": "stop",
                     "exp_id": this.getId(exp_id)
                 }
-                this.sendPayload(payload)
-                return await this.success(MessageTypes.CommandExecutedSuccessfully)
+                return await this.sendCommand(payload)
             } catch (error) {
                 throw new Error(`couldn't stop the experiment:${error}`);
             }
@@ -605,8 +630,7 @@ export default class GamaClient {
             "exp_id": this.getId(exp_id),
             "expr": expr
         }
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 
     /**
@@ -620,8 +644,7 @@ export default class GamaClient {
             "type": "download",
             "file": file_path
         }
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 
     /**
@@ -636,8 +659,7 @@ export default class GamaClient {
             "file": file_path,
             "content": content
         }
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 
     /**
@@ -659,8 +681,7 @@ export default class GamaClient {
             "agent": agent,
             "escaped": escaped
         }
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully);
+        return await this.sendCommand(payload);
 
 
 
@@ -680,8 +701,7 @@ export default class GamaClient {
             "syntax": syntax,
             "escaped": escaped
         }
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
     /**
      * This command is used to ask the server more information on a given model. When received, 
@@ -708,8 +728,7 @@ export default class GamaClient {
             "speciesVariables": speciesVariables,
             "speciesActions": speciesActions
         }
-        this.sendPayload(payload)
-        return await this.success(MessageTypes.CommandExecutedSuccessfully)
+        return await this.sendCommand(payload)
     }
 }
 
