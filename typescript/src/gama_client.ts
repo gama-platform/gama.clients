@@ -654,13 +654,16 @@ export default class GamaClient {
                 }
                 const response = await this.sendCommand(payload)
                 // Stopping a RUNNING experiment makes gama-server emit a trailing
-                // SimulationStatus of "PAUSED" after the "NONE", which leaves the client
+                // SimulationStatus of "PAUSED" around the "NONE", which leaves the client
                 // reporting PAUSED for an experiment that is actually gone — commands sent
                 // afterwards get "Unable to find the experiment or simulation". The server
                 // has acknowledged the stop here, so NONE is the truthful state whatever the
-                // last status said, which also makes stop() end on the same state every
-                // time. See issues #28 and #29.
+                // last status said. Builds disagree on whether that trailing frame arrives
+                // before or after the acknowledgement, so dropping the experiment id is what
+                // makes this order-independent: the status listener ignores frames once this
+                // client owns no experiment. See issues #28 and #29.
                 this.setExperimentState("NONE");
+                this.setExperimentId("");
                 this.interrupted = false;
                 return response;
             } catch (error) {

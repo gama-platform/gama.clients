@@ -53,14 +53,17 @@ describe('final state after stop (#28)', () => {
 describe('stop() timing (#29)', () => {
     it('leaves nothing running by the time it resolves', async () => {
         await client.loadExperiment(MODEL_SLOW, 'ex');
+        const id = client.getExperimentId();
         await client.play();
         await wait(2000);
         await client.stop();
 
         // No sleep here on purpose: the state must already be final when stop() returns.
         expect(client.getExperimentState()).toBe('NONE');
-        // and the experiment is genuinely gone, not merely reported as stopped
-        await expect(client.expression('cycle')).rejects.toThrow(/Unable to find the experiment/);
+        // The client also forgets the id, so it refuses to route anything there itself...
+        await expect(client.expression('cycle')).rejects.toThrow(/no current experiment/);
+        // ...and the experiment is genuinely gone server-side, not merely reported stopped.
+        await expect(client.expression('cycle', id)).rejects.toThrow(/Unable to find the experiment/);
     });
 });
 
