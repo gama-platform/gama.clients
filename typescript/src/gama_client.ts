@@ -217,6 +217,39 @@ export default class GamaClient {
 
 
     /**
+     * Releases the experiment and the connection without awaiting anything, for contexts
+     * that cannot wait for a promise.
+     *
+     * `beforeunload` is the motivating case: browsers do not keep the page alive for async
+     * handlers, so `await stop()` followed by `await closeConnection()` is cut short and the
+     * page reloads while the previous session is still shutting down (issue #24). Both
+     * frames here are handed to the socket synchronously, which is what the browser is
+     * willing to flush before navigating.
+     *
+     * Prefer `stop()` + `closeConnection()` anywhere you can actually await them: this
+     * returns without any confirmation from the server.
+     */
+    public disposeSync(): void {
+        if (!this.gama_socket) return;
+        const open = this.getReadyState() === WS_READY_STATE.OPEN;
+        if (open && this.getExperimentId() !== "" && this.getExperimentState() !== "NONE") {
+            try {
+                this.sendPayload({ "type": "stop", "exp_id": this.getExperimentId() });
+            } catch (error) {
+                logger.warn("disposeSync couldn't send the stop command:{error}", { error });
+            }
+        }
+        this.setConnected(false);
+        this.setExperimentState("NONE");
+        this.setExperimentId("");
+        try {
+            this.gama_socket.close();
+        } catch (error) {
+            logger.warn("disposeSync couldn't close the socket:{error}", { error });
+        }
+    }
+
+    /**
     * Connects the websocket client with gama server and manage the messages received
     * this function is asynchronous, it needs to be called with await. This is because
     * other functions need the websocket to be created and in the state "OPEN" to start
@@ -261,11 +294,19 @@ export default class GamaClient {
                             return;
                         }
                         if (message.type === 'SimulationStatus') {
+                            // gama-server broadcasts status changes to *every* open connection, not
+                            // only the one owning the experiment, and the exp_id they carry is a
+                            // per-socket index rather than the id `load` returned. Adopting them
+                            // blindly makes a freshly opened client believe it owns an experiment
+                            // that belongs to another session — the browser-reload race of issue #24.
+                            // So they are only tracked once this client has loaded something itself,
+                            // and the experiment id is never taken from them.
+                            if (this.getExperimentId() === "") {
+                                logger.debug("ignoring a SimulationStatus received before this client loaded an experiment")
+                                return;
+                            }
                             if (message.content) {
                                 this.setExperimentState(message.content as ExperimentState);
-                            }
-                            if (message.exp_id) {
-                                this.setExperimentId(message.exp_id);
                             }
                         }
                         logger.info("JsonGamaState:{state}", { state: this.getExperimentName() })

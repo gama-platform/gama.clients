@@ -40,10 +40,13 @@ async function load(model: string, experiment: string, ...rest: Parameters<GamaC
 // ─── Success cases ─────────────────────────────────────────────────────────────
 
 describe('load', () => {
-    it('loads empty model successfully and returns server-assigned ID', async () => {
+    it('loads empty model successfully and keeps a usable experiment ID', async () => {
         await load(MODEL_EMPTY, 'ex');
+        // The id comes from the load answer; its shape is server-dependent (a generated id
+        // in headless, the experiment name in a GUI server), so assert that it is present
+        // and actually routes commands rather than what it looks like.
         expect(client.getExperimentId()).not.toBe('');
-        expect(client.getExperimentId()).not.toBe('ex');
+        expect((await client.expression('1+1', client.getExperimentId())).content).toBe(2);
     });
 
     it('loads batch experiment successfully', async () => {

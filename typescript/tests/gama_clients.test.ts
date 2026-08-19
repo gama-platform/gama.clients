@@ -37,12 +37,18 @@ describe('loadExperiment', () => {
         expect(client.getExperimentState()).toBe('PAUSED');
     });
 
-    it('stores server-assigned experiment ID (not the experiment name)', async () => {
+    it('stores the experiment ID the load answer carried', async () => {
         await client.loadExperiment(MODEL_EMPTY, 'ex');
-        // Server assigns a numeric ID; it must not equal the experiment name
+        // The id must come from the load answer, which is the key gama-server files the
+        // experiment under (GamaHeadlessWebSocketServer.addExperiment). Its shape depends
+        // on the server: headless returns a generated id, a GUI server returns the
+        // experiment name — so only "present and usable" can be asserted here, not "not
+        // the experiment name". It must never come from a SimulationStatus frame, whose
+        // exp_id is a per-socket index that no lookup accepts (see issue #24).
         const id = client.getExperimentId();
-        expect(id).not.toBe('ex');
         expect(id).not.toBe('');
+        // usable: a command routed with this id reaches the experiment
+        expect((await client.expression('1+1', id)).content).toBe(2);
     });
 
     it('stores model path and experiment name', async () => {

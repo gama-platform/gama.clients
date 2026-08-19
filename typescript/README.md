@@ -54,3 +54,16 @@ is always empty. To read a value out of the simulation, use `expression`:
 ```ts
 const { content } = await client.expression("simulation.getStaticSpecies()");
 ```
+
+### Closing down from a browser
+
+Browsers do not keep a page alive for async `beforeunload` handlers, so an awaited
+cleanup is cut short and the page reloads while the previous session is still shutting
+down. `disposeSync` sends the stop and closes the socket synchronously:
+
+```ts
+window.addEventListener("beforeunload", () => client.disposeSync());
+```
+
+Use `await client.stop()` followed by `await client.closeConnection()` anywhere you can
+actually await them — `disposeSync` returns without any confirmation from the server.
