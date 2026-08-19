@@ -5,8 +5,6 @@
  * Implemented tests cover the runtime-error scenarios Python has implemented.
  */
 import GamaClient from '../src/gama_client.ts';
-import type { GamaMessage } from '../src/constants.ts';
-import { MessageTypes } from '../src/constants.ts';
 import { GAMA_PORT, GAMA_HOST, MODEL_RUNTIME_ERROR } from './helpers.ts';
 
 let client: GamaClient;
