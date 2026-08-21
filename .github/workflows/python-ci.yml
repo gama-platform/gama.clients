@@ -1,4 +1,4 @@
-name: GAMA Python Integration Tests
+name: "[PY] GAMA Integration Tests"
 
 on:
   push:
@@ -48,7 +48,7 @@ jobs:
           if [ -z "${{ github.event.inputs.release }}" ]; then
             # Default to latest stable release
             API_URL="https://api.github.com/repos/gama-platform/gama/releases"
-            
+
             # Compatible latest release and latest prerelease
             DOWNLOAD_URL=$(curl -s "$API_URL" | jq '.[] | select(.prerelease == ${{ matrix.gamaPrelease }}) | .assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url' | tr -d \" | head -n 1)
           else

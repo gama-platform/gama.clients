@@ -1,4 +1,4 @@
-name: TypeScript Continuous Integration
+name: "[TS] GAMA Integration Tests"
 
 on:
   push:

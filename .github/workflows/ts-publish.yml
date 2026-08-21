@@ -1,4 +1,4 @@
-name: npm Release Package
+name: "[TS] Release Package - NPM & GH"
 
 on:
   workflow_dispatch:

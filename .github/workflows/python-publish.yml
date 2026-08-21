@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: PypI Release Package
+name: "[PY] PypI Release Package"
 
 on:
   workflow_dispatch: # For manual trigger
