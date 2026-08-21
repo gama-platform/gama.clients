@@ -36,5 +36,15 @@
     "scripts": {
         "build": "tsup src/gama_client.ts --format esm,cjs --dts --out-dir dist",
         "test": "node --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles"
-    }
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/gama-platform/gama.clients.git",
+        "directory": "typescript"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "sideEffects": false
 }
