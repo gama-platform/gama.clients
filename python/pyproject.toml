@@ -9,7 +9,7 @@ authors = [
 ]
 description = "A python library to interact with Gama server"
 readme = "README.md"
-license = { file="LICENSE" }
+license = { file="../LICENSE" }
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
