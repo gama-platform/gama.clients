@@ -1,28 +1,33 @@
 # gama-client browser examples
 
 These are pure-browser demos of [`@gama-platform/gama-client`](../). There is **no
-backend, bundler, install or build step** — the glue code is plain JavaScript in a
-`<script type="module">`, and the library is pulled straight from the npm registry through
-the [esm.sh](https://esm.sh) CDN via an
-[import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap)
-(esm.sh bundles its dependencies for you).
+backend and no bundler** — the glue code is plain JavaScript in a
+`<script type="module">`, and the library is resolved through an
+[import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap).
 
-They replace the old hand-written demos in `js_static/` with the modern library:
+The import map points at the build in this repository (`../../dist/index.js`), so the
+demos exercise the code next to them and break loudly when the API changes. That build
+leaves its dependencies external, so `@logtape/logtape` is resolved from a CDN alongside
+it.
 
-| Example | Replaces | What it shows |
-| --- | --- | --- |
-| [`control-panel/`](./control-panel/) | `js_static/example/syntax.html` | Connect / load / play / pause / step / reload / evaluate, with a live server-message log. |
-| [`mapbox-display/`](./mapbox-display/) | `js_static/example/display.html` | Renders GAMA agents on a Mapbox map via `to_geojson`, using an awaited render loop instead of the original 1 ms polling flood. |
+| Example | What it shows |
+| --- | --- |
+| [`control-panel/`](./control-panel/) | Connect / load / play / pause / step / reload / evaluate, with a live server-message log. |
+| [`mapbox-display/`](./mapbox-display/) | Renders GAMA agents on a Mapbox map via `to_geojson`, using an awaited render loop instead of a 1 ms polling flood. |
 
 ## Prerequisites
 
-**Run a GAMA server** exposing the JSON WebSocket API (default `localhost:1000`). That's it
-— the library itself is loaded from the CDN, so nothing needs to be installed or built.
+1. **Build the library**, which is what the import map resolves to:
+   ```bash
+   cd typescript && npm install && npm run build
+   ```
+2. **Run a GAMA server** exposing the JSON WebSocket API. The demos default to
+   `localhost:6868`, the port the test suite and CI use; both host and port are editable
+   in the page.
 
-> Want to test a local, unpublished build of the library instead of the npm version?
-> Run `npm run build` in `typescript/` and change the import map in each `index.html` to
-> point `@gama-platform/gama-client` at `../../dist/gama_client.js` (and add a
-> `"@logtape/logtape": "https://esm.sh/@logtape/logtape@2"` entry so its dependency resolves).
+> To demo against the published package instead of this checkout, point
+> `@gama-platform/gama-client` at `https://esm.sh/@gama-platform/gama-client@2` in the
+> import map — esm.sh bundles the dependencies, so the `@logtape/logtape` entry can go.
 
 ## Running
 

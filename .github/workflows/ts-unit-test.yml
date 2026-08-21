@@ -8,15 +8,29 @@ on:
 
 jobs:
   unit-test:
+    name: test (node ${{ matrix.node }}, GAMA pre-release ${{ matrix.os }})
     strategy:
       matrix:
         gamaPrelease: [true, false]
+        nodeVersion: [20, 22, 24]
 
     runs-on: ubuntu-latest
     if: github.actor != 'gama-bot'
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.nodeVersion }}
+
+      - name: Install dependencies
+        working-directory: ./typescript
+        run: npm i
+
+      - name: Type check
+        working-directory: ./typescript
+        run: npx tsc --noEmit
 
       - name: Prepare GAMA to start in headless
         run: |
@@ -26,15 +40,7 @@ jobs:
           bash ./headless/gama-headless.sh -socket 6868 &
           echo "GAMA_HOME=$(pwd)" >> $GITHUB_ENV
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        working-directory: ./typescript
-        run: npm i
-
-      - name: Unit testing
+      - name: Testing against GAMA
         working-directory: ./typescript
         run: npm test
         env:

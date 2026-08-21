@@ -13,8 +13,10 @@ global {
 
     int zero <- 0;
 
-    action fail() {
-        write 1 / zero;
+    // Typed, without parentheses: GAMA builds disagree on whether a no-argument
+    // `action fail()` is legal, but this form compiles on all of them.
+    int fail {
+        return 1 / zero;
     }
 
     init {

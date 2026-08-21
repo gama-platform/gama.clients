@@ -7,14 +7,17 @@
 	<title>GAMA Mapbox Display — gama-client example</title>
 
 	<!--
-		Import map: resolves the library by name to the published npm package via the
-		esm.sh CDN. esm.sh bundles its dependencies (e.g. @logtape/logtape) automatically,
-		so there is nothing to install or build — just open this page over http(s).
+		Import map: resolves the library by name to the build in this repository, so the
+		demo exercises the code next to it rather than whatever version is published.
+		Run `npm run build` in typescript/ first, then serve this page over http(s).
+		The build leaves its dependencies external, so @logtape/logtape is resolved
+		separately here — unlike the esm.sh CDN, which bundles them for you.
 	-->
 	<script type="importmap">
 	{
 		"imports": {
-			"@gama-platform/gama-client": "https://esm.sh/@gama-platform/gama-client@2.0.1"
+			"@gama-platform/gama-client": "../../dist/index.js",
+			"@logtape/logtape": "https://esm.sh/@logtape/logtape@2"
 		}
 	}
 	</script>
@@ -145,8 +148,9 @@
 		// --- Configuration (matches the original Plan_des_pistes demo) ---------------
 		const HOST = "localhost";
 		const PORT = 6868;
-		const MODEL_PATH =
-			"Documents/Github/agrignard/SaReine/SaReine/models/Plan_des_pistes.gaml";
+		// Empty on purpose: this is a path on the *server's* filesystem, so it cannot
+		// have a useful default. Fill the "model path" field in the page.
+		const MODEL_PATH = "";
 		const EXPERIMENT = "demo";
 		const CRS = "EPSG:4326";
 

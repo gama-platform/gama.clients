@@ -7,6 +7,23 @@ export const WS_READY_STATE = {
 
 export type ExperimentState = "NONE" | "RUNNING" | "PAUSED" | "NOTREADY";
 
+/** Where a client connects when the constructor is not told otherwise. */
+export const DEFAULT_PORT = 1000;
+export const DEFAULT_HOST = "localhost";
+
+/** How long each kind of wait is given, in milliseconds.
+ *  These are the values the client has always used, gathered rather than retuned:
+ *  `answer` covers model compilation on `load`, so shortening it changes which models
+ *  load successfully. */
+export const TIMEOUTS = {
+    /** waiting for the answer to a command */
+    answer: 30_000,
+    /** waiting for a particular frame, such as a status change */
+    listen: 15_000,
+    /** waiting for the socket to close */
+    close:  15_000,
+} as const;
+
 export interface GamaMessage {
     type: string;
     /** Answers carry the command's result here. Its shape follows the command:
@@ -55,6 +72,26 @@ export const AGENT_REFERENCE_PATTERN = /^[A-Za-z_]\w*\[\d+\](\.[A-Za-z_]\w*\[\d+
  *  command happens to be waiting next. */
 export const CLIENT_COMMAND_ID = "client_command_id";
 
+/** Every command type gama-server accepts. Mirrors Python's CommandTypes enum, and keeps
+ *  the wire spelling in one place: `stepBack` in particular is easy to mistype, and the
+ *  client method that sends it is spelled differently again. */
+export const CommandTypes = {
+    Exit:       "exit",
+    Load:       "load",
+    Play:       "play",
+    Pause:      "pause",
+    Step:       "step",
+    StepBack:   "stepBack",
+    Reload:     "reload",
+    Stop:       "stop",
+    Expression: "expression",
+    Download:   "download",
+    Upload:     "upload",
+    Validate:   "validate",
+    Describe:   "describe",
+    Ask:        "ask",
+} as const;
+
 /** All message types that can be received from gama-server. Mirrors Python's MessageTypes enum. */
 export const MessageTypes = {
     ConnectionSuccessful:       "ConnectionSuccessful",
@@ -83,6 +120,4 @@ export const GAMA_ERROR_MESSAGES = [
     MessageTypes.GamaServerError,
     MessageTypes.MalformedRequest,
     MessageTypes.UnableToExecuteRequest,
-]
-
-
+] as const;

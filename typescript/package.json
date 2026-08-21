@@ -1,16 +1,16 @@
 {
     "name": "@gama-platform/gama-client",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "type": "module",
     "description": "library to control simulations from a js client",
-    "main": "./dist/gama_client.cjs",
-    "module": "./dist/gama_client.js",
-    "types": "./dist/gama_client.d.ts",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "import": "./dist/gama_client.js",
-            "require": "./dist/gama_client.cjs",
-            "types": "./dist/gama_client.d.ts"
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
         }
     },
     "files": [
@@ -34,8 +34,10 @@
         "typescript": "^5.8.3"
     },
     "scripts": {
-        "build": "tsup src/gama_client.ts --format esm,cjs --dts --out-dir dist",
-        "test": "node --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles"
+        "build": "tsup",
+        "typecheck": "tsc --noEmit",
+        "test": "node --experimental-vm-modules node_modules/.bin/jest",
+        "test:debug": "node --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles --runInBand"
     },
     "license": "MIT",
     "repository": {

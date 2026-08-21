@@ -4,70 +4,49 @@
  * Implemented tests match the Python tests that have a real implementation.
  * Tests marked with test.todo() correspond to Python tests that are `assert False` (not yet implemented).
  */
-import GamaClient from '../src/gama_client.ts';
 import type { GamaMessage } from '../src/constants.ts';
 import { MessageTypes } from '../src/constants.ts';
 import {
-    GAMA_PORT, GAMA_HOST,
     MODEL_EMPTY, MODEL_BATCH, MODEL_TEST, MODEL_CONSOLE,
     MODEL_TO_IMPORT, MODEL_IMPORTING, MODEL_FAULTY,
-    MODEL_WITH_PARAMS, MODEL_INIT_ERROR,
+    MODEL_INIT_ERROR,
 } from './helpers.ts';
+import { useClient } from './fixtures.ts';
 
-let client: GamaClient;
-const loadedIds: string[] = [];
+const ctx = useClient();
 
-beforeEach(async () => {
-    client = new GamaClient(GAMA_PORT, GAMA_HOST);
-    await client.connectGama();
-    loadedIds.length = 0;
-});
-
-afterEach(async () => {
-    // Stop any experiment that was loaded during the test
-    for (const id of loadedIds) {
-        try { await client.stop(id); } catch { /* ignore */ }
-    }
-    await client.closeConnection();
-});
-
-/** Convenience: load and track the experiment ID for teardown. */
-async function load(model: string, experiment: string, ...rest: Parameters<GamaClient['loadExperiment']> extends [string, string, ...infer R] ? R : never) {
-    await client.loadExperiment(model, experiment, ...rest);
-    loadedIds.push(client.getExperimentId());
-}
 
 // ─── Success cases ─────────────────────────────────────────────────────────────
 
 describe('load', () => {
     it('loads empty model successfully and keeps a usable experiment ID', async () => {
-        await load(MODEL_EMPTY, 'ex');
+        await ctx.load(MODEL_EMPTY, 'ex');
         // The id comes from the load answer; its shape is server-dependent (a generated id
         // in headless, the experiment name in a GUI server), so assert that it is present
         // and actually routes commands rather than what it looks like.
-        expect(client.getExperimentId()).not.toBe('');
-        expect((await client.expression('1+1', client.getExperimentId())).content).toBe(2);
+        expect(ctx.client.getExperimentId()).not.toBe('');
+        expect((await ctx.client.expression('1+1', ctx.client.getExperimentId())).content).toBe(2);
     });
 
     it('loads batch experiment successfully', async () => {
         // Batch experiments do not enter PAUSED state — readyCheck gracefully skips
-        await expect(load(MODEL_BATCH, 'ex')).resolves.toBeUndefined();
+        await expect(ctx.load(MODEL_BATCH, 'ex')).resolves.toBeDefined();
     });
 
     it('loads test experiment successfully', async () => {
-        await expect(load(MODEL_TEST, 'ex')).resolves.toBeUndefined();
+        await expect(ctx.load(MODEL_TEST, 'ex')).resolves.toBeDefined();
     });
 
     it('loads model from to_import.gaml (parent_ex experiment) successfully', async () => {
-        await expect(load(MODEL_TO_IMPORT, 'parent_ex')).resolves.toBeUndefined();
+        await expect(ctx.load(MODEL_TO_IMPORT, 'parent_ex')).resolves.toBeDefined();
     });
 
     it('loads model with inherited experiment (with_parent) successfully', async () => {
-        await expect(load(MODEL_IMPORTING, 'with_parent')).resolves.toBeUndefined();
+        await expect(ctx.load(MODEL_IMPORTING, 'with_parent')).resolves.toBeDefined();
     });
 
     it('loads model with inherited virtual experiment (with_virt_parent) successfully', async () => {
-        await expect(load(MODEL_IMPORTING, 'with_virt_parent')).resolves.toBeUndefined();
+        await expect(ctx.load(MODEL_IMPORTING, 'with_virt_parent')).resolves.toBeDefined();
     });
 
     // Parameters at load time are not applied by all GAMA server versions.
@@ -77,9 +56,9 @@ describe('load', () => {
     it('loads with console=true and receives SimulationOutput from init block', async () => {
         const outputs: GamaMessage[] = [];
         // Register listener before loading so we catch init-block messages too
-        client.onMessage(msg => { if (msg.type === MessageTypes.SimulationOutput) outputs.push(msg); });
+        ctx.client.onMessage(msg => { if (msg.type === MessageTypes.SimulationOutput) outputs.push(msg); });
 
-        await load(MODEL_CONSOLE, 'ex', true /* console */);
+        await ctx.load(MODEL_CONSOLE, 'ex', { console: true });
 
         const initMsg = outputs.find(m => {
             const c = m.content as unknown as Record<string, unknown>;
@@ -93,14 +72,14 @@ describe('load', () => {
         // because SimulationOutput may arrive after CommandExecutedSuccessfully.
         let resolveReflex: (msg: GamaMessage) => void;
         const reflexPromise = new Promise<GamaMessage>(res => { resolveReflex = res; });
-        client.onMessage(msg => {
+        ctx.client.onMessage(msg => {
             if (msg.type === MessageTypes.SimulationOutput) {
                 const c = msg.content as unknown as Record<string, unknown>;
                 if (String(c['message']).startsWith('Hey')) resolveReflex(msg);
             }
         });
 
-        await client.step(1, true);
+        await ctx.client.step(1, true);
 
         // Await the reflex message (with 5s grace period for server-side ordering)
         const reflexMsg = await Promise.race([
@@ -117,31 +96,31 @@ describe('load', () => {
 describe('load — error cases', () => {
     it('fails with UnableToExecuteRequest for a non-existent model path', async () => {
         await expect(
-            client.loadExperiment('does/not/exist', 'ex')
+            ctx.client.loadExperiment('does/not/exist', 'ex')
         ).rejects.toThrow(/does not exist/i);
     });
 
     it('fails with UnableToExecuteRequest for a non-existent experiment name', async () => {
         await expect(
-            client.loadExperiment(MODEL_EMPTY, 'expe_does_not_exist')
+            ctx.client.loadExperiment(MODEL_EMPTY, 'expe_does_not_exist')
         ).rejects.toThrow(/expe_does_not_exist/);
     });
 
     it('fails with UnableToExecuteRequest for an empty model path', async () => {
         await expect(
-            client.loadExperiment('', 'ex')
+            ctx.client.loadExperiment('', 'ex')
         ).rejects.toThrow(/(does not exist|not a gaml file)/i);
     });
 
     it('fails with UnableToExecuteRequest for an empty experiment name', async () => {
         await expect(
-            client.loadExperiment(MODEL_EMPTY, '')
+            ctx.client.loadExperiment(MODEL_EMPTY, '')
         ).rejects.toThrow(/is not an experiment/i);
     });
 
     it('fails with GamaCompilationFailedException for a syntactically invalid model', async () => {
         await expect(
-            client.loadExperiment(MODEL_FAULTY, 'ex')
+            ctx.client.loadExperiment(MODEL_FAULTY, 'ex')
         ).rejects.toThrow(/GamaCompilationFailedException/);
     });
 
@@ -149,8 +128,8 @@ describe('load — error cases', () => {
         // Python marks the assertion about the RuntimeError message as uncertain;
         // we only assert the load itself succeeds before the runtime error fires.
         await expect(
-            load(MODEL_INIT_ERROR, 'exp', undefined, undefined, undefined, true /* runtime */)
-        ).resolves.toBeUndefined();
+            ctx.load(MODEL_INIT_ERROR, 'exp', { runtime: true })
+        ).resolves.toBeDefined();
     });
 });
 

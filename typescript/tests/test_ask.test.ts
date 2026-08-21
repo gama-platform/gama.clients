@@ -10,27 +10,16 @@
  * Behaviours asserted here were first observed on a live gama-server; the
  * comments record the answers it actually sends.
  */
-import GamaClient from '../src/gama_client.ts';
 import { MessageTypes } from '../src/constants.ts';
-import { GAMA_PORT, GAMA_HOST, MODEL_ACTIONS } from './helpers.ts';
+import { MODEL_ACTIONS } from './helpers.ts';
+import { useClient } from './fixtures.ts';
 
-let client: GamaClient;
-const loadedIds: string[] = [];
+const ctx = useClient();
 
 beforeEach(async () => {
-    client = new GamaClient(GAMA_PORT, GAMA_HOST);
-    await client.connectGama();
-    loadedIds.length = 0;
-    await client.loadExperiment(MODEL_ACTIONS, 'ex');
-    loadedIds.push(client.getExperimentId());
+    await ctx.load(MODEL_ACTIONS, 'ex');
 });
 
-afterEach(async () => {
-    for (const id of loadedIds) {
-        try { await client.stop(id); } catch { /* ignore */ }
-    }
-    await client.closeConnection();
-});
 
 // ─── Agent reference validation (issue #25) ───────────────────────────────────
 
@@ -38,23 +27,23 @@ describe('ask agent reference', () => {
     it.each(['world', 'thing', 'simulation', '', 'simulation[0].', 'simulation[a]'])(
         'rejects %p, which crashes gama-server instead of returning an error',
         async (agent) => {
-            await expect(client.ask('getStaticSpecies', '{}', agent))
+            await expect(ctx.client.ask('getStaticSpecies', '{}', agent))
                 .rejects.toThrow(/not a valid agent reference/);
         }
     );
 
     it('accepts a simulation reference', async () => {
-        const resp = await client.ask('getStaticSpecies', '{}', 'simulation[0]');
+        const resp = await ctx.client.ask('getStaticSpecies', '{}', 'simulation[0]');
         expect(resp.type).toBe(MessageTypes.CommandExecutedSuccessfully);
     });
 
     it('accepts a nested species reference', async () => {
-        const resp = await client.ask('getVal', '{}', 'simulation[0].thing[1]');
+        const resp = await ctx.client.ask('getVal', '{}', 'simulation[0].thing[1]');
         expect(resp.type).toBe(MessageTypes.CommandExecutedSuccessfully);
     });
 
     it('reports an unknown species in the reference instead of crashing', async () => {
-        await expect(client.ask('getVal', '{}', 'simulation[0].nosuch[0]'))
+        await expect(ctx.client.ask('getVal', '{}', 'simulation[0].nosuch[0]'))
             .rejects.toThrow(/Agent does not exist: simulation\[0\]\.nosuch\[0\]/);
     });
 });
@@ -66,33 +55,33 @@ describe('ask args', () => {
         // This is the call from the issue: ask("getStaticSpecies", "[]", "world").
         // gama-server answers CommandExecutedSuccessfully for "[]" but the action
         // runs with every argument unset, so the failure is silent without this check.
-        await expect(client.ask('bump', '[]', 'simulation[0]'))
+        await expect(ctx.client.ask('bump', '[]', 'simulation[0]'))
             .rejects.toThrow(/must be a JSON object/);
     });
 
     it('rejects a non-JSON string', async () => {
-        await expect(client.ask('bump', 'not json', 'simulation[0]'))
+        await expect(ctx.client.ask('bump', 'not json', 'simulation[0]'))
             .rejects.toThrow(/must be a JSON object/);
     });
 
     it('passes the arguments of an object to the action', async () => {
-        await client.ask('bump', { nb: 5 }, 'simulation[0]');
-        expect((await client.expression('simulation.counter')).content).toBe(5);
+        await ctx.client.ask('bump', { nb: 5 }, 'simulation[0]');
+        expect((await ctx.client.expression('simulation.counter')).content).toBe(5);
     });
 
     it('passes the arguments of a JSON object string to the action', async () => {
-        await client.ask('bump', '{"nb": 4}', 'simulation[0]');
-        expect((await client.expression('simulation.counter')).content).toBe(4);
+        await ctx.client.ask('bump', '{"nb": 4}', 'simulation[0]');
+        expect((await ctx.client.expression('simulation.counter')).content).toBe(4);
     });
 
     it('accumulates across successive calls', async () => {
-        await client.ask('bump', { nb: 5 }, 'simulation[0]');
-        await client.ask('bump', { nb: 3 }, 'simulation[0]');
-        expect((await client.expression('simulation.counter')).content).toBe(8);
+        await ctx.client.ask('bump', { nb: 5 }, 'simulation[0]');
+        await ctx.client.ask('bump', { nb: 3 }, 'simulation[0]');
+        expect((await ctx.client.expression('simulation.counter')).content).toBe(8);
     });
 
     it('defaults to no argument when args is omitted', async () => {
-        const resp = await client.ask('getStaticSpecies', undefined, 'simulation[0]');
+        const resp = await ctx.client.ask('getStaticSpecies', undefined, 'simulation[0]');
         expect(resp.type).toBe(MessageTypes.CommandExecutedSuccessfully);
     });
 });
@@ -101,27 +90,27 @@ describe('ask args', () => {
 
 describe('ask execution', () => {
     it('runs an action with no argument', async () => {
-        const resp = await client.ask('getStaticSpecies', '{}', 'simulation[0]');
+        const resp = await ctx.client.ask('getStaticSpecies', '{}', 'simulation[0]');
         expect(resp.type).toBe(MessageTypes.CommandExecutedSuccessfully);
     });
 
     it('does not return the action result — use expression() for that', async () => {
         // gama-server discards the execution result and answers with empty content.
         // Documented so the day it changes, this test tells us.
-        const resp = await client.ask('getStaticSpecies', '{}', 'simulation[0]');
+        const resp = await ctx.client.ask('getStaticSpecies', '{}', 'simulation[0]');
         expect(resp.content).toBe('');
 
-        const evaluated = await client.expression('simulation.getStaticSpecies()');
+        const evaluated = await ctx.client.expression('simulation.getStaticSpecies()');
         expect(evaluated.content).toEqual(['province', 'park', 'road']);
     });
 
     it('reports a missing action rather than succeeding', async () => {
-        await expect(client.ask('does_not_exist', '{}', 'simulation[0]'))
+        await expect(ctx.client.ask('does_not_exist', '{}', 'simulation[0]'))
             .rejects.toThrow(/Action does_not_exist does not exist in agent simulation\[0\]/);
     });
 
     it('reports a runtime error raised by the action', async () => {
-        await expect(client.ask('fail', '{}', 'simulation[0]'))
+        await expect(ctx.client.ask('fail', '{}', 'simulation[0]'))
             .rejects.toThrow(/Division by zero/);
     });
 
@@ -130,12 +119,12 @@ describe('ask execution', () => {
         // agent (ref == null); sending "" instead reaches AgentReference and crashes.
         // The experiment agent is not `world`, so actions declared in `global` are
         // out of reach that way — hence "agent null" in the answer.
-        await expect(client.ask('getStaticSpecies'))
+        await expect(ctx.client.ask('getStaticSpecies'))
             .rejects.toThrow(/Action getStaticSpecies does not exist in agent null/);
     });
 
     it('accepts an explicit exp_id', async () => {
-        const resp = await client.ask('getStaticSpecies', '{}', 'simulation[0]', false, client.getExperimentId());
+        const resp = await ctx.client.ask('getStaticSpecies', '{}', 'simulation[0]', false, ctx.client.getExperimentId());
         expect(resp.type).toBe(MessageTypes.CommandExecutedSuccessfully);
     });
 });
