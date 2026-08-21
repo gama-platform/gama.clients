@@ -10,13 +10,16 @@ jobs:
   release-build:
     runs-on: ubuntu-latest
     if: github.actor != 'gama-bot'
+    strategy:
+      matrix:
+        pythonVersion: [3.9, 3.10, 3.11, 3.12]
     
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.pythonVersion }}
 
       - name: Prepare GAMA to start in headless
         run: |
