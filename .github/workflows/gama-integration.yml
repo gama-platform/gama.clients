@@ -21,7 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pythonVersion: ["3.9", "3.10", "3.11", "3.12"]
+        gamaPrelease: [true, false]
+        pythonVersion: ["3.10", "3.11", "3.12"]
     
     steps:
       - uses: actions/checkout@v7
@@ -46,14 +47,17 @@ jobs:
           # Determine the API URL for the release
           if [ -z "${{ github.event.inputs.release }}" ]; then
             # Default to latest stable release
-            API_URL="https://api.github.com/repos/gama-platform/gama/releases/latest"
+            API_URL="https://api.github.com/repos/gama-platform/gama/releases"
+            
+            # Compatible latest release and latest prerelease
+            DOWNLOAD_URL=$(curl -s "$API_URL" | jq '.[] | select(.prerelease == ${{ matrix.gamaPrelease }}) | .assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url' | tr -d \" | head -n 1)
           else
             # Use specified release tag
             API_URL="https://api.github.com/repos/gama-platform/gama/releases/tags/${{ github.event.inputs.release }}"
-          fi
           
-          echo "Fetching release info from $API_URL"
-          DOWNLOAD_URL=$(curl -s "$API_URL" | jq -r '.assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url')
+            echo "Fetching release info from $API_URL"
+            DOWNLOAD_URL=$(curl -s "$API_URL" | jq -r '.assets[] | select(.name | test("Linux.*JDK.*\\.zip")) | .browser_download_url')
+          fi
           
           if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" == "null" ]; then
             echo "Error: Could not find a suitable Linux JDK asset for the selected release."

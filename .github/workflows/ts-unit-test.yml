@@ -8,7 +8,6 @@ on:
 
 jobs:
   unit-test:
-    name: test (node ${{ matrix.node }}, GAMA pre-release ${{ matrix.os }})
     strategy:
       matrix:
         gamaPrelease: [true, false]
