@@ -139,7 +139,7 @@ class GamaSyncClient(GamaAsyncClient):
     async def load_awaitable(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                              dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
                              socket_id: str = "",
-                             additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
+                             additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -165,6 +165,7 @@ class GamaSyncClient(GamaAsyncClient):
             They will be set at the initialization phase of the experiment.
         :param until: A string representing an ending condition to stop an experiment run by gama-server.
             It must be expressed in the gaml language.
+        :param seed: Random seed to apply before the simulation initializes.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
@@ -193,13 +194,15 @@ class GamaSyncClient(GamaAsyncClient):
             cmd["until"] = until
         if additional_data:
             cmd.update(additional_data)
+        if seed is not None:
+            cmd["seed"] = seed
 
         return await self.execute_cmd_awaitable(cmd, timeout)
 
     def load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
              dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
              socket_id: str = "",
-             additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
+             additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -225,6 +228,7 @@ class GamaSyncClient(GamaAsyncClient):
             They will be set at the initialization phase of the experiment.
         :param until: A string representing an ending condition to stop an experiment run by gama-server.
             It must be expressed in the gaml language.
+        :param seed: Random seed to apply before the simulation initializes.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
@@ -234,7 +238,7 @@ class GamaSyncClient(GamaAsyncClient):
 
         return self.event_loop.run_until_complete(self.load_awaitable(file_path, experiment_name, console, status,
                                                                       dialog, runtime, parameters, until,
-                                                                      socket_id, additional_data, timeout))
+                                                                      socket_id, additional_data, timeout, seed=seed))
 
     def exit(self):
         """
@@ -586,7 +590,7 @@ class GamaSyncClient(GamaAsyncClient):
         return self.event_loop.run_until_complete(self.stop_awaitable(exp_id, socket_id, additional_data, timeout))
 
     async def reload_awaitable(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-                               additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
+                               additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -599,6 +603,7 @@ class GamaSyncClient(GamaAsyncClient):
             They will be set at the initialization phase of the experiment.
         :param until: A string representing an ending condition to stop an experiment run by gama-server.
             It must be expressed in the gaml language.
+        :param seed: Random seed to apply before the simulation initializes.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
@@ -618,10 +623,12 @@ class GamaSyncClient(GamaAsyncClient):
             cmd["until"] = until
         if additional_data:
             cmd.update(additional_data)
+        if seed is not None:
+            cmd["seed"] = seed
         return await self.execute_cmd_awaitable(cmd, timeout)
 
     def reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-               additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
+               additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -634,6 +641,7 @@ class GamaSyncClient(GamaAsyncClient):
             They will be set at the initialization phase of the experiment.
         :param until: A string representing an ending condition to stop an experiment run by gama-server.
             It must be expressed in the gaml language.
+        :param seed: Random seed to apply before the simulation initializes.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
@@ -641,7 +649,7 @@ class GamaSyncClient(GamaAsyncClient):
         :return: Nothing
         """
         return self.event_loop.run_until_complete(
-            self.reload_awaitable(exp_id, parameters, until, socket_id, additional_data, timeout))
+            self.reload_awaitable(exp_id, parameters, until, socket_id, additional_data, timeout, seed=seed))
 
     async def expression_awaitable(self, exp_id: str, expression: str, socket_id: str = "",
                                    additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:

@@ -121,7 +121,7 @@ class GamaAsyncClient:
     async def load_async(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                          dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
                          socket_id: str = "",
-                         additional_data: Dict = None):
+                         additional_data: Dict = None, *, seed: Optional[float] = None):
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -147,6 +147,7 @@ class GamaAsyncClient:
             They will be set at the initialization phase of the experiment.
         :param until: A string representing an ending condition to stop an experiment run by gama-server.
             It must be expressed in the gaml language.
+        :param seed: Random seed to apply before the simulation initializes.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
 
@@ -175,6 +176,8 @@ class GamaAsyncClient:
             cmd["until"] = until
         if additional_data:
             cmd.update(additional_data)
+        if seed is not None:
+            cmd["seed"] = seed
 
         await self.socket.send(json.dumps(cmd))
 
@@ -400,7 +403,7 @@ class GamaAsyncClient:
         await self.socket.send(json.dumps(cmd))
 
     async def reload_async(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-                           additional_data: Dict = None):
+                           additional_data: Dict = None, *, seed: Optional[float] = None):
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -413,6 +416,7 @@ class GamaAsyncClient:
             They will be set at the initialization phase of the experiment.
         :param until: A string representing an ending condition to stop an experiment run by gama-server.
             It must be expressed in the gaml language.
+        :param seed: Random seed to apply before the simulation initializes.
         :param additional_data: A dictionary containing any additional data you want to send to gama server. Those will
             be sent back with the command's answer. (for example an id for the client's internal use)
         :return: The command's answer will be sent back by gama-server and should be caught by the listening loop
@@ -430,6 +434,8 @@ class GamaAsyncClient:
             cmd["until"] = until
         if additional_data:
             cmd.update(additional_data)
+        if seed is not None:
+            cmd["seed"] = seed
         await self.socket.send(json.dumps(cmd))
 
     async def expression_async(self, exp_id: str, expression: str, socket_id: str = "", additional_data: Dict = None):
