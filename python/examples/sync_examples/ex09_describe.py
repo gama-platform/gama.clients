@@ -1,10 +1,9 @@
-import asyncio
 import argparse
 from pathlib import Path
 
 from gama_client.sync_client import GamaSyncClient
 
-async def main():
+def main():
     """
     This example shows how to ask the Gama server to describe a model using the GamaSyncClient.
     It first connects to the server and then ask the description of the model.
@@ -40,4 +39,4 @@ async def main():
     client.close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

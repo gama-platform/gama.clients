@@ -17,14 +17,9 @@ class TestPlayPauseStop(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(cls.loop)
-
-        async def _setup():
-            cls.client = GamaSyncClient(url, port, default_timeout=10)
-            cls.client.connect()
-
-        cls.loop.run_until_complete(_setup())
+        cls.client = GamaSyncClient(url, port, default_timeout=10)
+        cls.client.connect()
+        cls.loop = cls.client.event_loop
 
     @classmethod
     def tearDownClass(cls):
@@ -32,7 +27,6 @@ class TestPlayPauseStop(unittest.TestCase):
             cls.client.close_connection()
         except Exception as e:
             print(f"Error closing connection: {e}")
-        cls.loop.close()
 
     def setUp(self):
         self.sim_id: List[str] = []

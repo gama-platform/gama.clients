@@ -21,35 +21,35 @@ class TestSeed(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler, default_timeout=10)
-        self.client.connect()
+        await self.client.connect_awaitable()
         self.future_console = Future()
         self.sim_id = []
     
     async def asyncTearDown(self):
         for id in self.sim_id:
-            self.client.stop(id)
-        self.client.close_connection()
+            await self.client.stop_awaitable(id)
+        await self.client.close_connection_async()
 
     async def test_default_seed(self):
         """
         Test that the default seed is set to a different random value every load
         """
         # Load an empty model
-        gama_response = self.client.load(empty_model_path, "ex")
+        gama_response = await self.client.load_awaitable(empty_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
         # Get the default seed for the simulation
-        gama_response = self.client.expression(self.sim_id[0], "seed")
+        gama_response = await self.client.expression_awaitable(self.sim_id[0], "seed")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         old = gama_response["content"]
 
         # Load a second time to check if the seed changes
-        gama_response = self.client.load(empty_model_path, "ex")
+        gama_response = await self.client.load_awaitable(empty_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
         # Get the seed for the second simulation
-        gama_response = self.client.expression(self.sim_id[1], "seed")
+        gama_response = await self.client.expression_awaitable(self.sim_id[1], "seed")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         new = gama_response["content"]
         assert new != old
@@ -59,17 +59,36 @@ class TestSeed(unittest.IsolatedAsyncioTestCase):
         Test setting the seed manually after loading a simulation
         """
         # Load an empty model
-        gama_response = self.client.load(empty_model_path, "ex")
+        gama_response = await self.client.load_awaitable(empty_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
         # Set a seed for the simulation
         seed_value = 42
-        gama_response = self.client.expression(self.sim_id[0], f"seed <- {seed_value}")
+        gama_response = await self.client.expression_awaitable(self.sim_id[0], f"seed <- {seed_value};")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
 
         # Verify that the seed was set correctly
-        gama_response = self.client.expression(self.sim_id[0], "seed")
+        gama_response = await self.client.expression_awaitable(self.sim_id[0], "seed")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        assert gama_response["content"] == seed_value
+
+    async def test_setting_seed_manually_after_explicit_set(self): 
+        """
+        Test setting the seed manually after loading a simulation and explicitly setting one already
+        """
+        # Load an empty model
+        gama_response = await self.client.load_awaitable(empty_model_path, "ex", seed=123)
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+        self.sim_id.append(gama_response["content"])
+
+        # Set a seed for the simulation
+        seed_value = 42
+        gama_response = await self.client.expression_awaitable(self.sim_id[0], f"seed <- {seed_value};")
+        assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
+
+        # Verify that the seed was set correctly
+        gama_response = await self.client.expression_awaitable(self.sim_id[0], "seed")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         assert gama_response["content"] == seed_value
 
@@ -78,27 +97,27 @@ class TestSeed(unittest.IsolatedAsyncioTestCase):
         Test that the result of random draws are different when the seed is not set
         """
         # Load a model
-        gama_response = self.client.load(random_model_path, "ex")
+        gama_response = await self.client.load_awaitable(random_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
 
         # run one step to get a random value for the variable 'val'
-        gama_response = self.client.step(self.sim_id[0], sync=True)
+        gama_response = await self.client.step_awaitable(self.sim_id[0], sync=True)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         # Get the value of 'val' after the step
-        gama_response = self.client.expression(self.sim_id[0], "val")
+        gama_response = await self.client.expression_awaitable(self.sim_id[0], "val")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         old_val = gama_response["content"]
         
         # Load a second time
-        gama_response = self.client.load(random_model_path, "ex")
+        gama_response = await self.client.load_awaitable(random_model_path, "ex")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         self.sim_id.append(gama_response["content"])
         # run one step to get a random value for the variable 'val'
-        gama_response = self.client.step(self.sim_id[1], sync=True)
+        gama_response = await self.client.step_awaitable(self.sim_id[1], sync=True)
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         # Get the value of 'val' after the step
-        gama_response = self.client.expression(self.sim_id[1], "val")
+        gama_response = await self.client.expression_awaitable(self.sim_id[1], "val")
         assert gama_response["type"] == MessageTypes.CommandExecutedSuccessfully.value
         new_val = gama_response["content"]
 

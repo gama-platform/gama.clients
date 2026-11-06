@@ -1,9 +1,8 @@
-import asyncio
 import argparse
 
 from gama_client.sync_client import GamaSyncClient
 
-async def main():
+def main():
     """
     This example shows how to connect to a Gama server and close the connection using the GamaSyncClient.
     It first connects to the server and then closes the connection.
@@ -29,4 +28,4 @@ async def main():
     client.close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

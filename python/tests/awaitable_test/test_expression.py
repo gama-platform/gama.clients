@@ -17,7 +17,7 @@ class TestExpressionAwaitable(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.client = GamaSyncClient(url, port, default_timeout=DEFAULT_TIMEOUT)
-        self.client.connect()
+        await self.client.connect_awaitable()
         self.sim_id = []
 
     async def wait_for_response(self, awaitable: Awaitable, timeout: float = DEFAULT_TIMEOUT) -> Dict[str, Any]:
@@ -58,7 +58,7 @@ class TestExpressionAwaitable(unittest.IsolatedAsyncioTestCase):
                 await self.client.stop_awaitable(id)
             except Exception:
                 pass
-        self.client.close_connection()
+        await self.client.close_connection_async()
 
 if __name__ == '__main__':
     unittest.main()

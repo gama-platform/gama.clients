@@ -32,17 +32,17 @@ async def run_benchmark(iterations=1000, label="run"):
     
     # We use no compression as it's the fastest for localhost
     client = GamaSyncClient(server_url, server_port, async_command_answer_handler, gama_server_message_handler)
-    client.connect()
+    await client.connect_awaitable()
     
     print(f"Loading complex model: {gaml_file_path}")
-    response = client.load(gaml_file_path, "expe")
+    response = await client.load_awaitable(gaml_file_path, "expe")
     exp_id = response["content"]
     
     # Warmup
     print("Warmup...")
     for _ in range(iterations//10):
-        client.step(exp_id, sync=True)
-        client.expression(exp_id, "people collect ([\"name\"::each.name, \"age\"::each.age])")
+        await client.step_awaitable(exp_id, sync=True)
+        await client.expression_awaitable(exp_id, "people collect ([\"name\"::each.name, \"age\"::each.age])")
     print(f"Starting benchmark with {iterations} iterations...")
     
     # We measure: 
@@ -59,13 +59,13 @@ async def run_benchmark(iterations=1000, label="run"):
     for i in range(iterations):
             
         t0 = time.perf_counter()
-        client.step(exp_id, sync=True)
+        await client.step_awaitable(exp_id, sync=True)
         t1 = time.perf_counter()
         step_times.append(t1 - t0)
         
         # This expression returns a list of maps, which grows over time in complete.gaml
         t2 = time.perf_counter()
-        expr_res = client.expression(exp_id, "people collect ([\"name\"::each.name, \"age\"::each.age])")
+        expr_res = await client.expression_awaitable(exp_id, "people collect ([\"name\"::each.name, \"age\"::each.age])")
         t3 = time.perf_counter()
         expr_times.append(t3 - t2)
         
@@ -87,8 +87,8 @@ async def run_benchmark(iterations=1000, label="run"):
     print(f"Avg Step time:  {avg_step*1000:.2f}ms")
     print(f"Avg Expr time:  {avg_expr*1000:.2f}ms (First payload parsing)")
     
-    client.stop(exp_id)
-    client.close_connection()
+    await client.stop_awaitable(exp_id)
+    await client.close_connection_async()
     
     results = {
         "label": label,
@@ -117,8 +117,8 @@ async def run_connection_benchmark(n_connections=30, warmup=5, label="run"):
         for _ in range(warmup):
             try:
                 client = GamaSyncClient(server_url, server_port, async_command_answer_handler, gama_server_message_handler)
-                client.connect()
-                client.close_connection()
+                await client.connect_awaitable()
+                await client.close_connection_async()
             except Exception:
                 pass  # ignore warmup failures
 
@@ -131,12 +131,12 @@ async def run_connection_benchmark(n_connections=30, warmup=5, label="run"):
         try:
             client = GamaSyncClient(server_url, server_port, async_command_answer_handler, gama_server_message_handler)
             t0 = time.perf_counter()
-            client.connect()
+            await client.connect_awaitable()
             t1 = time.perf_counter()
             connect_times.append(t1 - t0)
 
             t2 = time.perf_counter()
-            client.close_connection()
+            await client.close_connection_async()
             t3 = time.perf_counter()
             close_times.append(t3 - t2)
         except Exception as e:

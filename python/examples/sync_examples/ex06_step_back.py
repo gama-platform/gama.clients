@@ -1,11 +1,10 @@
-import asyncio
 import argparse
 from pathlib import Path
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
 
-async def main():
+def main():
     """
     This example shows how to step back a Gama experiment using the GamaSyncClient.
     It first connects to the server, loads the model and runs the experiment for a given number of steps.
@@ -68,4 +67,4 @@ async def main():
     client.close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

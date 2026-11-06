@@ -16,7 +16,7 @@ class TestValidateAwaitable(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.client = GamaSyncClient(url, port, default_timeout=DEFAULT_TIMEOUT)
-        self.client.connect()
+        await self.client.connect_awaitable()
 
     async def wait_for_response(self, awaitable: Awaitable, timeout: float = DEFAULT_TIMEOUT) -> Dict[str, Any]:
         try:
@@ -29,7 +29,7 @@ class TestValidateAwaitable(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(val_res["type"], MessageTypes.CommandExecutedSuccessfully.value)
 
     async def asyncTearDown(self):
-        self.client.close_connection()
+        await self.client.close_connection_async()
 
 if __name__ == '__main__':
     unittest.main()

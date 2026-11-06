@@ -1,11 +1,11 @@
-import asyncio
+import time
 import argparse
 from pathlib import Path
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
 
-async def main():
+def main():
     """
     This example shows how to run a Gama experiment using the GamaSyncClient.
     It first connects to the server, loads the model, and then runs the experiment.
@@ -47,7 +47,7 @@ async def main():
         print("error while trying to run the experiment", gama_response)
         return
     
-    await asyncio.sleep(1)
+    time.sleep(1)
 
     print("killing the experiment")
     gama_response = client.stop(experiment_id)
@@ -60,4 +60,4 @@ async def main():
     client.close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

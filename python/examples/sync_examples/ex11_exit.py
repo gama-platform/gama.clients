@@ -1,4 +1,3 @@
-import asyncio
 import argparse
 
 import sys
@@ -6,7 +5,7 @@ from pathlib import Path
 
 from gama_client.sync_client import GamaSyncClient
 
-async def main():
+def main():
     """
     This example shows how to kill a Gama server using the GamaSyncClient.
     It first connects to the server and then sends a kill command to the server.
@@ -29,7 +28,7 @@ async def main():
     print("connection successful")
 
     print("sending kill command to the server")
-    await client.exit()
+    client.exit()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

@@ -25,7 +25,7 @@ class GamaAsyncClient:
         self.message_handler: Callable[[Dict], Awaitable] = message_handler
         self.socket_id: str = ""
         self.socket: websockets.WebSocketClientProtocol = None
-        self.event_loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
+        self.event_loop: asyncio.AbstractEventLoop | None = None
         self.connection_future: Future[Any] = None
 
     async def connect_async(self, set_socket_id: bool = True, ping_interval: Any | float = 20,
@@ -49,10 +49,14 @@ class GamaAsyncClient:
             a socket_id is sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
-        self.connection_future = self.event_loop.create_future()
+        loop = asyncio.get_running_loop()
+        if self.socket is not None and not self.socket.closed:
+            raise RuntimeError("Close the existing GAMA connection before reconnecting")
+        self.event_loop = loop
+        self.connection_future = loop.create_future()
         self.socket = await websockets.connect(f"ws://{self.url}:{self.port}", ping_interval=ping_interval,
                                                ping_timeout=ping_timeout, max_size=max_size)
-        self.event_loop.create_task(self.start_listening_connection(set_socket_id))
+        loop.create_task(self.start_listening_connection(set_socket_id))
         if set_socket_id:
             self.socket_id = await self.connection_future
 
@@ -121,7 +125,9 @@ class GamaAsyncClient:
     async def load_async(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                          dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
                          socket_id: str = "",
-                         additional_data: Dict = None, *, seed: Optional[float] = None):
+                         additional_data: Dict = None,
+                         seed: Optional[float] = None
+                         ):
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -403,7 +409,7 @@ class GamaAsyncClient:
         await self.socket.send(json.dumps(cmd))
 
     async def reload_async(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-                           additional_data: Dict = None, *, seed: Optional[float] = None):
+                           additional_data: Dict = None, seed: Optional[float] = None):
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.

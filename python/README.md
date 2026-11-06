@@ -35,12 +35,11 @@ The `GamaSyncClient` is the default and simplest way to interact with GAMA. It p
 ### Example:
 
 ```python
-import asyncio
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
 
 
-async def main():
+def main():
     # 1. Initialize and connect the client
     client = GamaSyncClient("localhost", 6868)
     client.connect()
@@ -77,7 +76,7 @@ async def main():
     client.close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
 ```
 
 ---
@@ -85,6 +84,8 @@ if __name__ == "__main__":
 ## 2. Advanced: Asynchronous Execution
 
 ### Using Awaitable methods
+Inside a coroutine or a notebook with a running event loop, use the awaitable API. Blocking methods use a loop owned by the client and are available from synchronous code.
+
 If your Python application is heavily based on `asyncio` and you do not want to block the main event loop while waiting for GAMA's responses, you can use the `_awaitable` suffix on any command from the `GamaSyncClient` (e.g., `client.load_awaitable(...)`). 
 
 These methods return a coroutine that you must `await`. The major advantage is that you don't need to manually link the request to the response in a global handler (like in pure async mode), the `await` returns the exact answer for that specific command. Meanwhile, your Python program can do other things in the background while GAMA is computing.
@@ -98,7 +99,7 @@ async def do_background_work():
 
 async def main():
     client = GamaSyncClient("localhost", 6868)
-    client.connect()
+    await client.connect_awaitable()
 
     # Launch a GAMA command and a background task concurrently
     gama_task = asyncio.create_task(client.load_awaitable("model.gaml", "exp"))
@@ -107,6 +108,7 @@ async def main():
     # Wait for both
     response, _ = await asyncio.gather(gama_task, other_task)
     print("GAMA answered! Experiment ID:", response["content"])
+    await client.close_connection_async()
 ```
 
 ### Pure Asynchronous (Fire-and-forget)
@@ -115,7 +117,7 @@ If you want to manage many simulations simultaneously or send commands without p
 Every command is available with an `_async` suffix (e.g., `load_async()`, `step_async()`). When called, the command is dispatched immediately, and your script moves to the next line. To catch the responses, simulation outputs, or errors, you must provide a `message_handler` function.
 
 **Did you know? You can mix modes!**
-The `GamaSyncClient` inherits all `_async` methods. This means you can comfortably mix blocking synchronous commands (like `load` to set up a model sequentially) with pure asynchronous commands (like `step_async` to run multiple simulations in parallel) using the same client. To do this, simply provide your handlers during the initialization of the `GamaSyncClient` as shown below.
+The `GamaSyncClient` inherits all `_async` methods. This means you can comfortably mix awaitable commands (like `load_awaitable` to set up a model sequentially) with fire-and-forget commands (like `step_async` to run multiple simulations in parallel) using the same client. To do this, simply provide your handlers during the initialization of the `GamaSyncClient` as shown below.
 
 ```python
 import asyncio
@@ -129,17 +131,17 @@ async def gama_server_message_handler(message):
 
 async def main():
     client = GamaSyncClient("localhost", 6868, async_command_answer_handler, gama_server_message_handler)
-    client.connect()
+    await client.connect_awaitable()
 
-    # Synchronous loading (easy and safe)
-    res = client.load("path/to/model.gaml", "exp")
+    # Wait for GAMA to load the model
+    res = await client.load_awaitable("path/to/model.gaml", "exp")
     
     # Asynchronous step (fire and forget, answer goes to async_command_answer_handler)
     await client.step_async(res["content"], nb_step=100)
 
     # Keep program alive to receive the asynchronous messages
     await asyncio.sleep(5)
-    client.close_connection()
+    await client.close_connection_async()
 ```
 
 *(Note: If you only plan to use pure asynchronous commands and want absolute maximum performance, you can use the `GamaAsyncClient` class directly. It strips away the tracking overhead required by the `GamaSyncClient`.)*

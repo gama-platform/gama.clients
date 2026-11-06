@@ -17,7 +17,7 @@ class TestReloadAwaitable(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.client = GamaSyncClient(url, port, default_timeout=DEFAULT_TIMEOUT)
-        self.client.connect()
+        await self.client.connect_awaitable()
         self.sim_id = []
 
     async def wait_for_response(self, awaitable: Awaitable, timeout: float = DEFAULT_TIMEOUT) -> Dict[str, Any]:
@@ -42,13 +42,25 @@ class TestReloadAwaitable(unittest.IsolatedAsyncioTestCase):
         expr_res = await self.wait_for_response(self.client.expression_awaitable(exp_id, "cycle"))
         self.assertEqual(expr_res["content"], 0)
 
+    async def test_reload_manual_seed_changing(self):
+        response = await self.client.load_awaitable(empty_model_path, "ex", seed=321)
+        self.assertEqual(response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        exp_id = response["content"]
+        self.sim_id.append(exp_id)
+
+        response = await self.client.reload_awaitable(exp_id, seed=123)
+        self.assertEqual(response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        response = await self.client.expression_awaitable(exp_id, "seed")
+        self.assertEqual(response["type"], MessageTypes.CommandExecutedSuccessfully.value)
+        self.assertEqual(response["content"], 123)
+
     async def asyncTearDown(self):
         for id in self.sim_id:
             try:
                 await self.client.stop_awaitable(id)
             except Exception:
                 pass
-        self.client.close_connection()
+        await self.client.close_connection_async()
 
 if __name__ == '__main__':
     unittest.main()

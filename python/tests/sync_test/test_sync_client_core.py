@@ -41,14 +41,9 @@ class TestSyncClientCore(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(cls.loop)
-
-        async def _setup():
-            cls.client = GamaSyncClient(url, port, other_message_handler=cls.message_handler, default_timeout=default_timeout)
-            cls.client.connect()
-
-        cls.loop.run_until_complete(_setup())
+        cls.client = GamaSyncClient(url, port, other_message_handler=cls.message_handler, default_timeout=default_timeout)
+        cls.client.connect()
+        cls.loop = cls.client.event_loop
 
     @classmethod
     def tearDownClass(cls):
@@ -56,7 +51,6 @@ class TestSyncClientCore(unittest.TestCase):
             cls.client.close_connection()
         except Exception as e:
             print(f"Error closing connection: {e}")
-        cls.loop.close()
 
     def setUp(self):
         self.sim_id: List[str] = []
@@ -176,10 +170,7 @@ class TestSyncClientCore(unittest.TestCase):
         """
         Test that default timeout is used when no timeout is specified.
         """
-        # Create client with short default timeout (needs a running loop)
-        async def _make_client():
-            return GamaSyncClient(url, port, default_timeout=5.0)
-        short_timeout_client = self.loop.run_until_complete(_make_client())
+        short_timeout_client = GamaSyncClient(url, port, default_timeout=5.0)
         short_timeout_client.connect()
 
         try:

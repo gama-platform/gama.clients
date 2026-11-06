@@ -28,7 +28,7 @@ class TestStepAwaitable(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.client = GamaSyncClient(url, port, other_message_handler=self.message_handler, default_timeout=DEFAULT_TIMEOUT)
-        self.client.connect()
+        await self.client.connect_awaitable()
         self.future_console = Future()
         self.sim_id = []
 
@@ -77,7 +77,7 @@ class TestStepAwaitable(unittest.IsolatedAsyncioTestCase):
                 await self.client.stop_awaitable(id)
             except Exception:
                 pass
-        self.client.close_connection()
+        await self.client.close_connection_async()
 
 if __name__ == '__main__':
     unittest.main()

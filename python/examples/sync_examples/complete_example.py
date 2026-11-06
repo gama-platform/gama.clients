@@ -1,4 +1,4 @@
-import asyncio
+import time
 import json
 from pathlib import Path
 from typing import Dict
@@ -16,7 +16,7 @@ async def gama_server_message_handler(message: Dict):
     print("Here it is:", message)
 
 
-async def main():
+def main():
 
     # Experiment and Gama-server constants
     server_url = "localhost"
@@ -51,7 +51,7 @@ async def main():
         print("error while trying to run the experiment", gama_response)
         return
     
-    await asyncio.sleep(2)
+    time.sleep(2)
 
     print("Pausing the model")
     gama_response = client.pause(experiment_id)
@@ -88,4 +88,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

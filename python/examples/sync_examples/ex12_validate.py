@@ -1,4 +1,3 @@
-import asyncio
 import argparse
 
 from gama_client.sync_client import GamaSyncClient
@@ -8,7 +7,7 @@ from gama_client.message_types import MessageTypes
 async def show_unexpected_message(mess):
     print(mess)
 
-async def main():
+def main():
     """
     This example shows how to manipulate the validate function to check that a piece of code follows
     the gaml syntax.
@@ -67,4 +66,4 @@ async def main():
     client.close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

@@ -1,10 +1,9 @@
-import asyncio
 import argparse
 
 from gama_client.sync_client import GamaSyncClient
 from gama_client.message_types import MessageTypes
 
-async def main():
+def main():
     """
     This example shows how to upload and download a file from the Gama server using the GamaSyncClient.
     It first uploads a file "file.txt" to the server, then downloads it back and prints its content.
@@ -48,4 +47,4 @@ async def main():
     client.close_connection()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

@@ -4,14 +4,9 @@ from asyncio import Future
 
 from itertools import count
 from typing import Dict, Callable, Awaitable, Any, List, Optional
-import nest_asyncio
 
 from gama_client.command_types import CommandTypes
 from gama_client.async_client import GamaAsyncClient
-
-# Mandatory to handle nested asyncio calls
-nest_asyncio.apply()
-
 
 class GamaSyncClient(GamaAsyncClient):
 
@@ -61,6 +56,23 @@ class GamaSyncClient(GamaAsyncClient):
         self.other_message_handler = other_message_handler
         self.unregistered_command_handler = async_command_handler
         self.default_timeout = default_timeout
+        self._sync_loop: asyncio.AbstractEventLoop | None = None
+
+    def _run_sync(self, operation):
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            pass
+        else:
+            operation.close()
+            raise RuntimeError("Use the awaitable GAMA API inside a running event loop")
+
+        if self.socket is not None and not self.socket.closed and self.event_loop is not self._sync_loop:
+            operation.close()
+            raise RuntimeError("This GAMA connection belongs to the async event loop that opened it")
+        if self._sync_loop is None:
+            self._sync_loop = asyncio.new_event_loop()
+        return self._sync_loop.run_until_complete(operation)
 
 
     async def execute_cmd_awaitable(self, cmd: Dict[str, Any], timeout: float = None) -> Dict[str, Any]:
@@ -76,7 +88,10 @@ class GamaSyncClient(GamaAsyncClient):
         command_id = str(next(self._command_counter))
 
         cmd["api_id"] = command_id
-        self.futures[command_id] = self.event_loop.create_future()
+        loop = asyncio.get_running_loop()
+        if loop is not self.event_loop:
+            raise RuntimeError("Use the event loop that opened the GAMA connection")
+        self.futures[command_id] = loop.create_future()
         try:
             await self.socket.send(json.dumps(cmd))
 
@@ -134,12 +149,12 @@ class GamaSyncClient(GamaAsyncClient):
             a socket_id is sent by gama-server
         :raise Exception: Can throw exceptions in case of connection problems.
         """
-        self.event_loop.run_until_complete(self.connect_awaitable(set_socket_id, ping_interval, ping_timeout, timeout, max_size))
+        self._run_sync(self.connect_awaitable(set_socket_id, ping_interval, ping_timeout, timeout, max_size))
 
     async def load_awaitable(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
                              dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
-                             socket_id: str = "",
-                             additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
+                             socket_id: str = "", additional_data: Dict = None, 
+                             timeout: float = None, seed: Optional[float] = None) -> Dict[str, Any]:
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -202,7 +217,7 @@ class GamaSyncClient(GamaAsyncClient):
     def load(self, file_path: str, experiment_name: str, console: bool = None, status: bool = None,
              dialog: bool = None, runtime: bool = None, parameters: List[Dict] = None, until: str = "",
              socket_id: str = "",
-             additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
+             additional_data: Dict = None, timeout: float = None, seed: Optional[float] = None) -> Dict[str, Any]:
         """Sends a command to load the experiment **experiment_name** from the file **file_path** (on the server side).
 
         **Note**
@@ -236,15 +251,15 @@ class GamaSyncClient(GamaAsyncClient):
             experiment's id.
         """
 
-        return self.event_loop.run_until_complete(self.load_awaitable(file_path, experiment_name, console, status,
+        return self._run_sync(self.load_awaitable(file_path, experiment_name, console, status,
                                                                       dialog, runtime, parameters, until,
-                                                                      socket_id, additional_data, timeout, seed=seed))
+                                                                      socket_id, additional_data, timeout, seed))
 
     def exit(self):
         """
         Sends a command to kill the gama-server
         """
-        return self.event_loop.run_until_complete(self.exit_async())
+        return self._run_sync(self.exit_async())
 
     async def validate_awaitable(self, expressions: str, syntax: bool, escaped: bool, additional_data: Dict = None, timeout: float = None) \
             -> Dict[str, Any]:
@@ -284,7 +299,7 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(self.validate_awaitable(expressions, syntax, escaped, additional_data, timeout))
+        return self._run_sync(self.validate_awaitable(expressions, syntax, escaped, additional_data, timeout))
 
     async def download_awaitable(self, file_path: str, timeout: float = None) -> Dict[str, Any]:
         """
@@ -314,7 +329,7 @@ class GamaSyncClient(GamaAsyncClient):
         :return: if everything goes well, gama-server will send back an object containing the entirety
         of the file as a string
         """
-        return self.event_loop.run_until_complete(self.download_awaitable(file_path, timeout))
+        return self._run_sync(self.download_awaitable(file_path, timeout))
 
     async def upload_awaitable(self, file_path: str, content: str, timeout: float = None) -> Dict[str, Any]:
         """
@@ -342,17 +357,7 @@ class GamaSyncClient(GamaAsyncClient):
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
         :raises asyncio.TimeoutError: if the command times out
         """
-        return self.event_loop.run_until_complete(self.upload_awaitable(file_path, content, timeout))
-
-    def close_connection(self, close_code=1000, reason="") -> None:
-        """
-        Closes the connection.
-
-        :param close_code: the close code, 1000 by default
-        :param reason: a human-readable reason for closing.
-        :return:
-        """
-        self.event_loop.run_until_complete(self.close_connection_async(close_code, reason))
+        return self._run_sync(self.upload_awaitable(file_path, content, timeout))
 
     async def play_awaitable(self, exp_id: str, sync: bool = None, socket_id: str = "",
                              additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
@@ -401,7 +406,7 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(self.play_awaitable(exp_id, sync, socket_id, additional_data, timeout))
+        return self._run_sync(self.play_awaitable(exp_id, sync, socket_id, additional_data, timeout))
 
     async def pause_awaitable(self, exp_id: str, socket_id: str = "", additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
         """
@@ -441,7 +446,7 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(self.pause_awaitable(exp_id, socket_id, additional_data, timeout))
+        return self._run_sync(self.pause_awaitable(exp_id, socket_id, additional_data, timeout))
 
     async def step_awaitable(self, exp_id: str, nb_step: int = 1, sync: bool = False, socket_id: str = "",
                              additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
@@ -493,7 +498,7 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(
+        return self._run_sync(
             self.step_awaitable(exp_id, nb_step, sync, socket_id, additional_data, timeout))
 
     async def step_back_awaitable(self, exp_id: str, nb_step: int = 1, sync: bool = None, socket_id: str = "",
@@ -546,7 +551,7 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(
+        return self._run_sync(
             self.step_back_awaitable(exp_id, nb_step, sync, socket_id, additional_data, timeout))
 
     async def stop_awaitable(self, exp_id: str, socket_id: str = "", additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
@@ -587,10 +592,10 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(self.stop_awaitable(exp_id, socket_id, additional_data, timeout))
+        return self._run_sync(self.stop_awaitable(exp_id, socket_id, additional_data, timeout))
 
     async def reload_awaitable(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-                               additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
+                               additional_data: Dict = None, timeout: float = None, seed: Optional[float] = None) -> Dict[str, Any]:
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -628,7 +633,7 @@ class GamaSyncClient(GamaAsyncClient):
         return await self.execute_cmd_awaitable(cmd, timeout)
 
     def reload(self, exp_id: str, parameters: List[Dict] = None, until: str = "", socket_id: str = "",
-               additional_data: Dict = None, timeout: float = None, *, seed: Optional[float] = None) -> Dict[str, Any]:
+               additional_data: Dict = None, timeout: float = None, seed: Optional[float] = None) -> Dict[str, Any]:
         """
         Sends a command to reload (kill + load again) the experiment **exp_id**. You can reset the experiment's
         parameters as well as the end condition.
@@ -648,8 +653,8 @@ class GamaSyncClient(GamaAsyncClient):
         :raises asyncio.TimeoutError: if the command times out
         :return: Nothing
         """
-        return self.event_loop.run_until_complete(
-            self.reload_awaitable(exp_id, parameters, until, socket_id, additional_data, timeout, seed=seed))
+        return self._run_sync(
+            self.reload_awaitable(exp_id, parameters, until, socket_id, additional_data, timeout, seed))
 
     async def expression_awaitable(self, exp_id: str, expression: str, socket_id: str = "",
                                    additional_data: Dict = None, timeout: float = None) -> Dict[str, Any]:
@@ -696,7 +701,7 @@ class GamaSyncClient(GamaAsyncClient):
         :return: The result of the evaluation of the expression will be sent back to the user and caught by the
             listening_loop
         """
-        return self.event_loop.run_until_complete(
+        return self._run_sync(
             self.expression_awaitable(exp_id, expression, socket_id, additional_data, timeout))
 
     async def describe_awaitable(self, path_to_model: str, experiments: bool = True, species_names: bool = True,
@@ -745,7 +750,7 @@ class GamaSyncClient(GamaAsyncClient):
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
         :raises asyncio.TimeoutError: if the command times out
         """
-        return self.event_loop.run_until_complete(self.describe_awaitable(path_to_model, experiments, species_names,
+        return self._run_sync(self.describe_awaitable(path_to_model, experiments, species_names,
                                                                           species_variables, species_actions, additional_data,
                                                                           timeout))
 
@@ -797,7 +802,7 @@ class GamaSyncClient(GamaAsyncClient):
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
         :return: the answer to the command sent by gama-server
         """
-        return self.event_loop.run_until_complete(
+        return self._run_sync(
             self.ask_awaitable(exp_id, action, args, agent, escaped, additional_data, timeout))
 
     async def upload_awaitable(self, file_path: str, content: str, timeout: float = None) -> Dict[str, Any]:
@@ -825,7 +830,7 @@ class GamaSyncClient(GamaAsyncClient):
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
         :return: the answer to the command sent by gama-server
         """
-        return self.event_loop.run_until_complete(self.upload_awaitable(file_path, content, timeout))
+        return self._run_sync(self.upload_awaitable(file_path, content, timeout))
 
     async def download_awaitable(self, file_path: str, timeout: float = None) -> Dict[str, Any]:
         """
@@ -849,7 +854,7 @@ class GamaSyncClient(GamaAsyncClient):
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
         :return: the answer to the command sent by gama-server
         """
-        return self.event_loop.run_until_complete(self.download_awaitable(file_path, timeout))
+        return self._run_sync(self.download_awaitable(file_path, timeout))
 
 
     def exit(self, additional_data: Dict = None, timeout: float = None) -> None:
@@ -860,10 +865,14 @@ class GamaSyncClient(GamaAsyncClient):
             be sent back with the command's answer. (for example an id for the client's internal use)
         :param timeout: timeout in seconds for this command. If None, uses default_timeout. If 0 or negative, no timeout.
         """
-        self.event_loop.run_until_complete(asyncio.wait_for(self.exit_async(additional_data), timeout))
+        self._run_sync(asyncio.wait_for(self.exit_async(additional_data), timeout))
 
     def close_connection(self, close_code=1000, reason=""):
         """
         Closes the connection.
         """
-        self.event_loop.run_until_complete(self.close_connection_async(close_code, reason))
+        if self.socket is not None and not self.socket.closed:
+            self._run_sync(self.close_connection_async(close_code, reason))
+        if self._sync_loop is not None:
+            self._sync_loop.close()
+            self._sync_loop = None
