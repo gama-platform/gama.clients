@@ -367,9 +367,15 @@ export default class GamaClient {
  * This function is used to watch on messages stream and look for a response to the command initiated.
  * it resolves if the message received is of the same type specified in the parameter
  * and throws an error if it's of any type specified in the GAMA_ERROR_MESSAGES specified in the constants file
+ * @param onSuccess called synchronously on the matching response, before resolving the promise
  * @returns returns a promise containing the response's message's content
  */
-    async success(successMessage: string, timeoutMs: number = TIMEOUTS.answer, commandId?: string): Promise<GamaMessage> {
+    async success(
+        successMessage: string,
+        timeoutMs: number = TIMEOUTS.answer,
+        commandId?: string,
+        onSuccess?: (message: GamaMessage) => void
+    ): Promise<GamaMessage> {
         return awaitMessage<GamaMessage>(
             this.gama_socket,
             (event) => {
@@ -379,7 +385,10 @@ export default class GamaClient {
                     logger.debug("ignoring an answer meant for another command")
                     return undefined;
                 }
-                if (message.type === successMessage) return { done: true, value: message };
+                if (message.type === successMessage) {
+                    onSuccess?.(message);
+                    return { done: true, value: message };
+                }
                 if (isErrorMessage(message.type)) {
                     this.setContentError(errorContentToString(message.content));
                     return {
@@ -486,15 +495,16 @@ export default class GamaClient {
         const commandId = this.sendPayload(payload);
         this.setModelPath(model_path);
         this.setExperimentName(experiment);
-        // Extract the server-assigned experiment ID from the load response
-        const loadResponse = await this.success(MessageTypes.CommandExecutedSuccessfully, undefined, commandId);
-        this.setExperimentId(
-            (loadResponse.content && typeof loadResponse.content === 'string')
-                ? loadResponse.content
-                : experiment
-        );
-        this.interrupted = false;
-        this.pauseRequested = false;
+        // Commit the ID before a back-to-back status notification can be handled.
+        await this.success(MessageTypes.CommandExecutedSuccessfully, undefined, commandId, (loadResponse) => {
+            this.setExperimentId(
+                (loadResponse.content && typeof loadResponse.content === 'string')
+                    ? loadResponse.content
+                    : experiment
+            );
+            this.interrupted = false;
+            this.pauseRequested = false;
+        });
         await this.readyCheck()
     }
 
@@ -812,7 +822,6 @@ export default class GamaClient {
         return await this.sendCommand(payload)
     }
 }
-
 
 
 
